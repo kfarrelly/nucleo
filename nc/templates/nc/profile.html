@@ -1,0 +1,407 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Profile{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only"></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:user-detail' request.user.username %}">
+        <span data-feather="user"></span>
+        Profile <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="card mb-4 box-shadow">
+  <img class="card-img-top img-object-fit-cover" style="height: 300px; width: 100%; display: block;"{% if object.profile and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
+  <img class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.profile and object.profile.pic %} src="{{ object.profile.pic.url }}"{% endif %} alt="">
+    <div class="card-body">
+      <h2>{{ object.get_full_name }}</h2>
+      <h5 class="text-secondary">@{{ object.username }}</h5>
+      <p class="card-text">{% if object.profile.bio %}{{ object.profile.bio }}{% endif %}</p>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="btn-group">
+          <a href="{% url 'nc:user-follower-list' object.username %}" class="btn btn-sm btn-outline-dark">
+            Followers: {{ followers_count }}
+          </a>
+          <a href="{% url 'nc:user-following-list' object.username %}" class="btn btn-sm btn-outline-dark">
+            Following: {{ following_count }}
+          </a>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="btn-group">
+          {% if object.id == request.user.id %}
+          <a href="{% url 'nc:user-update' user.username %}" class="btn btn-sm btn-outline-secondary">
+            <span data-feather="edit"></span>
+            Edit Profile
+          </a>
+          {% else %}
+          <form method="POST" action="{% url 'nc:user-follow' object.username %}">
+          {% csrf_token %}
+          {% if is_following %}
+          <button type="submit" class="btn btn-sm btn-outline-primary active">
+            <span data-feather="activity"></span>
+            Following
+          </button>
+          {% else %}
+          <button type="submit" class="btn btn-sm btn-outline-primary">
+            <span data-feather="activity"></span>
+            Follow
+          </button>
+          {% endif %}
+          <a href="#" class="btn btn-sm btn-outline-secondary">
+            <span data-feather="send"></span>
+            Send
+          </a>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Assets</h1>
+</div>
+
+<div class="album py-3">
+  <div class="container-fluid">
+    <div class="row">
+      {% for tup, asset in assets.items %}
+      <div class="col-md-4">
+        <div class="card mb-4 pt-3 box-shadow justify-content-between align-items-center text-center">
+          {% if asset.asset_type == 'native' %}
+          <img class="card-img-top rounded-circle" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-info">
+              <strong>XLM</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div data-id='balance-XLM-native' class="text-muted invisible"></div> <!-- TODO: BALANCE XLM v DOLLAR -->
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            <div style="font-weight: 500;">
+              Stellar Network
+            </div>
+            <div><small>Native Lumens</small></div>
+          </div>
+          {% else %}
+          {% with model_assets|get_item:tup as model_asset %}
+          {% if model_asset %}
+          <img class="card-img-top rounded-circle" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% endif %} style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2" style="color: #{{ model_asset.color }}">
+              <strong>{{ model_asset.code }}</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div class="text-muted">{# TODO: XLM price comes from orderbook. do this in js? #}</div>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            {% if asset.asset_issuer in issuers %}
+            {% with issuers|get_item:asset.asset_issuer as issuer %}
+            {% with issuer.user as user %}
+            <div style="font-weight: 500;">{{ model_asset.domain }}</div>
+            <div><small>{{ asset.asset_issuer }}
+               (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
+            </small></div>
+            {% endwith %}
+            {% endwith %}
+            {% else %}
+            <div style="font-weight: 500;"></div>
+            <div><small>{{ asset.asset_issuer }}</small></div>
+            {% endif %}
+          </div>
+          {% else %}
+          <img class="card-img-top rounded-circle" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-success">
+              <strong>{{ asset.asset_code }}</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div class="text-muted">{# TODO: XLM price comes from orderbook. do this in js? #}</div>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            {% if asset.asset_issuer in issuers %}
+            {% with issuers|get_item:asset.asset_issuer as issuer %}
+            {% with issuer.user as user %}
+            <div style="font-weight: 500;">{{ user.get_full_name }}</div>
+            <div><small>{{ asset.asset_issuer }}
+               (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
+            </small></div>
+            {% endwith %}
+            {% endwith %}
+            {% else %}
+            <div style="font-weight: 500;"></div>
+            <div><small>{{ asset.asset_issuer }}</small></div>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endwith %}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Accounts</h1>
+</div>
+
+<div id="accordion" class="p-3">
+  {% for account in object.accounts.all %}
+  <div class="card mb-2">
+    <div class="card-header bg-white" id="heading-{{ forloop.counter0 }}">
+      {% if object.id == request.user.id %}
+      <a href="{% url 'nc:account-update' account.public_key %}" class="btn btn-sm btn-outline-secondary float-right">
+        <span data-feather="edit"></span>
+        Edit Account
+      </a>
+      {% elif is_following %}
+      <a href="#" class="btn btn-sm btn-outline-primary float-right">
+        <span data-feather="copy"></span>
+        Mirror Assets
+      </a>
+      {% endif %}
+
+      {# TODO: PUT THE MINIMUM BALANCE WITH TRUSTLINES, DATA ENTRIES, ETC. SOMEWHERE HERE! ALSO DO WE WANT MIRROR FOR INSTITUTIONS LIKE NUCLEO?? LIKELY NO #}
+
+      <div class="d-flex justify-content-start flex-wrap align-items-center mb-0 h5">
+        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% endif %} alt="">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapse-{{ forloop.counter0 }}" aria-expanded="false" aria-controls="collapse-{{ forloop.counter0 }}">
+          <div class="d-flex flex-column align-items-start justify-content-center">
+            <h3 class="mb-0">{% if account.name %}{{ account.name }}{% else %}&nbsp;{% endif %}</h3>
+            <small class="mb-1 text-muted">{{ account.public_key|truncatechars:13 }}{{ account.public_key|slice:"-10:" }}</small>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div id="collapse-{{ forloop.counter0 }}" class="collapse account" aria-labelledby="heading-{{ forloop.counter0 }}" data-parent="#accordion" data-more="#more-{{ forloop.counter0 }}">
+      <div class="card-body">
+        <strong class="py-1">Public Key:</strong>
+        <h6 class="text-secondary w-100 mt-0 pt-0">
+          <abbr title="Stellar Account Public Key">{{ account.public_key }}</abbr>
+        </h6>
+
+        {% with addresses|get_item:account.public_key as address %}
+        <ul class="list-group mt-4">
+          <strong class="py-1">Assets</strong>
+          {% for asset in address.balances %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-start align-items-center">
+              {% with asset|get_item:'asset_type' as asset_type %}
+              {% if asset_type == 'native' %}
+              <img class="card-img-top rounded-circle mr-2" src="{% static 'nc/images/rocket.png' %}" style="height: 25px; width: 25px;">
+              <span>XLM</span>
+              {% else %}
+
+              {% with asset|get_item:'asset_code' as asset_code %}
+              {% with asset|get_item:'asset_issuer' as asset_issuer %}
+              {% if asset_issuer in issuers %}
+
+              {% with issuers|get_item:asset_issuer as issuer %}
+              {% with issuer.user as user %}
+
+              {% with asset_issuer|create_tuple:asset_code as tu %}
+              {% with model_assets|get_item:tu as model_asset %}
+              {% if model_asset %}
+              <img class="card-img-top rounded-circle mr-2" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% endif %} style="height: 25px; width: 25px;">
+              {% else %}
+              <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;">
+              {% endif %}
+              {% endwith %}
+              {% endwith %}
+
+              <span>{{ asset_code }} (Issuer: <a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }})</a></span>
+
+              {% endwith %}
+              {% endwith %}
+
+              {% else %}
+              <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;">
+              <span>{{ asset_code }} (Issuer: {{ asset_issuer|truncatechars:8 }}{{ asset_issuer|slice:"-5:" }})</a></span>
+              {% endif %}
+              {% endwith %}
+              {% endwith %}
+
+              {% endif %}
+              {% endwith %}
+            </div>
+            {% with asset|get_item:'balance' as asset_balance %}
+            <strong>{{ asset_balance|intcomma }}</strong>
+            {% endwith %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endwith %}
+
+        <ul id="operations-{{ forloop.counter0 }}" class="list-group mt-4" data-parent="#collapse-{{ forloop.counter0 }}">
+          <strong class="py-1">Recent Activity</strong>
+          <div id="more-container-{{ forloop.counter0 }}">
+            <button id="more-{{ forloop.counter0 }}" type="button" class="btn btn-sm btn-link account more" data-parent="#more-container-{{ forloop.counter0 }}" data-url="{% url 'nc:account-operation-list' account.public_key %}" data-cursor="" data-has_more="true">More</button>
+          </div>
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if object.id == request.user.id %}
+<div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
+  <button type="button" class="btn btn-lg btn-secondary m-2" data-toggle="modal" data-target="#addStellarModal">Add Stellar Account</button>
+  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create Stellar Account</button>
+</div>
+
+<!-- Add Stellar Account Modal -->
+<div class="modal fade" id="addStellarModal" tabindex="-1" role="dialog" aria-labelledby="addStellarModalTitle" aria-hidden="true">
+  <form method="POST" id="addStellarModalForm">
+    {% csrf_token %}
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addStellarModalTitle">Add Stellar Account</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 id="addStellarModalHeader" class="mb-3">Please enter your secret key to verify account ownership</h5>
+          <input type="hidden" name="signed_user" value="{{ signed_user }}">
+          <input type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" required>
+          <div class="text-danger mt-4">
+            <strong>Security Notes</strong>
+            <ul>
+              <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+              <li>Nucleo verifies Stellar account ownership by adding a Data Entry to your Stellar account from the browser. Your secret key is used to sign off on this modification to the Stellar ledger.</li>
+              <li>This added Data Entry contains a cryptographically signed version of your Nucleo user ID (signed with our server keys).</li>
+              <li>Once verified, we associate your Stellar account with your Nucleo profile by storing your Stellar public key.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Add Account</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Create Stellar Account Modal -->
+<div class="modal fade" id="createStellarModal" tabindex="-1" role="dialog" aria-labelledby="createStellarModalTitle" aria-hidden="true">
+  <form method="POST" id="createStellarModalForm">
+    {% csrf_token %}
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createStellarModalTitle">Create Stellar Account</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 id="createStellarModalHeader" class="mb-3">
+            Account details
+          </h5>
+
+          <ul class="list-group">
+            <strong class="pb-1 text-secondary">Public Key:</strong>
+            <li class="list-group-item">
+              <h6 class="text-secondary w-100 my-0 py-0">
+                <abbr id="createStellarModalPublicKey" title="Stellar Account Public Key"></abbr>
+              </h6>
+            </li>
+            <strong class="pb-1 pt-3 text-info">Secret Key:</strong>
+            <li class="list-group-item">
+              <h6 class="text-info w-100 my-0 py-0">
+                <abbr id="createStellarModalSecretKey" title="Stellar Account Secret Key"></abbr>
+              </h6>
+            </li>
+          </ul>
+
+          <h6 class="mt-3">
+            Please store your <span class="text-info">secret key</span> securely. It will only be shown to you once. Your <span class="text-secondary">public key</span> is safe to share.
+          </h6>
+
+          <div class="text-danger mt-4">
+            <strong>Security Notes</strong>
+            <ul>
+              <li><strong>Public Key</strong>:
+                The public key identifies your account. It is completely safe to share with others.
+              </li>
+              <li><strong>Secret Key</strong>:
+                The secret key allows you to access/modify your account and make transactions. DO NOT SHARE IT. Anyone with your secret key will have full access to your account and its funds.
+              </li>
+              <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+              <li>If you lose your secret key, you will no longer be able to access your funds. There is no recovery mechanism.</li>
+              <li>Nucleo will not be able to help you recover your secret key if it is lost.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Create Account</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Add Stellar Account Public Key Form -->
+<form method="POST" id="addStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-create' %}" data-success="{% url 'nc:user-redirect' %}">
+  {% csrf_token %}
+  {{ account_form }}
+</form>
+{% endif %}
+{% endblock %}
+
+
+{% block script %}
+<script>
+  const IS_CURRENT_USER = {% if object.id == request.user.id %}true{% else %}false{% endif %};
+  const STELLAR_DATA_VERIFICATION_KEY = "{{ verification_key }}";
+</script>
+<script src="{% static 'nc/scripts/ticker.js' %}"></script>
+<script src="{% static 'nc/scripts/profile.js' %}"></script>
+{% endblock %}

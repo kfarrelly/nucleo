@@ -1,0 +1,12 @@
+@body-bg:    #222222;
+@text-color: white;
+
+html,
+body {
+  height: 100%;
+  font-family: @font-family-sans-serif;
+}
+
+.img-object-fit-cover {
+  object-fit: cover;
+}

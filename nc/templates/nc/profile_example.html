@@ -1,0 +1,204 @@
+{% extends "nc/base.html" %}
+{% load static %}
+
+{% block head %}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Profile{% endblock %}
+
+{% block main %}
+<div class="card mb-4 box-shadow">
+  <img class="card-img-top img-object-fit-cover" style="height: 300px; width: 100%; display: block;" src="{% static 'nc/images/me/cover.jpg' %}" alt="">
+  <img class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;" src="{% static 'nc/images/me/profile.jpg' %}" alt="">
+    <div class="card-body">
+      <h2>Michael Feldman</h2>
+      <h5 class="text-secondary">@mikey.rf</h5>
+      <p class="card-text">Physicist, developer, and founder of Nucleo.fi</p>
+      <!--<div class="d-flex justify-content-between align-items-center">
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+        </div>
+      </div>-->
+    </div>
+</div>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Assets</h1>
+</div>
+
+<div class="album py-3">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card mb-4 pt-3 box-shadow justify-content-between align-items-center text-center">
+          <img class="card-img-top rounded-circle" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-info">
+              <strong>XLM</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">1,040.05</h4>
+              <div class="text-muted">$379.41</div>
+            </div>
+            <div class="btn-group mt-2" role="group" aria-label="Trustline">
+              <button type="button" class="btn text-secondary" disabled>Trusted</button>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            <div style="font-weight: 500;">Stellar Network</div>
+            <div><small>Native Lumens</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card mb-4 pt-3 box-shadow justify-content-between align-items-center text-center">
+          <img class="card-img-top rounded-circle" src="{% static 'nc/images/dollar.png' %}" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-success">
+              <strong>USD</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">2,000.00</h4>
+              <div class="text-muted">$2,000.00</div>
+            </div>
+            <div class="btn-group mt-2" role="group" aria-label="Trustline">
+              <button type="button" class="btn btn-secondary">Untrust</button>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            <div style="font-weight: 500;">Nucleo.fi</div>
+            <div><small>GDOJNX...1230L1 (<a href="{% url 'nc:user-detail' 'nucleo' %}">@nucleo</a>)</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card mb-4 pt-3 box-shadow justify-content-between align-items-center text-center">
+          <img class="card-img-top rounded-circle" src="{% static 'nc/images/logo_short.png' %}" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-black">
+              <strong>NUCL</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">32,590.3234</h4>
+              <div class="text-muted">$45,870.00</div>
+            </div>
+            <div class="btn-group mt-2" role="group" aria-label="Trustline">
+              <button type="button" class="btn btn-secondary">Distrust</button>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            <div style="font-weight: 500;">Nucleo.fi</div>
+            <div><small>GDOJNX...1230L1 (<a href="{% url 'nc:user-detail' 'nucleo' %}">@nucleo</a>)</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card mb-4 pt-3 box-shadow justify-content-between align-items-center text-center">
+          <img class="card-img-top rounded-circle" src="{% static 'nc/images/mobius.png' %}" style="height: 75px; width: 75px; display: block;">
+          <div class="card-body">
+            <div class="d-inline-block mb-2 text-black">
+              <strong>MOBI</strong>
+            </div>
+            <div class="mb-2">
+              <h4 class="mb-0">32,590.3234</h4>
+              <div class="text-muted">$45,870.00</div>
+            </div>
+            <div class="btn-group mt-2" role="group" aria-label="Trustline">
+              <button type="button" class="btn btn-secondary">Distrust</button>
+            </div>
+          </div>
+          <div class="card-footer text-muted w-100">
+            <div style="font-weight: 500;">mobius.network</div>
+            <div><small>GDAB6E...920M13 (<a href="{% url 'nc:user-detail' 'mobius' %}">@mobius</a>)</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--<div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-0 pb-0 mb-3">
+  <a href="#" class="btn btn-lg btn-primary m-2">Deposit Funds</a>
+  <a href="#" class="btn btn-lg btn-secondary m-2">Withdraw Funds</a>
+</div>-->
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Accounts</h1>
+</div>
+
+<div id="accordion" class="p-3">
+  <div class="card mb-2">
+    <div class="card-header bg-white" id="headingOne">
+      <div class="d-flex mb-0 h5">
+        <img class="img-object-fit-cover img-thumbnail flex-auto d-block"  style="height: 65px; width: 65px;" src="{% static 'nc/images/personal.jpg' %}" alt="">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+          <div class="d-flex flex-column align-items-start justify-content-center">
+            <h3 class="mb-0">Personal</h3>
+            <small class="mb-1 text-muted">GDOJNX3TF09AUAOF909AIFAUPUUOPIAF12OJOFJAOFJOOJOMOM1230L1</small>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+      <div class="card-body">
+        Account 1 assets & transactions go here in a list/table! Retrieve using Stellar js
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-2">
+    <div class="card-header bg-white" id="headingTwo">
+      <div class="d-flex mb-0 h5">
+        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" src="{% static 'nc/images/business.png' %}" alt="">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+          <div class="d-flex flex-column align-items-start justify-content-center">
+            <h3 class="mb-0">Business</h3>
+            <small class="mb-1 text-muted">GOFJAOFJX3TF09AUAOF909AIFAUPUUOPIAF12OJOFAJFOJAFMMAOFJO2</small>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+      <div class="card-body">
+        Account 2 assets & transactions go here in a list/table! Retrieve using Stellar js
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-2">
+    <div class="card-header bg-white" id="headingThree">
+      <div class="d-flex mb-0 h5">
+        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" src="{% static 'nc/images/logo_short.png' %}" alt="">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+          <div class="d-flex flex-column align-items-start justify-content-center">
+            <h3 class="mb-0">Nucleo</h3>
+            <small class="mb-1 text-muted">michael*nucleo.fi</small>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+      <div class="card-body">
+        Account 3 assets & transactions go here in a list/table! Retrieve using Stellar js
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-0 pb-0 mb-3">
+  <a href="#" class="btn btn-lg btn-primary m-2">Create Account</a>
+  <a href="#" class="btn btn-lg btn-secondary m-2">Add Account</a>
+</div>
+{% endblock %}
+
+
+{% block script %}
+{% endblock %}

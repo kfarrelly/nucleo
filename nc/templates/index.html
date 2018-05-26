@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href='{% static 'index.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Generate Lumens{% endblock %}
+
+
+{% block content %}
+<header>
+  <div class="navbar navbar-dark">
+    <div class="container d-flex justify-content-between">
+      <span class="navbar-brand d-flex align-items-center">
+        <img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="50">
+      </span>
+    </div>
+  </div>
+</header>
+
+<main role="main">
+
+  <section class="jumbotron text-center">
+    <div class="container">
+      <h1 class="jumbotron-heading font-weight-bold">Generate Lumens</h1>
+      <p class="lead pt-1" style="color: #ccc;">
+        Social banking on the Stellar network.
+      </p>
+      <p>
+        <a href="{% url 'account_signup' %}" class="btn btn-lg btn-primary my-3">Get started</a>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="text-muted">
+  <div class="container"></div>
+</footer>
+{% endblock %}
+
+
+{% block script %}{% endblock %}

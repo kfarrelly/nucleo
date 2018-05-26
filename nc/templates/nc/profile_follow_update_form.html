@@ -1,0 +1,59 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_update.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Follow User{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only"></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:user-detail' request.user.username %}">
+        <span data-feather="user"></span>
+        Profile <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Are you sure you want to {% if is_following %}unfollow{% else %}follow{% endif %} @{{ object.username }}?</h1>
+</div>
+<form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:user-follow' object.username %}">
+  {% csrf_token %}
+  <div class="my-4">
+    <button class="btn btn-lg btn-primary m-2" type="submit">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
+    <a href="{% url 'nc:user-detail' object.username %}" class="btn btn-lg btn-secondary m-2">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block script %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap %}
+{% load account %}
+
+{% block head %}{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href='{% static 'account/base.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Email Verification{% endblock %}
+
+
+{% block content %}
+<div class="text-center">
+  <img class="mb-4" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  <h1 class="h3 mb-3 font-weight-normal">Email Verification</h1>
+  <p>We have sent an e-mail to you for verification. Follow the link provided to finalize the signup process.</p>
+  <p>Please contact <a href="mailto:help@nucleo.fi">us</a> if you do not receive it within a few minutes.</p>
+</div>
+{% endblock %}
+
+
+{% block script %}{% endblock %}

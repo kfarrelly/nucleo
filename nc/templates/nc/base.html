@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/base.css' %}' />
+{% block extra_styles %}
+{% endblock %}
+{% endblock %}
+
+{% block content %}
+<body class="bg-light text-dark">
+  <nav class="navbar navbar-dark fixed-top flex-nowrap p-0">
+    <div class="d-inline-flex flex-auto">
+      <a href="" class="navbar-brand col-sm-3 col-md-2 mr-0">
+        <img src="{% static 'nc/images/logo_transparent_text-align-left.png' %}" alt="" width="auto" height="25">
+      </a>
+    </div>
+    <div class="input-group input-group-sm" style="width: 50%">
+      <input type="text" class="form-control form-control-dark" placeholder="Search" aria-label="Search" aria-describedby="btnSearchAddon">
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" type="button">
+          <span data-feather="search"></span>
+        </button>
+      </div>
+    </div>
+    <div class="btn-group pr-2">
+      <a href="{% url 'nc:user-redirect' %}" class="btn btn-dark navbar-btn">
+        {% with request.user.profile as profile %}
+        <img class="rounded-circle img-object-fit-cover" style="height: 30px; width: 30px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
+        {% endwith %}
+      </a>
+      <button type="button" class="btn btn-dark navbar-btn dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
+        <h6 class="dropdown-header">{{ request.user.username }}</h6>
+        <a class="dropdown-item" href="#">
+          <span data-feather="activity"></span>
+          Feed
+        </a>
+        <a class="dropdown-item" href="{% url 'nc:user-redirect' %}">
+          <span data-feather="user"></span>
+          Profile
+        </a>
+        <a class="dropdown-item" href="#">
+          <span data-feather="trending-up"></span>
+          Trade
+        </a>
+        <a class="dropdown-item" href="#">
+          <span data-feather="send"></span>
+          Send
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="{% url 'account_logout' %}">Sign out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <nav class="col-md-2 d-none d-md-block sidebar">
+        {% block nav %}
+        {% endblock %}
+      </nav>
+
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 pb-4">
+      {% block main %}
+      {% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+  <script>
+    feather.replace()
+  </script>
+
+  <!-- Graphs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+</body>
+{% endblock %}
+
+
+{% block script %}{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_follow_list.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | {{ object.username }}: {% if in_followers %}Followers{% else %}Following{% endif %}{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only"></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:user-detail' request.user.username %}">
+        <span data-feather="user"></span>
+        Profile <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">{% if in_followers %}Followers{% else %}Following{% endif %}</h1>
+</div>
+
+<div class="my-2">
+  <a href="{% url 'nc:user-detail' object.username %}">Back</a>
+</div>
+
+<ul class="list-group">
+  {% for u in page_obj %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item-action d-inline-flex justify-content-start align-items-center">
+      <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if u.profile and u.profile.pic %} src="{{ u.profile.pic.url }}"{% endif %} alt="">
+      <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+        <strong>{{ u.get_full_name }}</strong>
+        <small class="text-muted">@{{ u.username }}</small>
+      </div>
+    </a>
+    {% if u != request.user %}
+    <form method="POST" action="{% url 'nc:user-follow' u.username %}">
+    {% csrf_token %}
+    <input name="success_url" type="hidden" {% if in_followers %}value="{% url 'nc:user-follower-list' object.username %}?page={{ page_obj.number }}"{% else %}value="{% url 'nc:user-following-list' object.username %}?page={{ page_obj.number }}"{% endif %}>
+    {% if not u.is_following %}
+    <button type="submit" class="btn btn-sm btn-outline-primary">
+      <span data-feather="activity"></span>
+      Follow
+    </button>
+    {% else %}
+    <button type="submit" class="btn btn-sm btn-outline-primary active">
+      <span data-feather="activity"></span>
+      Following
+    </button>
+    {% endif %}
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</ul>
+
+<div class="pagination mt-2">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
+
+
+{% block script %}
+{% endblock %}
