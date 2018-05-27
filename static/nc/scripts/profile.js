@@ -1,17 +1,62 @@
 (function() {
   /* Initialization of Stellar server */
   var server = new StellarSdk.Server(STELLAR_SERVER_URL);
-  var tickerData = null;
 
   $(document).ready(function() {
     // Fetch compiled asset prices, vol, etc. from StellarTerm
-    // when ready
-    $.when(fetchTickerData())
-    .done(function(data) {
-      // TODO: FUNCTION TO POPULATE ASSET PRICES
-      tickerData = data;
+    // when ready.
+    $.when(getTickerAssets())
+    .done(function(assets) {
+      populateAssetValues(assets);
     });
   });
+
+  function populateAssetValues(data) {
+    /*
+    Use ticker data = { asset.id: asset } to populate asset values
+    in USD and 24h percent change for all assets in user's portfolio.
+    */
+    // Get all the asset price containers
+    $('.asset-ticker').each(function(i, assetTickerDiv) {
+      // For each check for an asset in the fetched data
+      let asset = data[assetTickerDiv.dataset.asset_id];
+      if (asset) {
+        // If fetched asset exists, set USD val and % change
+        // data as container text.
+        let value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance),
+            percentChange = asset.change24h_USD/100,
+            valueChange = value * percentChange;
+
+        // Create the asset value div and append to ticker div
+        assetValueDiv = document.createElement('div');
+        assetValueDiv.classList.add('text-muted');
+        assetValueDiv.textContent = numeral(value).format('$0,0.00');
+        assetTickerDiv.appendChild(assetValueDiv);
+
+        // Create the 24H change div
+        assetChangeDiv = document.createElement('small');
+        assetChangeDiv.setAttribute('title', 'Change 24h');
+        assetChangeDiv.classList.add('font-weight-bold');
+        changeText = numeral(valueChange).format('$0,0.00') + ' (' + numeral(percentChange).format('0.00%') + ')';
+        assetChangeText = document.createTextNode(changeText);
+        assetChangeDiv.appendChild(assetChangeText);
+
+        // Change asset value color depending
+        // on % change (if exactly zero, don't add color).
+        if (percentChange > 0) {
+          assetChangeDiv.classList.add('text-success');
+        } else if (percentChange < 0) {
+          assetChangeDiv.classList.add('text-danger');
+        }
+
+        // Append change div to asset ticker
+        assetTickerDiv.appendChild(assetChangeDiv);
+
+        // Make the full ticker div visible
+        $(assetTickerDiv).fadeIn();
+      }
+    });
+  }
 
   if (IS_CURRENT_USER) {
     /* Adding/Creating Stellar Account Functions */

@@ -111,7 +111,7 @@
             </div>
             <div class="mb-2">
               <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-              <div data-id='balance-XLM-native' class="text-muted invisible"></div> <!-- TODO: BALANCE XLM v DOLLAR -->
+              <div data-asset_id='XLM-native' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
             </div>
           </div>
           <div class="card-footer text-muted w-100">
@@ -130,14 +130,14 @@
             </div>
             <div class="mb-2">
               <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-              <div class="text-muted">{# TODO: XLM price comes from orderbook. do this in js? #}</div>
+              <div data-asset_id='{{ asset.asset_code }}-{{ asset.asset_issuer }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
             </div>
           </div>
           <div class="card-footer text-muted w-100">
             {% if asset.asset_issuer in issuers %}
             {% with issuers|get_item:asset.asset_issuer as issuer %}
             {% with issuer.user as user %}
-            <div style="font-weight: 500;">{{ model_asset.domain }}</div>
+            <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% endif %}</div>
             <div><small>{{ asset.asset_issuer }}
                (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
             </small></div>
@@ -156,7 +156,7 @@
             </div>
             <div class="mb-2">
               <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-              <div class="text-muted">{# TODO: XLM price comes from orderbook. do this in js? #}</div>
+              <div data-asset_id='{{ asset.asset_code }}-{{ asset.asset_issuer }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
             </div>
           </div>
           <div class="card-footer text-muted w-100">
@@ -204,7 +204,7 @@
       </a>
       {% endif %}
 
-      {# TODO: PUT THE MINIMUM BALANCE WITH TRUSTLINES, DATA ENTRIES, ETC. SOMEWHERE HERE! ALSO DO WE WANT MIRROR FOR INSTITUTIONS LIKE NUCLEO?? LIKELY NO #}
+      {# TODO: PUT THE MINIMUM BALANCE SOMEWHERE HERE! #}
 
       <div class="d-flex justify-content-start flex-wrap align-items-center mb-0 h5">
         <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% endif %} alt="">

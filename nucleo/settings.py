@@ -200,6 +200,7 @@ BOWER_INSTALLED_APPS = (
     'stellar-sdk',
     'js-cookie',
     'moment',
+    'numeral',
     'ladda-bootstrap',
 )
 

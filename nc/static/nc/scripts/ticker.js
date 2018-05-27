@@ -28,3 +28,19 @@ function fetchTickerData(attempt) {
     setTimeout(function() { this.fetchTickerData(attempt + 1); }, 1000);
   });
 }
+
+function getTickerAssets() {
+  /* Returns fetched assets reformatted in dict form (for easier lookup) */
+  return fetchTickerData()
+  .then(function(data) {
+    var assetData = {};
+    data.assets.forEach(function(asset) {
+      if (asset.id == 'XLM-native') {
+        // Add the 24h USD change from data._meta since it's not included
+        asset.change24h_USD = data._meta.externalPrices.USD_XLM_change;
+      }
+      assetData[asset.id] = asset;
+    });
+    return assetData;
+  });
+}
