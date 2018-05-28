@@ -1,3 +1,6 @@
+import algoliasearch_django
+
+from django.conf import settings
 from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
 from django.views.generic.detail import SingleObjectMixin
@@ -68,3 +71,20 @@ class JSONResponseMixin:
         # NOTE: This will work for our simple implementation when reporting
         # GET results from the Stellar network using python client
         return context
+
+
+class IndexContextMixin(object):
+    """
+    A mixin that adds index search constants to the context data.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(IndexContextMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'index_app_id': settings.ALGOLIA.get('APPLICATION_ID'),
+            'index_search_api_key': settings.ALGOLIA.get('SEARCH_API_KEY'),
+            'index_names': {
+                model.__name__: algoliasearch_django.get_adapter(model).index_name
+                for model in algoliasearch_django.get_registered_model()
+            },
+        })
+        return kwargs

@@ -25,6 +25,7 @@ def profile_file_directory_path(instance, filename, field):
     return 'profile/{0}/{1}/{2}'.format(instance.user_id, field, new_filename)
 
 
+# TODO: need management command to create Profile for admininstrator account
 @python_2_unicode_compatible
 class Profile(models.Model):
     """
@@ -51,6 +52,18 @@ class Profile(models.Model):
     )
     accounts_created = models.PositiveSmallIntegerField(default=0)
 
+    # NOTE: user.get_full_name(), followers.count() are duplicated here
+    # so Algolia search index updates work when user, follower updates occur (kept in sync through signals.py)
+    full_name = models.CharField(max_length=200, null=True, blank=True, default=None)
+    followers_count = models.IntegerField(default=0)
+
+    def username(self):
+        """
+        Have as proxy for search index since never changes in db so update
+        issues won't exist
+        """
+        return self.user.username
+
     def __str__(self):
         bio =  ': ' + self.bio if self.bio else ''
         return self.user.username + bio
@@ -72,6 +85,13 @@ class Account(models.Model):
         upload_to=partial(profile_file_directory_path, field='pic'),
         null=True, blank=True, default=None
     )
+
+    def username(self):
+        """
+        Have as proxy for search index since never changes in db so update
+        issues won't exist
+        """
+        return self.user.username
 
     def __str__(self):
         name = self.name + ': ' if self.name else ''

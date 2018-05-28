@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'betterforms',
+    'algoliasearch_django',
 ]
 
 MIDDLEWARE = [
@@ -204,6 +205,13 @@ BOWER_INSTALLED_APPS = (
     'ladda-bootstrap',
 )
 
+# Algolia
+ALGOLIA = {
+    'APPLICATION_ID': os.environ.get('ALGOLIA_APPLICATION_ID'),
+    'API_KEY': os.environ.get('ALGOLIA_API_KEY'),
+    'SEARCH_API_KEY': os.environ.get('ALGOLIA_SEARCH_API_KEY'),
+    'INDEX_SUFFIX': ENV_TYPE,
+}
 
 # AWS
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')

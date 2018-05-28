@@ -33,7 +33,8 @@ from .models import (
 
 # Web app views
 ## User
-class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin, generic.DetailView):
+class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
@@ -123,7 +124,7 @@ class UserDetailRedirectView(LoginRequiredMixin, generic.RedirectView):
         return super(UserDetailRedirectView, self).get_redirect_url(*args, **kwargs)
 
 
-class UserUpdateView(LoginRequiredMixin, generic.UpdateView):
+class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
     form_class = forms.UserProfileUpdateMultiForm
@@ -151,7 +152,8 @@ class UserUpdateView(LoginRequiredMixin, generic.UpdateView):
         return self.model.objects.filter(id=self.request.user.id)
 
 
-class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin, generic.UpdateView):
+class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
     form_class = forms.UserFollowUpdateForm
@@ -193,7 +195,7 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
         return HttpResponseRedirect(self.get_success_url())
 
 
-class UserFollowerListView(LoginRequiredMixin, generic.ListView):
+class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
     template_name = 'nc/profile_follow_list.html'
     paginate_by = 50
 
@@ -222,7 +224,7 @@ class UserFollowerListView(LoginRequiredMixin, generic.ListView):
             .order_by(Lower('first_name'))\
             .prefetch_related('profile')
 
-class UserFollowingListView(LoginRequiredMixin, generic.ListView):
+class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
     template_name = 'nc/profile_follow_list.html'
     paginate_by = 50
 
@@ -254,7 +256,8 @@ class UserFollowingListView(LoginRequiredMixin, generic.ListView):
 
 
 ## Account
-class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin, generic.CreateView):
+class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
+    mixins.IndexContextMixin, generic.CreateView):
     model = Account
     form_class = forms.AccountCreateForm
     success_url = reverse_lazy('nc:user-redirect')
@@ -279,7 +282,7 @@ class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin, generi
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
-class AccountUpdateView(LoginRequiredMixin, generic.UpdateView):
+class AccountUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.UpdateView):
     model = Account
     slug_field = 'public_key'
     form_class = forms.AccountUpdateForm
@@ -292,7 +295,7 @@ class AccountUpdateView(LoginRequiredMixin, generic.UpdateView):
         """
         return self.request.user.accounts.all()
 
-class AccountDeleteView(LoginRequiredMixin, generic.DeleteView):
+class AccountDeleteView(LoginRequiredMixin, mixins.IndexContextMixin, generic.DeleteView):
     model = Account
     slug_field = 'public_key'
     success_url = reverse_lazy('nc:user-redirect')

@@ -33,7 +33,7 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        exclude = ['user', 'followers', 'accounts_created']
+        fields = [ 'bio', 'pic', 'cover' ]
         widgets = {
             'bio': forms.TextInput(attrs={'placeholder': 'Bio'}),
         }
