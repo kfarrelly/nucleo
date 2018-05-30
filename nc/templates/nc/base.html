@@ -5,7 +5,7 @@
 
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href='{% static 'nc/base.css' %}' />
-{% block extra_styles %}
+{% block nc_style %}
 {% endblock %}
 {% endblock %}
 
@@ -17,14 +17,23 @@
         <img src="{% static 'nc/images/logo_transparent_text-align-left.png' %}" alt="" width="auto" height="25">
       </a>
     </div>
+
     <div class="input-group input-group-sm" style="width: 50%">
-      <input type="text" class="form-control form-control-dark" placeholder="Search" aria-label="Search" aria-describedby="btnSearchAddon">
-      <div class="input-group-append">
-        <button class="btn btn-outline-secondary" type="button">
-          <span data-feather="search"></span>
-        </button>
+      <input id="searchInput" type="text" class="form-control form-control-dark" placeholder="Search" aria-label="Search" aria-describedby="btnSearchAddon" autocomplete="off" autocorrect="false" spellcheck="false" type="search">
+      <button id="searchToggle" class="d-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="sr-only">Search Toggle Dropdown</span>
+      </button>
+      <div id="searchDropdown" class="dropdown-menu search-dropdown">
+        <small class="dropdown-item">Powered by <a class="text-muted" href="https://www.algolia.com/">Algolia</a></small>
+        <div class="dropdown-divider"></div>
+        <h6 class="dropdown-header">Profiles</h6>
+        <ul class="list-group" id="searchProfileHits"></ul>
+        <div class="dropdown-divider"></div>
+        <h6 class="dropdown-header">Accounts</h6>
+        <ul class="list-group" id="searchAccountHits"></ul>
       </div>
     </div>
+
     <div class="btn-group pr-2">
       <a href="{% url 'nc:user-redirect' %}" class="btn btn-dark navbar-btn">
         {% with request.user.profile as profile %}
@@ -71,17 +80,58 @@
       </main>
     </div>
   </div>
-
-  <!-- Icons -->
-  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
-  <script>
-    feather.replace()
-  </script>
-
-  <!-- Graphs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 </body>
 {% endblock %}
 
 
-{% block script %}{% endblock %}
+{% block script %}
+<!-- Icons -->
+<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+<script>
+  feather.replace()
+</script>
+
+<!-- Graphs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+
+<!-- Search -->
+<script>
+  const ALGOLIA_APPLICATION_ID = "{{ index_app_id }}",
+        ALGOLIA_SEARCH_API_KEY = "{{ index_search_api_key }}";
+        ALGOLIA_INDEX_NAMES = {
+          {% for k, v in index_names.items %}
+          "{{ k }}": "{{ v }}",
+          {% endfor %}
+        };
+</script>
+{% verbatim %}
+<script type="text/html" id="searchProfileHitTemplate">
+  <a href="{{ href }}" class="dropdown-item d-flex flex-wrap justify-content-start align-items-center border-0 py-2">
+    <img class="img-object-fit-cover img-thumbnail" style="height: 60px; width: 60px;" src="{{ pic_url }}" alt="">
+    <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+      <strong>{{{ _highlightResult.full_name.value }}}</strong>
+      <span class="text-secondary">@{{{ _highlightResult.username.value }}}</span>
+      <small>{{{ _highlightResult.bio.value }}}</small>
+    </div>
+  </a>
+</script>
+<script type="text/html" id="searchAccountHitTemplate">
+  <a href="{{ href }}" class="dropdown-item d-flex flex-wrap justify-content-start align-items-center border-0 py-3">
+    <img class="img-object-fit-cover img-thumbnail" style="height: 60px; width: 60px;" src="{{ pic_url }}" alt="">
+    <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+      <strong>{{{ _highlightResult.name.value }}}</strong>
+      <span class="text-secondary">@{{{ _highlightResult.username.value }}}</span>
+      <small class="text-muted" style="font-size: 0.6em">{{{ _highlightResult.public_key.value }}}</small>
+    </div>
+  </a>
+</script>
+<script type="text/html" id="searchEmptyTemplate">
+  <div class="list-group-item d-flex list-group-item-action justify-content-start align-items-center border-left-0 border-right-0 rounded-0">
+    No results
+  </div>
+</script>
+{% endverbatim %}
+<script src="{% static 'nc/scripts/search.js' %}"></script>
+{% block nc_script %}
+{% endblock %}
+{% endblock %}

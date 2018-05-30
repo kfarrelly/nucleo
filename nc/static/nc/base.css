@@ -121,6 +121,16 @@ body {
   margin-right: 4px;
 }
 
+mark {
+  background-color: rgba(0, 123, 255, .25);
+}
+
+.search-dropdown {
+  height: auto;
+  max-height: 600px;
+  overflow-x: hidden;
+}
+
 /*
  * Utilities
  */

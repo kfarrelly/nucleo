@@ -6,7 +6,7 @@
 
 {% block head %}{% endblock %}
 
-{% block extra_styles %}
+{% block nc_style %}
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
 {% endblock %}
 
@@ -94,7 +94,7 @@
 </div>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 class="h2">Assets</h1>
+  <h1 id="assets" class="h2">Assets</h1>
 </div>
 
 <div class="album py-3">
@@ -185,7 +185,7 @@
 </div>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 class="h2">Accounts</h1>
+  <h1 id="accounts" class="h2">Accounts</h1>
 </div>
 
 <div id="accordion" class="p-3">
@@ -397,7 +397,7 @@
 {% endblock %}
 
 
-{% block script %}
+{% block nc_script %}
 <script>
   const IS_CURRENT_USER = {% if object.id == request.user.id %}true{% else %}false{% endif %};
   const STELLAR_DATA_VERIFICATION_KEY = "{{ verification_key }}";

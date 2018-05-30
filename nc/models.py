@@ -59,10 +59,24 @@ class Profile(models.Model):
 
     def username(self):
         """
-        Have as proxy for search index since never changes in db so update
-        issues won't exist
+        Have this method as a proxy for the search index.
+
+        user.username will never change in the db so search index related
+        update issues with related fields don't exist here.
         """
         return self.user.username
+
+    def pic_url(self):
+        """
+        Have this method as a proxy for the search index.
+        """
+        return self.pic.url if self.pic else None
+
+    def href(self):
+        """
+        Have this method as a proxy for the search index.
+        """
+        return reverse('nc:user-detail', kwargs={'slug': self.user.username})
 
     def __str__(self):
         bio =  ': ' + self.bio if self.bio else ''
@@ -88,10 +102,24 @@ class Account(models.Model):
 
     def username(self):
         """
-        Have as proxy for search index since never changes in db so update
-        issues won't exist
+        Have this method as a proxy for the search index.
+
+        user.username will never change in the db so search index related
+        update issues with related fields don't exist here.
         """
         return self.user.username
+
+    def pic_url(self):
+        """
+        Have this method as a proxy for the search index.
+        """
+        return self.pic.url if self.pic else None
+
+    def href(self):
+        """
+        Have this method as a proxy for the search index.
+        """
+        return '{}#accounts'.format(reverse('nc:user-detail', kwargs={'slug': self.user.username}))
 
     def __str__(self):
         name = self.name + ': ' if self.name else ''

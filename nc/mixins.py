@@ -80,8 +80,8 @@ class IndexContextMixin(object):
     def get_context_data(self, **kwargs):
         kwargs = super(IndexContextMixin, self).get_context_data(**kwargs)
         kwargs.update({
-            'index_app_id': settings.ALGOLIA.get('APPLICATION_ID'),
-            'index_search_api_key': settings.ALGOLIA.get('SEARCH_API_KEY'),
+            'index_app_id': settings.ALGOLIA.get('APPLICATION_ID', ''),
+            'index_search_api_key': settings.ALGOLIA.get('SEARCH_API_KEY', ''),
             'index_names': {
                 model.__name__: algoliasearch_django.get_adapter(model).index_name
                 for model in algoliasearch_django.get_registered_model()
