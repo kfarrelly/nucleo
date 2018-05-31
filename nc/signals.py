@@ -1,12 +1,13 @@
 from django.conf import settings
 from django.db.models.signals import (
-    post_save, m2m_changed
+    m2m_changed, pre_save, post_save,
 )
 from django.dispatch import receiver
 
-from .models import Profile
+from .models import Asset, Profile
 
 
+# Profile
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def update_profile_full_name(sender, instance, **kwargs):
     """
@@ -31,3 +32,13 @@ def update_profile_followers_count(sender, instance, **kwargs):
     """
     instance.followers_count = instance.followers.count()
     instance.save()
+
+
+# Asset
+@receiver(pre_save, sender=Asset)
+def update_asset_id(sender, instance, **kwargs):
+    """
+    Keep asset.asset_id in sync with asset.code-asset.issuer.public_key.
+    """
+    issuer = instance.issuer.public_key if instance.issuer else 'native'
+    instance.asset_id = instance.code + '-' + issuer

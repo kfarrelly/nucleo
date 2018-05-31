@@ -31,6 +31,8 @@
         <div class="dropdown-divider"></div>
         <h6 class="dropdown-header">Accounts</h6>
         <ul class="list-group" id="searchAccountHits"></ul>
+        <h6 class="dropdown-header">Assets</h6>
+        <ul class="list-group" id="searchAssetHits"></ul>
       </div>
     </div>
 
@@ -122,6 +124,16 @@
       <strong>{{{ _highlightResult.name.value }}}</strong>
       <span class="text-secondary">@{{{ _highlightResult.username.value }}}</span>
       <small class="text-muted" style="font-size: 0.6em">{{{ _highlightResult.public_key.value }}}</small>
+    </div>
+  </a>
+</script>
+<script type="text/html" id="searchAssetHitTemplate">
+  <a href="{{ href }}" class="dropdown-item d-flex flex-wrap justify-content-start align-items-center border-0 py-3">
+    <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" src="{{ pic_url }}" alt="">
+    <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+      <strong>{{{ _highlightResult.code.value }}}</strong>
+      <span class="text-secondary">Issued by {{{ _highlightResult.issuer_handle.value }}}</span>
+      <small class="text-muted" style="font-size: 0.6em">{{{ _highlightResult.issuer_public_key.value }}}</small>
     </div>
   </a>
 </script>

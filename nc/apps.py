@@ -18,3 +18,4 @@ class NcConfig(AppConfig):
         # Register the search indexes
         algoliasearch.register(self.get_model('Profile'), index.ProfileIndex)
         algoliasearch.register(self.get_model('Account'), index.AccountIndex)
+        algoliasearch.register(self.get_model('Asset'), index.AssetIndex)

@@ -63,11 +63,12 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 
             # Build the total assets list for this user. Keep track of
             # all the issuers to query if they have User instances with us
+            # TODO: account for case of trustline as issuer
             assets = {}
             for public_key, address in addresses.iteritems():
                 for b in address.balances:
                     # NOTE: 'asset_issuer', 'asset_code' are only None for native type
-                    tup = (b.get('asset_issuer', None), b.get('assset_code', None))
+                    tup = (b.get('asset_issuer', None), b.get('asset_code', None))
                     asset = assets.get(tup, None)
                     if not asset:
                         # Copy the balance to the assets dict
@@ -418,6 +419,25 @@ class AccountOperationListView(LoginRequiredMixin, mixins.JSONResponseMixin, gen
                 .select_related('user')
         }
         return accounts
+
+
+class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, generic.DetailView):
+    model = Asset
+    slug_field = 'asset_id'
+    template_name = 'nc/asset.html'
+    prefetch_related_lookups = ['issuer__user']
+
+    def get_context_data(self, **kwargs):
+        """
+        Override to include whether asset is native.
+        """
+        # TODO: API call to Horizon to retrieve asset details
+        # Use horizon object.assets() with params:
+        # https://github.com/StellarCN/py-stellar-base/blob/v0.2/stellar_base/horizon.py
+        context = super(AssetDetailView, self).get_context_data(**kwargs)
+        context.update({'is_native': (self.object.issuer == None)})
+        return context
 
 
 # TODO: For way later down the line in the roadmap.

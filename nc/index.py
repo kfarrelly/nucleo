@@ -17,3 +17,11 @@ class AccountIndex(AlgoliaIndex):
         'highlightPreTag': '<mark>',
         'highlightPostTag': '</mark>',
     }
+
+class AssetIndex(AlgoliaIndex):
+    fields = ('code', 'issuer_public_key', 'issuer_handle', 'domain', 'pic_url', 'href')
+    settings = {
+        'searchableAttributes': ['code', 'issuer_public_key', 'issuer_handle'],
+        'highlightPreTag': '<mark>',
+        'highlightPostTag': '</mark>',
+    }

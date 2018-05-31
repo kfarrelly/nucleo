@@ -1,0 +1,115 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Asset{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only"></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:user-detail' request.user.username %}">
+        <span data-feather="user"></span>
+        Profile <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="card mb-4 box-shadow">
+  {% if is_native %}
+  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;" src="{% static 'nc/images/wireframe-dotted-world.svg' %}" alt="">
+  <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;" src="{% static 'nc/images/rocket.png' %}" alt="">
+    <div class="card-body">
+      <h2 class="text-info">XLM <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span></button></h2>
+      <h5 class="text-secondary">
+        Stellar Network
+      </h5>
+      <p class="card-text">Native Lumens</p>
+      <div class="d-flex flex-wrap">
+        <h4 class="asset-price-usd">$0.2787</h4>
+        <button type="button" class="btn btn-sm btn-outline-success btn-asset-change ml-3">
+          <span class="asset-change asset-change-price d-none">+ 0.0054</span>
+          <span class="asset-change asset-change-percent">+ 2.00%</span>
+        </button>
+      </div>
+    </div>
+  {% else %}
+  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.issuer and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
+  <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;" {% if obj.pic %}src="{{ obj.pic.url }}"{% endif %} alt="">
+    <div class="card-body">
+      <h2 {% if object.color %} style="color: #{{ object.color }}"{% endif %}>
+        {{ object.code }}
+        {% if object.verified %}
+         <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span></button>
+        {% elif object.issuer.user.id == request.user.id %}
+         <button id="assetVerified" type="button" class="btn btn-outline-danger" title="Unverified asset"><span data-feather="alert-octagon"></span></button>
+        {% else %}
+         <button id="assetVerified" type="button" class="btn bg-white p-1 text-danger" title="Unverified asset"><span data-feather="alert-octagon"></span></button>
+        {% endif %}
+      </h2>
+      <h5 class="text-secondary">
+        {% if object.domain %}{{ object.domain }}{% endif %}
+      </h5>
+      <p class="card-text">{{ object.issuer.public_key }} (<a href="{% url 'nc:user-detail' object.issuer.user.username %}">@{{ object.issuer.user.username }}</a>)</p>
+      <div class="d-flex flex-wrap mb-2">
+        <h4>$0.2787</h4>
+        <button type="button" class="btn btn-sm btn-outline-success ml-3">+2.81%</button>
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="btn-group">
+          <a href="#" class="btn btn-sm btn-outline-primary">
+            <span data-feather="trending-up"></span>
+            Trade
+          </a>
+          {% if object.issuer.user.id == request.user.id %}
+          <a href="{% url 'nc:user-update' user.username %}" class="btn btn-sm btn-outline-secondary">
+            <span data-feather="edit"></span>
+            Edit Asset
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 id="assets" class="h2">Asset Details</h1>
+</div>
+{{ object }}
+{% endblock %}
+
+
+{% block nc_script %}
+<script src="{% static 'nc/scripts/ticker.js' %}"></script>
+<script src="{% static 'nc/scripts/asset.js' %}"></script>
+{% endblock %}

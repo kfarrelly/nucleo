@@ -127,7 +127,7 @@
       // Assign the signed user value to a variable to transmit later
       // Obtain the modal header to display errors under if POSTings fail
       let signedUser = this.elements["signed_user"].value,
-          modalHeader = $("#addStellarModalHeader")[0];
+          modalHeader = $(this).find('.tab-pane.show').find('.modal-body-header')[0];
 
       // Attempt to generate Keypair
       var sourceKeys;
@@ -200,7 +200,8 @@
       })
       .catch(function(error) {
         // Fail response gives form.errors. Make sure to show in error form
-        let modalHeader = (adding ? $("#addStellarModalHeader")[0] : $("#createStellarModalHeader")[0]);
+        console.log($("#addStellarModalForm").find('.tab-pane.show').find('.modal-body-header')[0]);
+        let modalHeader = (adding ? $("#addStellarModalForm").find('.tab-pane.show').find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]);
 
         // Stop the button loading animation then display the error
         Ladda.stopAll();
