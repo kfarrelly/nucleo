@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy
+import copy, sys
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -89,11 +89,22 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
             # NOTE: Getting all of the assets each issuer offers here versus just those
             # the current user owns to make the Asset query easier
             model_assets = {
-                (a.issuer.public_key, a.code): a
+                (a.issuer_address, a.code): a
                 for a in Asset.objects\
-                    .filter(issuer__public_key__in=issuer_public_keys)\
+                    .filter(issuer_address__in=issuer_public_keys)\
                     .select_related('issuer')
             }
+
+            # Build any model assets that aren't in our db
+            # General try, except here because always want to return user obj no matter what
+            try:
+                new_model_assets = self._build_assets(
+                    asset_pairs=set(assets.keys()).difference(set(model_assets.keys())),
+                    issuers=issuers,
+                )
+                model_assets.update(new_model_assets)
+            except:
+                pass
 
             # Update the context
             context['addresses'] = addresses
@@ -115,6 +126,42 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
                 context['signed_user'] = signing.dumps(self.request.user.id)
                 context['account_form'] = forms.AccountCreateForm()
         return context
+
+    def _build_assets(self, asset_pairs, issuers):
+        """
+        Create model instances for any assets we don't have in Nucleo db
+        after retrieve user account balances from Horizon.
+
+        asset_pairs is an iterable of tuples of form [(code, issuer)] needed
+        to build new instances.
+
+        issuers is a dict { public_key: Account } of existing addresses in our
+        db as Account instances.
+
+        Returns {(code, issuer): Asset} dict to use in update of context model_assets
+
+        NOTE: Technically shouldn't be creating on a GET, but ignore this
+        as it might be a good way to incrementally accumulate model assets
+        in the beginning.
+        """
+        # Clean given asset_pairs so only include tuples with code, issuer (no None vals)
+        cleaned_asset_pairs = [ tup for tup in asset_pairs if tup[1] != None ]
+
+        # Create new model assets.
+        # NOTE: Include asset_id since pre_save signal won't fire on bulk_create (TODO: make a custom Asset manager)
+        new_assets = [
+            Asset(code=asset_code, issuer=account, issuer_address=asset_issuer)
+            if issuers.get(asset_issuer, None) != None
+            else Asset(code=asset_code, issuer_address=asset_issuer)
+            for asset_issuer, asset_code in cleaned_asset_pairs
+        ]
+        created = Asset.objects.bulk_create(new_assets)
+
+        return {
+            (asset.issuer_address, asset.code): asset
+            for asset in created
+        }
+
 
 class UserDetailRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
@@ -430,14 +477,82 @@ class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 
     def get_context_data(self, **kwargs):
         """
-        Override to include whether asset is native.
+        Override to include asset from Horizon API GET.
         """
-        # TODO: API call to Horizon to retrieve asset details
         # Use horizon object.assets() with params:
         # https://github.com/StellarCN/py-stellar-base/blob/v0.2/stellar_base/horizon.py
         context = super(AssetDetailView, self).get_context_data(**kwargs)
-        context.update({'is_native': (self.object.issuer == None)})
+
+        is_native = (self.object.issuer_address == None)
+        context.update({'is_native': is_native})
+
+        record = None
+        if not is_native:
+            # Include the issuer URL on Horizon
+            context['asset_issuer_stellar_href'] = settings.STELLAR_HORIZON + '/accounts/' + self.object.issuer_address
+
+            # Retrieve asset record from Horizon
+            horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
+            params = {
+                'asset_issuer': self.object.issuer_address,
+                'asset_code': self.object.code,
+            }
+            json = horizon.assets(params=params)
+
+            # Store the asset record from Horizon in context
+            record = None
+            if '_embedded' in json and 'records' in json['_embedded'] and json['_embedded']['records']:
+                record = json['_embedded']['records'][0]
+                self._update_asset(record)
+
+
+            # Update existing model asset in our db
+            # General try, except here because always want to return asset
+            # obj no matter what
+            try:
+                self.object = self._update_asset(record)
+                context.update({'object': self.object})
+            except:
+                pass
+
+        context['asset'] = record
+
         return context
+
+    def _update_asset(self, record):
+        """
+        Update model asset instance given fetched asset record from Horizon call.
+
+        Returns updated model_asset.
+
+        NOTE: Technically shouldn't be creating on a GET, but ignore this
+        as it might be a good way to incrementally accumulate model assets
+        in the beginning.
+        """
+        model_asset = self.object
+
+        # Use toml attribute of record to update instance from toml file (to fetch)
+        if record and '_links' in record and 'toml' in record['_links'] and 'href' in record['_links']['toml']:
+            toml_url = record['_links']['toml']['href']
+            if toml_url:
+                model_asset.update_from_toml(toml_url)
+
+        return model_asset
+
+
+class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, generic.UpdateView):
+    model = Asset
+    slug_field = 'asset_id'
+    template_name = 'nc/asset_update_form.html'
+    prefetch_related_lookups = ['issuer__user']
+
+    def get_queryset(self):
+        """
+        Authenticated user can only update themselves.
+        """
+        return self.model.objects.filter(issuer__user=self.request.user)
+
 
 
 # TODO: For way later down the line in the roadmap.

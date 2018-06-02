@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | Profile{% endblock %}
+{% block title %}Nucleo | {{ object.get_full_name }} (@{{ object.username }}){% endblock %}
 
 {% block nav %}
 <div class="sidebar-sticky">
@@ -104,16 +104,17 @@
       <div class="col-md-4">
         <div class="card mb-4 box-shadow text-center">
           {% if asset.asset_type == 'native' %}
-          <div class="card-header d-flex justify-content-end align-items-center">
-            <a class="text-secondary" href="{% url 'nc:asset-detail' 'XLM-native' %}"><span data-feather="info"></span></a> {# TODO: in asset detail, check TOML file for verification #}
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="text-success" data-feather="check-circle"></span>
+            <a href="{% url 'nc:asset-detail' 'XLM-native' %}"><span data-feather="info"></span></a> {# TODO: in asset detail, check TOML file for verification #}
           </div>
           <div class="card-body">
             <div class="mb-2">
-              <img class="card-img-top img-thumbnail rounded-circle" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px;">
+              <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px;">
             </div>
-            <div class="d-inline-block mb-2 text-info">
+            <a href="{% url 'nc:asset-detail' 'XLM-native' %}" class="d-inline-block mb-2 text-info">
               <strong>XLM</strong>
-            </div>
+            </a>
             <div class="mb-2">
               <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
               <div data-asset_id='XLM-native' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
@@ -128,15 +129,16 @@
           {% else %}
           {% with model_assets|get_item:tup as model_asset %}
           {% with asset.asset_code|add:'-'|add:asset.asset_issuer as asset_id %}
-          <div class="card-header d-flex justify-content-end align-items-center">
-            <a class="text-secondary" href="{% url 'nc:asset-detail' asset_id %}"><span data-feather="info"></span></a> {# TODO: in asset detail, check TOML file for verification #}
-          </div>
           {% if model_asset %}
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span {% if model_asset.verified %}class="text-success" data-feather="check-circle"{% else %}class="text-danger" data-feather="alert-octagon"{% endif %}></span>
+            <a href="{% url 'nc:asset-detail' asset_id %}"><span data-feather="info"></span></a> {# TODO: in asset detail, check TOML file for verification #}
+          </div>
           <div class="card-body">
             <div class="mb-2">
-              <img class="card-img-top img-thumbnail rounded-circle" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% endif %} style="height: 75px; width: 75px; display: block;">
+              <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 75px; width: 75px;">
             </div>
-            <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2"{% if model_asset.color %} style="color: #{{ model_asset.color }}"{% endif %}>
+            <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style={% if model_asset.color %}"color: #{{ model_asset.color }};"{% else %}"color: black;"{% endif %}>
               <strong>{{ model_asset.code }}</strong>
             </a>
             <div class="mb-2">
@@ -149,24 +151,31 @@
             {% with issuers|get_item:asset.asset_issuer as issuer %}
             {% with issuer.user as user %}
             <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% endif %}</div>
-            <div><small>{{ asset.asset_issuer }}
+            <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}
                (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
             </small></div>
             {% endwith %}
             {% endwith %}
             {% else %}
             <div style="font-weight: 500;"></div>
-            <div><small>{{ asset.asset_issuer }}</small></div>
+            <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}</small></div>
             {% endif %}
           </div>
           {% else %}
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="text-danger" data-feather="alert-octagon"></span>
+            <span>&nbsp;</span>
+          </div>
           <div class="card-body">
-            <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2 text-success">
+            <div class="mb-2">
+              <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="" style="height: 75px; width: 75px;">
+            </div>
+            <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
               <strong>{{ asset.asset_code }}</strong>
             </a>
             <div class="mb-2">
               <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-              <div data-asset_id='{{ asset.asset_code }}-{{ asset.asset_issuer }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
+              <div data-asset_id='{{ asset_id }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
             </div>
           </div>
           <div class="card-footer text-muted w-100">
@@ -174,14 +183,14 @@
             {% with issuers|get_item:asset.asset_issuer as issuer %}
             {% with issuer.user as user %}
             <div style="font-weight: 500;">{{ user.get_full_name }}</div>
-            <div><small>{{ asset.asset_issuer }}
+            <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}
                (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
             </small></div>
             {% endwith %}
             {% endwith %}
             {% else %}
             <div style="font-weight: 500;"></div>
-            <div><small>{{ asset.asset_issuer }}</small></div>
+            <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}</small></div>
             {% endif %}
           </div>
           {% endif %}
@@ -215,7 +224,7 @@
       </a>
       {% endif %}
 
-      {# TODO: PUT THE MINIMUM BALANCE SOMEWHERE HERE! #}
+      {# TODO: PUT THE MINIMUM BALANCE SOMEWHERE HERE PLUS ASSET LIMITS! #}
 
       <div class="d-flex justify-content-start flex-wrap align-items-center mb-0 h5">
         <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% endif %} alt="">
@@ -245,36 +254,34 @@
               <img class="card-img-top rounded-circle mr-2" src="{% static 'nc/images/rocket.png' %}" style="height: 25px; width: 25px;">
               <span>XLM</span>
               {% else %}
-
               {% with asset|get_item:'asset_code' as asset_code %}
               {% with asset|get_item:'asset_issuer' as asset_issuer %}
-              {% if asset_issuer in issuers %}
-
               {% with issuers|get_item:asset_issuer as issuer %}
               {% with issuer.user as user %}
 
               {% with asset_issuer|create_tuple:asset_code as tu %}
               {% with model_assets|get_item:tu as model_asset %}
               {% if model_asset %}
-              <img class="card-img-top rounded-circle mr-2" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% endif %} style="height: 25px; width: 25px;">
+              <img class="card-img-top rounded-circle mr-2" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 25px; width: 25px;">
               {% else %}
               <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;">
               {% endif %}
               {% endwith %}
               {% endwith %}
 
-              <span>{{ asset_code }} (Issuer: <a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }})</a></span>
+              <span>
+                {{ asset_code }}
+                {% if asset_issuer in issuers %}
+                 (Issuer: <a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }})</a>
+                {% else %}
+                 (Issuer: {{ asset_issuer|truncatechars:8 }}{{ asset_issuer|slice:"-5:" }})
+                {% endif %}
+              </span>
 
               {% endwith %}
               {% endwith %}
-
-              {% else %}
-              <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;">
-              <span>{{ asset_code }} (Issuer: {{ asset_issuer|truncatechars:8 }}{{ asset_issuer|slice:"-5:" }})</a></span>
-              {% endif %}
               {% endwith %}
               {% endwith %}
-
               {% endif %}
               {% endwith %}
             </div>

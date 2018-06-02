@@ -237,6 +237,7 @@ STELLAR_BASE_KEY_PAIR = keypair.Keypair.from_seed(
     )['Plaintext']
 )
 STELLAR_DATA_VERIFICATION_KEY = 'nucleo_signed_user'
+STELLAR_TOML_PATH = '/.well-known/stellar.toml'
 
 # Nucleo covers 1 data entry + 1 trustline for user's first account
 # NOTE: https://www.stellar.org/developers/guides/concepts/fees.html
@@ -250,3 +251,6 @@ else:
     STELLAR_HORIZON = horizon.HORIZON_LIVE
     STELLAR_HORIZON_INITIALIZATION_METHOD = horizon.horizon_livenet
     STELLAR_NETWORK = 'PUBLIC'
+
+# StellarTerm
+STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'

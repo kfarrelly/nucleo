@@ -8,7 +8,7 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile_follow_list.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | {{ object.username }}: {% if in_followers %}Followers{% else %}Following{% endif %}{% endblock %}
+{% block title %}Nucleo | {{ object.get_full_name }} (@{{ object.username }}): {% if in_followers %}Followers{% else %}Following{% endif %}{% endblock %}
 
 {% block nav %}
 <div class="sidebar-sticky">

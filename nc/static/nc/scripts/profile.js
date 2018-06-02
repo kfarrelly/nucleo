@@ -121,6 +121,7 @@
     });
 
     /** Bootstrap addStellarModalForm submission **/
+    // TODO: FIX WITH NEW LEDGER TAB!
     $('#addStellarModalForm').submit(function(event) {
       event.preventDefault();
 
@@ -200,7 +201,6 @@
       })
       .catch(function(error) {
         // Fail response gives form.errors. Make sure to show in error form
-        console.log($("#addStellarModalForm").find('.tab-pane.show').find('.modal-body-header')[0]);
         let modalHeader = (adding ? $("#addStellarModalForm").find('.tab-pane.show').find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]);
 
         // Stop the button loading animation then display the error
@@ -364,7 +364,7 @@
         break;
       case STELLAR_OPERATION_CHANGE_TRUST:
         // Change trust
-        featherIcon = "share-2";
+        featherIcon = "shield";
 
         var assetCode = (op.asset_type != 'native' ? op.asset_code : 'XLM');
         if (op.trustor == publicKey) {
@@ -379,7 +379,7 @@
         break;
       case STELLAR_OPERATION_ALLOW_TRUST:
         // Allow trust
-        featherIcon = "share-2";
+        featherIcon = "shield";
 
         var assetCode = (op.asset_type != 'native' ? op.asset_code : 'XLM');
         var verb = (op.authorize ? "Authorized": "Revoked");

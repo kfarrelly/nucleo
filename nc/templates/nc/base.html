@@ -132,8 +132,8 @@
     <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" src="{{ pic_url }}" alt="">
     <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
       <strong>{{{ _highlightResult.code.value }}}</strong>
-      <span class="text-secondary">Issued by {{{ _highlightResult.issuer_handle.value }}}</span>
-      <small class="text-muted" style="font-size: 0.6em">{{{ _highlightResult.issuer_public_key.value }}}</small>
+      <span class="text-secondary">{{{ _highlightResult.domain.value }}}</span>
+      <small class="text-muted" style="font-size: 0.6em">Issuer: {{{ _highlightResult.issuer_address.value }}}</small>
     </div>
   </a>
 </script>

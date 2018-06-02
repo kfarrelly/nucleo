@@ -1,6 +1,6 @@
 from allauth.account.adapter import DefaultAccountAdapter
 
-from .models import Profile
+from .models import Profile, Asset
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -12,7 +12,8 @@ class AccountAdapter(DefaultAccountAdapter):
         Saves a new `User` instance using information provided in the
         signup form.
 
-        Extends to create a profile for this new user.
+        Extends to create a profile for this new user and to note
+        that XLM is always a trusted asset.
         """
         user = super(AccountAdapter, self).save_user(request, user, form)
         Profile.objects.create(user=user)

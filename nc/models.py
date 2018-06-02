@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import os
+import os, requests, toml, urlparse
 
 from django.conf import settings
 from django.db import models
@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from functools import partial
 
-from . import validators
+from . import managers, validators
 
 
 def profile_file_directory_path(instance, filename, field):
@@ -144,12 +144,23 @@ class Asset(models.Model):
     If issuer is registered in Nucleo, allow them to change the color, pic
     of asset.
     """
-    # NOTE: if None then must be Lumens: https://www.stellar.org/developers/guides/concepts/assets.html
+    # NOTE: If None, then either doesn't have an account with us OR must be Lumens
     issuer = models.ForeignKey(Account, related_name='assets_issued',
         on_delete=models.CASCADE, null=True, blank=True, default=None)
+
+    # NOTE: if None then must be Lumens: https://www.stellar.org/developers/guides/concepts/assets.html
+    issuer_address = models.CharField(max_length=56, null=True, blank=True, default=None)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None)
     code = models.CharField(max_length=12)
     asset_id = models.CharField(max_length=70, null=True, blank=True, default=None)
+
+    # NOTE: Since these meta fields are defined in the TOML (which Nucleo can't change
+    # directly for logged in user clientside), should store them here to be safe
+    name = models.CharField(max_length=255, null=True, blank=True, default=None)
+    description = models.CharField(max_length=255, null=True, blank=True, default=None)
+    conditions = models.CharField(max_length=255, null=True, blank=True, default=None)
+    display_decimals = models.PositiveSmallIntegerField(default=4)
+
     color = models.CharField(max_length=6, null=True, blank=True, default=None)
     pic = models.ImageField(
         _('Asset photo'),
@@ -163,25 +174,37 @@ class Asset(models.Model):
         upload_to=partial(model_file_directory_path, field='cover'),
         null=True, blank=True, default=None
     )
+    # TODO: whitepaper pdf upload
+
+    toml = models.URLField(null=True, blank=True, default=None)
+    toml_pic = models.URLField(null=True, blank=True, default=None)
     verified = models.BooleanField(default=False)
 
-    def issuer_public_key(self):
-        """
-        Have this method as a proxy for the search index.
-        """
-        return self.issuer.public_key if self.issuer else None
+    # Asset manager
+    objects = managers.AssetManager()
 
     def issuer_handle(self):
         """
         Have this method as a proxy for the search index.
         """
-        return '@' + self.issuer.user.username if self.issuer else 'Stellar Network'
+        if self.issuer:
+            issuer_handle = '@' + self.issuer.user.username
+        elif self.issuer_address:
+            issuer_handle = None
+        else:
+            issuer_handle = 'Stellar Network'
+        return issuer_handle
 
     def pic_url(self):
         """
         Have this method as a proxy for the search index.
         """
-        return self.pic.url if self.pic else None
+        pic_url = None
+        if self.pic:
+            pic_url = self.pic.url
+        elif self.toml_pic:
+            pic_url = self.toml_pic
+        return pic_url
 
     def href(self):
         """
@@ -189,8 +212,55 @@ class Asset(models.Model):
         """
         return reverse('nc:asset-detail', kwargs={'slug': self.asset_id})
 
+    def update_from_toml(self, toml_url=None):
+        """
+        Fetch toml file and update attributes of this instance with its details.
+        """
+        # Set the new toml value if given one
+        if toml_url:
+            self.toml = toml_url
+            self.domain = urlparse.urlparse(toml_url).netloc
+
+        # Fetch the toml file and check for this asset in [[CURRENCIES]]
+        if self.toml:
+            r = requests.get(self.toml)
+            parsed_toml = toml.loads(r.text)
+            matched_currencies = [ c for c in parsed_toml.get('CURRENCIES', [])
+                if c.get('code', None) == self.code and c.get('issuer') == self.issuer_address ]
+            if len(matched_currencies) == 1:
+                # If matched, then asset has been verified and start updating instance fields
+                currency = matched_currencies[0]
+                if 'image' in currency:
+                    self.toml_pic = currency['image']
+
+                if 'name' in currency:
+                    # NOTE: problems here if desc is longer than 255 so concat for db
+                    self.name = currency['name'][:255]
+
+                if 'desc' in currency:
+                    # NOTE: problems here if desc is longer than 255 so concat for db
+                    self.description = currency['desc'][:255]
+
+                if 'conditions' in currency:
+                    # NOTE: problems here if conditions is longer than 255 so concat for db
+                    self.conditions = currency['conditions'][:255]
+
+                if 'display_decimals' in currency:
+                    self.display_decimals = currency['display_decimals']
+
+                self.verified = True
+
+        # Save the instance
+        self.save()
+
     class Meta:
-        unique_together = ('issuer', 'code')
+        unique_together = ('issuer_address', 'code')
 
     def __str__(self):
-        return self.asset_id
+        if self.asset_id:
+            asset_id = self.asset_id
+        elif self.issuer_address:
+            asset_id = '{0}-{1}'.format(self.code, self.issuer_address)
+        else:
+            asset_id = '{0}-{1}'.format(instance.code, 'native')
+        return asset_id

@@ -19,9 +19,9 @@ class AccountIndex(AlgoliaIndex):
     }
 
 class AssetIndex(AlgoliaIndex):
-    fields = ('code', 'issuer_public_key', 'issuer_handle', 'domain', 'pic_url', 'href')
+    fields = ('code', 'issuer_address', 'issuer_handle', 'domain', 'pic_url', 'href')
     settings = {
-        'searchableAttributes': ['code', 'issuer_public_key', 'issuer_handle'],
+        'searchableAttributes': ['code', 'domain', 'issuer_handle', 'issuer_address'],
         'highlightPreTag': '<mark>',
         'highlightPostTag': '</mark>',
     }

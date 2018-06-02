@@ -7,4 +7,6 @@ def get_item(dictionary, key):
 
 @register.filter
 def create_tuple(arg1, arg2):
+    print arg1
+    print arg2
     return (arg1, arg2)
