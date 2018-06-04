@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         Management command to fetch assets from known Stellar registeries
-        (StellarTerm for now) to initially populate our asset db.
+        (StellarTerm for now) to initially populate our db with assets.
         """
         # Accumulate asset_ids that are already in our db
         existing_asset_ids = [

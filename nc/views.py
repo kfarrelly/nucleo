@@ -57,13 +57,12 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
                 for account in self.object.accounts.all()
             }
             # NOTE: This is expensive! Might have to roll out into JS with loader
-            # NOTE: Need to decouple Address initialization from get() method to work!
+            # Need to decouple Address initialization from get() method to work!
             for k, a in addresses.iteritems():
                 a.get()
 
             # Build the total assets list for this user. Keep track of
             # all the issuers to query if they have User instances with us
-            # TODO: account for case of trustline as issuer
             assets = {}
             for public_key, address in addresses.iteritems():
                 for b in address.balances:
@@ -148,7 +147,7 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         cleaned_asset_pairs = [ tup for tup in asset_pairs if tup[1] != None ]
 
         # Create new model assets.
-        # NOTE: Include asset_id since pre_save signal won't fire on bulk_create (TODO: make a custom Asset manager)
+        # NOTE: Include asset_id since pre_save signal won't fire on bulk_create
         new_assets = [
             Asset(code=asset_code, issuer=account, issuer_address=asset_issuer)
             if issuers.get(asset_issuer, None) != None

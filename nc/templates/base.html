@@ -35,6 +35,7 @@
     <script type="text/javascript" src='{% static 'stellar-sdk/stellar-sdk.min.js' %}'></script>
     <script type="text/javascript" src='{% static 'js-cookie/src/js.cookie.js' %}'></script>
     <script src='{% static 'moment/min/moment.min.js' %}'></script>
+    <script src='{% static 'moment-timezone/builds/moment-timezone-with-data-2012-2022.min.js' %}'></script>
     <script src='{% static 'numeral/min/numeral.min.js' %}'></script>
     <script src='{% static 'ladda-bootstrap/dist/spin.min.js' %}'></script>
     <script src='{% static 'ladda-bootstrap/dist/ladda.min.js' %}'></script>
@@ -47,12 +48,15 @@
     <script>
       /* JS constants */
       /** Stellar constants **/
+      const STELLAR_TESTNET_SERVER_URL = 'https://horizon-testnet.stellar.org',
+            STELLAR_MAINNET_SERVER_URL = 'https://horizon.stellar.org';
+
       {% if debug %}
       const STELLAR_NETWORK_TYPE = 'TESTNET';
-      const STELLAR_SERVER_URL = 'https://horizon-testnet.stellar.org';
+      const STELLAR_SERVER_URL = STELLAR_TESTNET_SERVER_URL;
       {% else %}
       const STELLAR_NETWORK_TYPE = 'PUBLIC';
-      const STELLAR_SERVER_URL = 'https://horizon.stellar.org';
+      const STELLAR_SERVER_URL = STELLAR_MAINNET_SERVER_URL;
       {% endif %}
       const STELLAR_OPERATION_CREATE_ACCOUNT = 0;
             STELLAR_OPERATION_PAYMENT = 1;

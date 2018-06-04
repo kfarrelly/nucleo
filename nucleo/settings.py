@@ -201,8 +201,10 @@ BOWER_INSTALLED_APPS = (
     'stellar-sdk',
     'js-cookie',
     'moment',
+    'moment-timezone',
     'numeral',
     'ladda-bootstrap',
+    'highcharts',
 )
 
 # Algolia

@@ -24,24 +24,42 @@
         let usdValue = asset.price_USD,
             usdPercentChange = asset.change24h_USD/100,
             xlmValue = asset.price_XLM,
+            xlmPercentChange = asset.change24h_XLM/100,
             score = asset.activityScore;
 
         // Set inner content for asset values
         // NOTE: Not using numeral() to format here and
         // trusting Stellar term returned price val for sig figs
         $(assetTickerDiv).find('.asset-price-usd').each(function(i, assetPriceUsd) {
-          assetPriceUsd.textContent = numeral(usdValue).format('$0,0.0000');
+          if (usdValue) {
+            assetPriceUsd.textContent = numeral(usdValue).format('$0,0.0000');
+          }
         });
         $(assetTickerDiv).find('.asset-price-usd-change').each(function(i, assetPriceUsdChange) {
-          assetPriceUsdChange.textContent = numeral(usdPercentChange).format('0.00%');
-          if (usdPercentChange > 0) {
-            assetPriceUsdChange.classList.add('text-success');
-          } else if (usdPercentChange < 0) {
-            assetPriceUsdChange.classList.add('text-danger');
+          if (usdPercentChange) {
+            assetPriceUsdChange.textContent = numeral(usdPercentChange).format('0.00%');
+            if (usdPercentChange > 0) {
+              assetPriceUsdChange.classList.add('text-success');
+            } else if (usdPercentChange < 0) {
+              assetPriceUsdChange.classList.add('text-danger');
+            }
           }
         });
         $(assetTickerDiv).find('.asset-price-xlm').each(function(i, assetPriceXlm) {
-          assetPriceXlm.textContent = xlmValue + ' XLM';
+          // NOTE: check if xlmValue is even there given some assets mirror XLM (and don't give this attr)
+          if (xlmValue) {
+            assetPriceXlm.textContent = xlmValue + ' XLM';
+          }
+        });
+        $(assetTickerDiv).find('.asset-price-xlm-change').each(function(i, assetPriceXlmChange) {
+          if (xlmPercentChange) {
+            assetPriceXlmChange.textContent = numeral(xlmPercentChange).format('0.00%');
+            if (xlmPercentChange > 0) {
+              assetPriceXlmChange.classList.add('text-success');
+            } else if (xlmPercentChange < 0) {
+              assetPriceXlmChange.classList.add('text-danger');
+            }
+          }
         });
         $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
           assetScore.textContent = score;
