@@ -86,7 +86,7 @@
   <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.cover %} src="{{ object.cover.url }}"{% endif %} alt="">
   <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.pic %} src="{{ object.pic.url }}"{% elif object.toml_pic %} src="{{ object.toml_pic }}"{% endif %} alt="">
     <div class="card-body">
-      <h2 {% if object.color %} style="color: {{ object.color }}"{% endif %}>
+      <h2>
         {{ object.code }}
         {% if object.verified %}
          <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span> <small>Verified</small></button>
@@ -147,7 +147,7 @@
   <div class="card-body">
     <div id="assetChart" class="asset-chart" data-base_asset_code="{{ object.code }}" data-base_asset_issuer="{{ object.issuer_address }}">
       <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
-        Loading historical price data
+        Loading historical price data ...
       </div>
     </div>
   </div>
@@ -170,7 +170,11 @@
     <h6 class="card-subtitle mt-4">Conditions</h6>
     <p class="card-text">{% if object.conditions %}{{ object.conditions }}{% endif %}</p>
 
-    <a href="#" class="btn btn-sm btn-primary disabled" role="button" aria-disabled="true"><span data-feather='download'></span> Download White Paper</a>
+    {% if object.whitepaper %}
+    <a href="{{ object.whitepaper.url }}" class="btn btn-sm btn-primary" role="button" aria-disabled="true" download><span data-feather='download'></span> Download White Paper</a>
+    {% else %}
+    <button type="button" class="btn btn-sm btn-primary" role="button" aria-disabled="true" disabled><span data-feather='download'></span> Download White Paper</button>
+    {% endif %}
   </div>
 </div>
 

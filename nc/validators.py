@@ -9,6 +9,8 @@ from django.utils.translation import gettext_lazy as _
 
 import magic, mimetypes
 
+# File extension
+validate_pdf_file_extension = FileExtensionValidator(allowed_extensions=['pdf'])
 
 # File size
 @deconstructible
@@ -85,4 +87,8 @@ def get_available_image_mimetypes():
 
 validate_image_mimetype = MimeTypeValidator(
     allowed_mimetypes=get_available_image_mimetypes(),
+)
+
+validate_pdf_mimetype = MimeTypeValidator(
+    allowed_mimetypes=['application/pdf'],
 )

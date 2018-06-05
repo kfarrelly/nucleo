@@ -192,6 +192,9 @@ STATICFILES_FINDERS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# UPLOAD SIZE MAX (10 MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10*1024**2
+
 # Sites Framework
 SITE_ID = 1
 

@@ -84,7 +84,7 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
                     .select_related('user')
             }
 
-            # Build the model assets for pic, color of token in template
+            # Build the model assets for pic of token in template
             # NOTE: Getting all of the assets each issuer offers here versus just those
             # the current user owns to make the Asset query easier
             model_assets = {
@@ -107,6 +107,7 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 
             # Update the context
             context['addresses'] = addresses
+            context['num_addresses'] = len(addresses.keys())
             context['assets'] = assets
             context['issuers'] = issuers
             context['model_assets'] = model_assets
@@ -467,6 +468,32 @@ class AccountOperationListView(LoginRequiredMixin, mixins.JSONResponseMixin, gen
         return accounts
 
 
+## Asset
+class AssetCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
+    mixins.IndexContextMixin, generic.CreateView):
+    model = Asset
+    form_class = forms.AssetCreateForm
+    success_url = reverse_lazy('nc:user-redirect')
+
+    def get_context_data(self, **kwargs):
+        """
+        Override to prefetch user related accounts
+        """
+        context = super(AssetCreateView, self).get_context_data(**kwargs)
+        context['user'] = prefetch_related_objects([object], *['accounts'])
+        return context
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in the request for authenticated user.
+        """
+        kwargs = super(AssetCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'request_user': self.request.user
+        })
+        return kwargs
+
+
 class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
     mixins.IndexContextMixin, generic.DetailView):
     model = Asset
@@ -548,10 +575,9 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 
     def get_queryset(self):
         """
-        Authenticated user can only update themselves.
+        Authenticated user can only update assets they have issued.
         """
         return self.model.objects.filter(issuer__user=self.request.user)
-
 
 
 # TODO: For way later down the line in the roadmap.

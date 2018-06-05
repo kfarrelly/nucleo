@@ -159,9 +159,8 @@ class Asset(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True, default=None)
     description = models.CharField(max_length=255, null=True, blank=True, default=None)
     conditions = models.CharField(max_length=255, null=True, blank=True, default=None)
-    display_decimals = models.PositiveSmallIntegerField(default=4)
+    display_decimals = models.PositiveSmallIntegerField(default=7)
 
-    color = models.CharField(max_length=6, null=True, blank=True, default=None)
     pic = models.ImageField(
         _('Asset photo'),
         validators=[validators.validate_file_size, validators.validate_image_mimetype],
@@ -169,12 +168,17 @@ class Asset(models.Model):
         null=True, blank=True, default=None
     )
     cover = models.ImageField(
-        _('Asset cover photo'),
+        _('Asset profile cover photo'),
         validators=[validators.validate_file_size, validators.validate_image_mimetype],
         upload_to=partial(model_file_directory_path, field='cover'),
         null=True, blank=True, default=None
     )
-    # TODO: whitepaper pdf upload
+    whitepaper = models.FileField(
+        validators=[validators.validate_pdf_file_extension, validators.validate_file_size,
+            validators.validate_pdf_mimetype],
+        upload_to=partial(model_file_directory_path, field='whitepaper'),
+        null=True, blank=True, default=None
+    )
 
     toml = models.URLField(null=True, blank=True, default=None)
     toml_pic = models.URLField(null=True, blank=True, default=None)

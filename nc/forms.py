@@ -17,7 +17,7 @@ from stellar_base.operation import CreateAccount
 from stellar_base.transaction import Transaction
 from stellar_base.transaction_envelope import TransactionEnvelope as Te
 
-from .models import Account, Profile
+from .models import Account, Asset, Profile
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -175,3 +175,37 @@ class AccountUpdateForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Account name'}),
         }
+
+
+class AssetCreateForm(forms.ModelForm):
+    distributer = forms.ModelChoiceField(queryset=Account.objects.none())
+
+    class Meta:
+        model = Asset
+        fields = [
+            'code', 'issuer', 'distributer', 'name', 'description', 'conditions', 'domain',
+            'display_decimals', 'pic', 'cover',
+        ]
+        widgets = {
+            'code': forms.TextInput(attrs={'placeholder': 'A short identifier of 1 to 12 letters or numbers (e.x. NUCL)'}),
+            'name': forms.TextInput(attrs={'placeholder': 'A more explicit name for the token (e.x. Nucleon)'}),
+            'description': forms.TextInput(attrs={'placeholder': 'A longer description explaining the token (e.x. Token powering the Nucleo platform)'}),
+            'conditions': forms.TextInput(attrs={'placeholder': 'Conditions on the token (e.x. There will only ever be 500 million Nucleons)'}),
+            'domain': forms.TextInput(attrs={'placeholder': 'The domain hosting your stellar.toml file (e.x. nucleo.fi)'}),
+            'display_decimals': forms.NumberInput(attrs={'placeholder': 'The number of decimal places to track for your token'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """
+        Restrict queryset of ModelForm to only accounts user has associated.
+        """
+        self.request_user = kwargs.pop('request_user', None)
+        super(AssetCreateForm, self).__init__(*args, **kwargs)
+
+        user_accounts = self.request_user.accounts.all() if self.request_user else Account.objects.none()
+
+        self.fields['issuer'].queryset = user_accounts
+        self.fields['issuer'].label = 'Issuing account'
+
+        self.fields['distributer'].queryset = user_accounts
+        self.fields['distributer'].label = 'Distributing account'

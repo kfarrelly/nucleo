@@ -179,6 +179,14 @@
                count: 1,
                text: '1m'
            }, {
+               type: 'month',
+               count: 3,
+               text: '3m'
+           }, {
+               type: 'month',
+               count: 6,
+               text: '6m'
+           }, {
                type: 'year',
                count: 1,
                text: '1y'
@@ -186,7 +194,7 @@
                type: 'all',
                text: 'All'
            }],
-           selected: 4,
+           selected: 6,
            inputEnabled: false
        },
        xAxis: {
