@@ -162,13 +162,13 @@ class Asset(models.Model):
     display_decimals = models.PositiveSmallIntegerField(default=7)
 
     pic = models.ImageField(
-        _('Asset photo'),
+        _('Asset profile photo'),
         validators=[validators.validate_file_size, validators.validate_image_mimetype],
         upload_to=partial(model_file_directory_path, field='pic'),
         null=True, blank=True, default=None
     )
     cover = models.ImageField(
-        _('Asset profile cover photo'),
+        _('Asset cover photo'),
         validators=[validators.validate_file_size, validators.validate_image_mimetype],
         upload_to=partial(model_file_directory_path, field='cover'),
         null=True, blank=True, default=None
@@ -220,42 +220,52 @@ class Asset(models.Model):
         """
         Fetch toml file and update attributes of this instance with its details.
         """
+        changed = False
+
         # Set the new toml value if given one
         if toml_url:
             self.toml = toml_url
             self.domain = urlparse.urlparse(toml_url).netloc
+            changed = True
 
         # Fetch the toml file and check for this asset in [[CURRENCIES]]
+        # Use try except in case no toml file exists at given toml_url
         if self.toml:
-            r = requests.get(self.toml)
-            parsed_toml = toml.loads(r.text)
-            matched_currencies = [ c for c in parsed_toml.get('CURRENCIES', [])
-                if c.get('code', None) == self.code and c.get('issuer') == self.issuer_address ]
-            if len(matched_currencies) == 1:
-                # If matched, then asset has been verified and start updating instance fields
-                currency = matched_currencies[0]
-                if 'image' in currency:
-                    self.toml_pic = currency['image']
+            try:
+                r = requests.get(self.toml)
+                parsed_toml = toml.loads(r.text)
+                matched_currencies = [ c for c in parsed_toml.get('CURRENCIES', [])
+                    if c.get('code', None) == self.code and c.get('issuer') == self.issuer_address ]
+                if len(matched_currencies) == 1:
+                    # If matched, then asset has been verified and start updating instance fields
+                    currency = matched_currencies[0]
+                    if 'image' in currency:
+                        self.toml_pic = currency['image']
 
-                if 'name' in currency:
-                    # NOTE: problems here if desc is longer than 255 so concat for db
-                    self.name = currency['name'][:255]
+                    if 'name' in currency:
+                        # NOTE: problems here if desc is longer than 255 so concat for db
+                        self.name = currency['name'][:255]
 
-                if 'desc' in currency:
-                    # NOTE: problems here if desc is longer than 255 so concat for db
-                    self.description = currency['desc'][:255]
+                    if 'desc' in currency:
+                        # NOTE: problems here if desc is longer than 255 so concat for db
+                        self.description = currency['desc'][:255]
 
-                if 'conditions' in currency:
-                    # NOTE: problems here if conditions is longer than 255 so concat for db
-                    self.conditions = currency['conditions'][:255]
+                    if 'conditions' in currency:
+                        # NOTE: problems here if conditions is longer than 255 so concat for db
+                        self.conditions = currency['conditions'][:255]
 
-                if 'display_decimals' in currency:
-                    self.display_decimals = currency['display_decimals']
+                    if 'display_decimals' in currency:
+                        self.display_decimals = currency['display_decimals']
 
-                self.verified = True
+                    self.verified = True
+                    changed = True
+
+            except requests.exceptions.ConnectionError:
+                pass
 
         # Save the instance
-        self.save()
+        if changed:
+            self.save()
 
     class Meta:
         unique_together = ('issuer_address', 'code')

@@ -8,7 +8,7 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile_update.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | Issue New Token{% endblock %}
+{% block title %}Nucleo | Edit Asset{% endblock %}
 
 {% block nav %}
 <div class="sidebar-sticky">
@@ -43,14 +43,21 @@
 
 {% block main %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 class="h2">Issue New Token</h1>
+  <h1 class="h2">Edit Asset</h1>
 </div>
-<form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:asset-create' %}">
+
+<div class="d-flex flex-wrap mx-4 mt-4 mb-0">
+  <h6 class="text-muted">
+    * Modify the <a href="https://www.stellar.org/developers/guides/concepts/stellar-toml.html" target="_blank" class="text-info">stellar.toml</a> file on the home domain of this asset's issuing account to update the <a href="{% url 'nc:asset-detail' object.asset_id %}#about">About</a> info section.
+  </h6>
+</div>
+
+<form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:asset-update' object.asset_id %}">
   {% csrf_token %}
   {{ form|bootstrap_horizontal }}
   <div class="my-4 pt-3 border-top">
-    <a href="{% url 'nc:user-redirect' %}" class="btn btn-secondary m-1">Cancel</a>
-    <button class="btn btn-primary m-1" type="submit">Create</button>
+    <a href="{% url 'nc:asset-detail' object.asset_id %}" class="btn btn-secondary m-1">Cancel</a>
+    <button class="btn btn-primary m-1" type="submit">Save Changes</button>
   </div>
 </form>
 {% endblock %}

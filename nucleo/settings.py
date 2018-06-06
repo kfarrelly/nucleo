@@ -244,9 +244,9 @@ STELLAR_BASE_KEY_PAIR = keypair.Keypair.from_seed(
 STELLAR_DATA_VERIFICATION_KEY = 'nucleo_signed_user'
 STELLAR_TOML_PATH = '/.well-known/stellar.toml'
 
-# Nucleo covers 1 data entry + 1 trustline for user's first account
+# Nucleo covers 1 data entry + 1 trustline for user's first two account
 # NOTE: https://www.stellar.org/developers/guides/concepts/fees.html
-STELLAR_CREATE_ACCOUNT_QUOTA = 1
+STELLAR_CREATE_ACCOUNT_QUOTA = 2
 STELLAR_CREATE_ACCOUNT_MINIMUM_BALANCE = '2'
 if DEBUG:
     STELLAR_HORIZON = horizon.HORIZON_TEST

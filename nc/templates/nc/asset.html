@@ -75,7 +75,7 @@
           </button>
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <button type="button" title="Activity Score" class="btn btn-sm btn-warning">
+          <button type="button" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
             <span class="asset-score">100</span>
           </button>
@@ -91,7 +91,7 @@
         {% if object.verified %}
          <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span> <small>Verified</small></button>
         {% elif object.issuer and object.issuer.user.id == request.user.id %}
-         <button id="assetVerified" type="button" class="btn btn-outline-danger" title="Unverified asset"><span data-feather="alert-octagon"></span> Verify asset</button>
+         <button id="assetVerified" type="button" class="btn btn-sm m-1 btn-outline-danger" title="Unverified asset"><span data-feather="alert-octagon"></span> Verify asset</button>
         {% else %}
          <button id="assetVerified" type="button" class="btn bg-white p-1 text-danger" title="Unverified asset"><span data-feather="alert-octagon"></span> <small>Unverified</small></button>
         {% endif %}
@@ -115,16 +115,16 @@
       </p>
       <div class="d-flex flex-wrap justify-content-between align-items-center">
         <div class="btn-group py-1">
+          <a href="" class="btn btn-sm btn-outline-primary">
+            <span data-feather="shield"></span>
+            Trust
+          </a>
           {% if object.issuer and object.issuer.user.id == request.user.id %}
           <a href="{% url 'nc:asset-update' object.asset_id %}" class="btn btn-sm btn-outline-secondary">
             <span data-feather="edit"></span>
             Edit Asset
           </a>
           {% else %}
-          <a href="" class="btn btn-sm btn-outline-primary">
-            <span data-feather="shield"></span>
-            Change Trust
-          </a>
           <a href="#" class="btn btn-sm btn-outline-secondary">
             <span data-feather="trending-up"></span>
             Trade
@@ -132,7 +132,7 @@
           {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <button type="button" title="Activity Score" class="btn btn-sm btn-warning">
+          <button type="button" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
             <span class="asset-score">100</span>
           </button>
@@ -156,7 +156,7 @@
 
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 id="assets" class="h2">About</h1>
+  <h1 id="about" class="h2">About</h1>
 </div>
 
 <div class="card my-4 box-shadow">

@@ -8,3 +8,32 @@
 .modal-body abbr {
   word-wrap: break-word;
 }
+
+.form-issue-token .form-group-details .form-control {
+  position: relative;
+  box-sizing: border-box;
+  height: auto;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-issue-token .form-control:focus {
+  z-index: 2;
+}
+.form-issue-token input[name="token_code"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-issue-token input[type="number"] {
+  margin-top: -1px;
+  margin-bottom: -1px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-issue-token input[name="issuer_domain"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}

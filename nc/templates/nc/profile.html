@@ -150,7 +150,7 @@
             {% if asset.asset_issuer in issuers %}
             {% with issuers|get_item:asset.asset_issuer as issuer %}
             {% with issuer.user as user %}
-            <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% endif %}</div>
+            <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% else %}{{ user.get_full_name }}{% endif %}</div>
             <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}
                (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
             </small></div>
@@ -209,8 +209,77 @@
   {% if num_addresses == 1 %}
   <button type="button" class="btn btn-lg btn-primary" data-toggle="tooltip" data-placement="bottom" title="Two accounts are needed to issue tokens" disabled>Issue New Token</button>
   {% else %}
-  <a href="{% url 'nc:asset-create' %}" class="btn btn-lg btn-primary">Issue New Token</a>
+  <button type="button" class="btn btn-lg btn-primary" data-toggle="modal" data-target="#issueStellarToken">Issue New Token</button>
   {% endif %}
+</div>
+
+<!-- Issue Stellar Token Modal -->
+<div class="modal fade" id="issueStellarToken" tabindex="-1" role="dialog" aria-labelledby="issueStellarModalTitle" aria-hidden="true">
+  <form method="POST" id="issueStellarModalForm" class="form-issue-token" data-success="{% url 'nc:user-redirect' %}">
+    {% csrf_token %}
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="issueStellarModalTitle">Issue New Token</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 class="pt-1 modal-body-header">Token Details</h5>
+          <div class="form-group form-group-details">
+            <label class="control-label sr-only">Token Asset Code</label>
+            <input type="text" name="token_code" class="form-control" placeholder="Asset Code (alphanumeric 12-character max)" aria-label="Token Asset Code" maxlength="12" required>
+            <label class="control-label sr-only">Number Of Tokens To Create</label>
+            <input type="number" name="token_number" class="form-control" placeholder="Number Of Tokens To Create" aria-label="Number Of Tokens To Create" min="1" required>
+            <label class="control-label sr-only">Home Domain</label>
+            <input type="text" name="issuer_domain" class="form-control" placeholder="Home Web Domain (example.com)" aria-label="Home Web Domain" maxlength="255" required>
+          </div>
+          <div class="form-group">
+            <label class="control-label sr-only">Issuing Account</label>
+            <div class="input-group">
+              <input type="password" name="issuer_secret_key" class="form-control" placeholder="Issuing Account (e.x. SBUVRVHRRGNBFYY...)" aria-label="Issuing Account Secret Key" required>
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" disabled>
+                  <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label sr-only">Distribution Account</label>
+            <div class="input-group">
+              <input type="password" name="distributer_secret_key" class="form-control" placeholder="Distribution Account (e.x. SB4YQ6LEODDJRZY...)" aria-label="Distributing Account Secret Key" required>
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" disabled>
+                  <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+                </button>
+              </div>
+            </div>
+          </div>
+          <h6 class="mt-3">
+            Please enter your secret keys for the issuing and distribution accounts associated with this token. <a href="https://www.stellar.org/blog/tokens-on-stellar/" class="text-info" target="_blank">Learn more.</a>
+          </h6>
+          <div class="text-danger mt-3">
+            <strong>Security Notes</strong>
+            <ul>
+              <li>We do NOT store your secret keys. Your secret keys are never sent to our servers.</li>
+              <li>By clicking Issue Token, a transaction with three operations will be added to the Stellar Network:</li>
+              <ol>
+                <li>Your distribution account will trust your issuing account for the exact number of tokens specified.</li>
+                <li>Your issuing account will create your tokens and send them to the distribution account.</li>
+                <li>The home domain for your issuing account will be changed to the web domain specified, for future asset verification with your <a href="https://www.stellar.org/developers/guides/concepts/stellar-toml.html" class="text-danger font-weight-bold" target="_blank">stellar.toml</a> file.</li>
+              </ol>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Issue Token</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
 </div>
 {% endif %}
 
@@ -282,7 +351,7 @@
               <span>
                 {{ asset_code }}
                 {% if asset_issuer in issuers %}
-                 (Issuer: <a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }})</a>
+                 (Issuer: <a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
                 {% else %}
                  (Issuer: {{ asset_issuer|truncatechars:8 }}{{ asset_issuer|slice:"-5:" }})
                 {% endif %}
@@ -306,7 +375,7 @@
         <ul id="operations-{{ forloop.counter0 }}" class="list-group mt-4" data-parent="#collapse-{{ forloop.counter0 }}">
           <strong class="py-1">Recent Activity</strong>
           <div id="more-container-{{ forloop.counter0 }}">
-            <button id="more-{{ forloop.counter0 }}" type="button" class="btn btn-sm btn-link account more" data-parent="#more-container-{{ forloop.counter0 }}" data-url="{% url 'nc:account-operation-list' account.public_key %}" data-cursor="" data-has_more="true">More</button>
+            <button id="more-{{ forloop.counter0 }}" type="button" class="btn btn-sm btn-link account more" data-parent="#more-container-{{ forloop.counter0 }}" data-public_key="{{ account.public_key }}" data-url="{% url 'nc:account-operation-list' account.public_key %}" data-cursor="" data-has_more="true">More</button>
           </div>
         </ul>
       </div>
@@ -327,40 +396,30 @@
     {% csrf_token %}
     <div class="modal-dialog" role="document">
       <div class="modal-content">
-        <div class="modal-header border-bottom-0">
+        <div class="modal-header">
           <h5 class="modal-title" id="addStellarModalTitle">Add Stellar Account</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <ul id="addStellarModalTab" class="nav nav-tabs" role="tablist">
-          <li class="nav-item">
-            <a href="#secret" class="nav-link active" id="secret-tab" data-toggle="tab" role="tab" aria-controls="secret" aria-selected="true">
-              Secret Key
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#ledger" class="nav-link" id="ledger-tab" data-toggle="tab" role="tab" aria-controls="ledger" aria-selected="false">
-              <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="20">
-            </a>
-          </li>
-        </ul>
-        <div class="tab-content" id="addStellarModalTabContent">
-          <div id="secret" class="modal-body tab-pane fade show active" role="tabpanel" aria-labelledby="secret-tab">
-            <h5 class="pt-1 mb-3 modal-body-header">Please enter your secret key to verify account ownership</h5>
+        <div class="modal-body">
+          <h5 class="pt-1 mb-3 modal-body-header">Please enter your secret key to verify account ownership</h5>
+          <div class="input-group">
             <input type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
-            <div class="text-danger mt-4">
-              <strong>Security Notes</strong>
-              <ul>
-                <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
-                <li>Nucleo verifies Stellar account ownership by adding a Data Entry to your Stellar account from the browser. Your secret key is used to sign off on this modification to the Stellar ledger.</li>
-                <li>This added Data Entry contains a cryptographically signed version of your Nucleo user ID (signed with our server keys).</li>
-                <li>Once verified, we associate your Stellar account with your Nucleo profile by storing your Stellar public key.</li>
-              </ul>
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" disabled>
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
             </div>
           </div>
-          <div id="ledger" class="modal-body tab-pane fade" role="tabpanel" aria-labelledby="ledger-tab">
-            <h5 class="pt-1 mb-3 modal-body-header">Please open the Stellar app on a connected Ledger device</h5>
+          <div class="text-danger mt-4">
+            <strong>Security Notes</strong>
+            <ul>
+              <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+              <li>Nucleo verifies Stellar account ownership by adding a Data Entry to your Stellar account from the browser. Your secret key is used to sign off on this modification to the Stellar ledger.</li>
+              <li>This added Data Entry contains a cryptographically signed version of your Nucleo user ID (signed with our server keys).</li>
+              <li>Once verified, we associate your Stellar account with your Nucleo profile by storing your Stellar public key.</li>
+            </ul>
           </div>
         </div>
         <div class="modal-footer">

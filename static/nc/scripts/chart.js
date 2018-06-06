@@ -39,6 +39,12 @@
             plotData.push([ record.timestamp, parseFloat(record.avg) ]);
           });
           createChart(assetChartDiv.id, baseAssetCode, plotData);
+        })
+        .catch(function(error) {
+          // If something went wrong, notify user data not available
+          console.error('Something went wrong with Stellar call', error);
+          assetChartDiv.textContent = "Historical price data not available";
+          return false;
         });
       }
     });
@@ -133,9 +139,11 @@
     /**
      * Create the chart when all data is loaded into seriesOptions
      */
-     let firstVal = seriesData[0][1],
-         lastVal = seriesData[seriesData.length-1][1];
-         seriesColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
+     var seriesColor = '#343a40';
+     if (seriesData.length != 0) {
+       let firstVal = seriesData[0][1], lastVal = seriesData[seriesData.length-1][1];
+       seriesColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
+     }
 
      // Set timezone options on chart
      Highcharts.setOptions({

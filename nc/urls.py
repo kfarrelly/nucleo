@@ -19,7 +19,6 @@ urlpatterns = [
     url(r'^account/(?P<slug>[\w.@+-]+)/operation/$', views.AccountOperationListView.as_view(), name='account-operation-list'),
 
     # Assets
-    url(r'^asset/create/$', views.AssetCreateView.as_view(), name='asset-create'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
 ]

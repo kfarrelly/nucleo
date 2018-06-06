@@ -67,6 +67,7 @@
       // Clear out the user input from forms
       $('#addStellarModalForm')[0].reset();
       $('#addStellarPublicKeyForm')[0].reset();
+      $('#issueStellarModalForm')[0].reset();
 
       // Remove any randomly generated keypair data for new account
       createStellarKeypair = null;
@@ -105,6 +106,12 @@
       resetStellarForms();
     });
 
+    /** Bootstrap issueStellarModalForm close **/
+    $('#issueStellarModal').on('hidden.bs.modal', function (e) {
+      // Clear out forms
+      resetStellarForms();
+    });
+
     /** Bootstrap createStellarModalForm submission **/
     $('#createStellarModalForm').submit(function(event) {
       event.preventDefault();
@@ -121,14 +128,13 @@
     });
 
     /** Bootstrap addStellarModalForm submission **/
-    // TODO: FIX WITH NEW LEDGER TAB!
     $('#addStellarModalForm').submit(function(event) {
       event.preventDefault();
 
       // Assign the signed user value to a variable to transmit later
       // Obtain the modal header to display errors under if POSTings fail
       let signedUser = this.elements["signed_user"].value,
-          modalHeader = $(this).find('.tab-pane.show').find('.modal-body-header')[0];
+          modalHeader = $(this).find('.modal-body-header')[0];
 
       // Attempt to generate Keypair
       var sourceKeys;
@@ -201,7 +207,7 @@
       })
       .catch(function(error) {
         // Fail response gives form.errors. Make sure to show in error form
-        let modalHeader = (adding ? $("#addStellarModalForm").find('.tab-pane.show').find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]);
+        let modalHeader = (adding ? $("#addStellarModalForm").find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]);
 
         // Stop the button loading animation then display the error
         Ladda.stopAll();
@@ -210,6 +216,112 @@
       });
     })
   }
+
+  /** Bootstrap issueStellarModalForm submission **/
+  $('#issueStellarModalForm').submit(function(event) {
+    event.preventDefault();
+
+    // Obtain the modal header to display errors under if POSTings fail
+    let modalHeader = $(this).find('.modal-body-header')[0];
+
+    // Attempt to generate Keypairs
+    var issuingKeys, distributionKeys;
+    try {
+      issuingKeys = StellarSdk.Keypair.fromSecret(this.elements["issuer_secret_key"].value);
+    }
+    catch (err) {
+      console.error('Keypair generation failed', err);
+      displayError(modalHeader, 'Keypair generation failed for the issuing account. Please enter a valid secret key.');
+      return false;
+    }
+    try {
+      distributionKeys = StellarSdk.Keypair.fromSecret(this.elements["distributer_secret_key"].value);
+    }
+    catch (err) {
+      console.error('Keypair generation failed', err);
+      displayError(modalHeader, 'Keypair generation failed for the distribution account. Please enter a valid secret key.');
+      return false;
+    }
+
+    // Check that both issuing and distribution accounts have been associated with Nucleo db
+    // and they aren't the same.
+    let userAccountPublicKeys = getUserAccountPublicKeys();
+    if (!userAccountPublicKeys.includes(issuingKeys.publicKey()) || !userAccountPublicKeys.includes(distributionKeys.publicKey())) {
+      displayError(modalHeader, 'Both distribution and issuing accounts must be associated with your user profile.');
+      return false;
+    } else if (issuingKeys.publicKey() == distributionKeys.publicKey()) {
+      displayError(modalHeader, 'Your distribution account must be different than your issuing account.');
+      return false;
+    }
+
+    // Store the user inputted asset detail values and the success redirect URL
+    let tokenCode = this.elements["token_code"].value,
+        numberOfTokens = this.elements["token_number"].value,
+        issuerHomeDomain = this.elements["issuer_domain"].value,
+        successUrl = this.dataset.success;
+
+    // If successful on KeyPair generation, load account to prep for manage data transaction
+    // Start Ladda animation for UI loading
+    let laddaButton = Ladda.create($(this).find(":submit")[0]);
+    laddaButton.start();
+
+    // Load distribution then issuing account from Horizon server
+    server.loadAccount(distributionKeys.publicKey())
+    .catch(StellarSdk.NotFoundError, function (error) {
+      throw new Error('No Stellar account with the distribution secret key exists yet.');
+    })
+    .then(function(distributionAccount) {
+      server.loadAccount(issuingKeys.publicKey())
+      .catch(StellarSdk.NotFoundError, function (error) {
+        throw new Error('No Stellar account with the issuing secret key exists yet.');
+      })
+      // If there was no error, load up-to-date information on your account.
+      .then(function(issuingAccount) {
+        // Create the asset
+        var asset = new StellarSdk.Asset(tokenCode, issuingKeys.publicKey())
+
+        // Start building the transaction.
+        transaction = new StellarSdk.TransactionBuilder(issuingAccount)
+          .addOperation(StellarSdk.Operation.changeTrust({
+            'asset': asset,
+            'limit': numberOfTokens,
+            'source': distributionKeys.publicKey(),
+          }))
+          .addOperation(StellarSdk.Operation.payment({
+            'destination': distributionKeys.publicKey(),
+            'asset': asset,
+            'amount': numberOfTokens,
+          }))
+          .addOperation(StellarSdk.Operation.setOptions({
+            'homeDomain': issuerHomeDomain,
+          }))
+          .build();
+        // Sign the transaction to prove you are actually the person sending it.
+        transaction.sign(issuingKeys, distributionKeys);
+        // And finally, send it off to Stellar!
+        return server.submitTransaction(transaction);
+      })
+      .then(function(result) {
+        // Server side will create new asset model upon user profile retrieval,
+        // so simply can redirect
+        window.location.href = successUrl;
+      })
+      .catch(function(error) {
+        // Stop the button loading animation then display the error
+        laddaButton.stop();
+        console.error('Something went wrong with Stellar call', error);
+        displayError(modalHeader, error.message);
+        return false;
+      });
+    })
+    .catch(function(error) {
+      // Stop the button loading animation then display the error
+      laddaButton.stop();
+      console.error('Something went wrong with Stellar call', error);
+      displayError(modalHeader, error.message);
+      return false;
+    });
+  });
 
   /* Loading of operations for each Stellar account collapsable panel */
   /** Initialization of operations occurs when a panel is first clicked by user **/
@@ -224,6 +336,15 @@
       button.click();
     }
   });
+
+  /* Gets user account public keys this user has already associated */
+  function getUserAccountPublicKeys() {
+    var keys = [];
+    $('button.account.more').each(function(i, button){
+      keys.push(button.dataset.public_key);
+    });
+    return keys;
+  }
 
   /** Load more operations when the MORE button for account is clicked **/
   $('button.account.more').on('click', function() {

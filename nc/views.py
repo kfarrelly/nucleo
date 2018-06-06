@@ -150,7 +150,7 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         # Create new model assets.
         # NOTE: Include asset_id since pre_save signal won't fire on bulk_create
         new_assets = [
-            Asset(code=asset_code, issuer=account, issuer_address=asset_issuer)
+            Asset(code=asset_code, issuer=issuers.get(asset_issuer, None), issuer_address=asset_issuer)
             if issuers.get(asset_issuer, None) != None
             else Asset(code=asset_code, issuer_address=asset_issuer)
             for asset_issuer, asset_code in cleaned_asset_pairs
@@ -469,31 +469,6 @@ class AccountOperationListView(LoginRequiredMixin, mixins.JSONResponseMixin, gen
 
 
 ## Asset
-class AssetCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
-    mixins.IndexContextMixin, generic.CreateView):
-    model = Asset
-    form_class = forms.AssetCreateForm
-    success_url = reverse_lazy('nc:user-redirect')
-
-    def get_context_data(self, **kwargs):
-        """
-        Override to prefetch user related accounts
-        """
-        context = super(AssetCreateView, self).get_context_data(**kwargs)
-        context['user'] = prefetch_related_objects([object], *['accounts'])
-        return context
-
-    def get_form_kwargs(self):
-        """
-        Need to override to pass in the request for authenticated user.
-        """
-        kwargs = super(AssetCreateView, self).get_form_kwargs()
-        kwargs.update({
-            'request_user': self.request.user
-        })
-        return kwargs
-
-
 class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
     mixins.IndexContextMixin, generic.DetailView):
     model = Asset
@@ -529,8 +504,6 @@ class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
             record = None
             if '_embedded' in json and 'records' in json['_embedded'] and json['_embedded']['records']:
                 record = json['_embedded']['records'][0]
-                self._update_asset(record)
-
 
             # Update existing model asset in our db
             # General try, except here because always want to return asset
@@ -569,6 +542,7 @@ class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
     mixins.IndexContextMixin, generic.UpdateView):
     model = Asset
+    form_class = forms.AssetUpdateForm
     slug_field = 'asset_id'
     template_name = 'nc/asset_update_form.html'
     prefetch_related_lookups = ['issuer__user']
@@ -578,6 +552,16 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         Authenticated user can only update assets they have issued.
         """
         return self.model.objects.filter(issuer__user=self.request.user)
+
+    def get_success_url(self):
+        """
+        If success url passed into query param, then use for redirect.
+        Otherwise, simply redirect to asset profile page.
+        """
+        if self.success_url:
+            return self.success_url
+
+        return reverse('nc:asset-detail', kwargs={'slug': self.object.asset_id})
 
 
 # TODO: For way later down the line in the roadmap.

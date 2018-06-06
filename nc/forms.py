@@ -96,7 +96,9 @@ class AccountCreateForm(forms.ModelForm):
 
             # Check the quota hasn't been reached
             if profile.accounts_created + 1 > settings.STELLAR_CREATE_ACCOUNT_QUOTA:
-                raise ValidationError(_('Your created accounts quota has been reached. Nucleo only funds one new Stellar account per user.'), code='invalid_quota_amount')
+                raise ValidationError(_('Your created accounts quota has been reached. Nucleo only funds {0} new Stellar account{1} per user.'.format(
+                    settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
+                )), code='invalid_quota_amount')
 
             # Make a call to Horizon to fund new account with Nucleo base account
             horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
@@ -177,35 +179,13 @@ class AccountUpdateForm(forms.ModelForm):
         }
 
 
-class AssetCreateForm(forms.ModelForm):
-    distributer = forms.ModelChoiceField(queryset=Account.objects.none())
-
+class AssetUpdateForm(forms.ModelForm):
     class Meta:
         model = Asset
-        fields = [
-            'code', 'issuer', 'distributer', 'name', 'description', 'conditions', 'domain',
-            'display_decimals', 'pic', 'cover',
-        ]
+        fields = [ 'pic', 'cover', 'whitepaper' ]
         widgets = {
-            'code': forms.TextInput(attrs={'placeholder': 'A short identifier of 1 to 12 letters or numbers (e.x. NUCL)'}),
-            'name': forms.TextInput(attrs={'placeholder': 'A more explicit name for the token (e.x. Nucleon)'}),
-            'description': forms.TextInput(attrs={'placeholder': 'A longer description explaining the token (e.x. Token powering the Nucleo platform)'}),
+            'name': forms.TextInput(attrs={'placeholder': 'A name for the token (e.x. Nucleon)'}),
+            'description': forms.TextInput(attrs={'placeholder': 'A description explaining the token purpose'}),
             'conditions': forms.TextInput(attrs={'placeholder': 'Conditions on the token (e.x. There will only ever be 500 million Nucleons)'}),
-            'domain': forms.TextInput(attrs={'placeholder': 'The domain hosting your stellar.toml file (e.x. nucleo.fi)'}),
-            'display_decimals': forms.NumberInput(attrs={'placeholder': 'The number of decimal places to track for your token'}),
+            'domain': forms.TextInput(attrs={'placeholder': 'example.com'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        """
-        Restrict queryset of ModelForm to only accounts user has associated.
-        """
-        self.request_user = kwargs.pop('request_user', None)
-        super(AssetCreateForm, self).__init__(*args, **kwargs)
-
-        user_accounts = self.request_user.accounts.all() if self.request_user else Account.objects.none()
-
-        self.fields['issuer'].queryset = user_accounts
-        self.fields['issuer'].label = 'Issuing account'
-
-        self.fields['distributer'].queryset = user_accounts
-        self.fields['distributer'].label = 'Distributing account'
