@@ -69,11 +69,6 @@
         $(assetTickerDiv).fadeIn();
       }
     });
-
-    // Iterate through all the asset score containers
-    // $('.asset-score').each(function(i, assetScoreContainer) {
-    //
-    // });
   }
 
   function populateAssetDetails(assets) {
@@ -81,6 +76,55 @@
     Use ticker data = { asset.id: asset } to populate asset statistics
     in # trades, 24h volumes, spread, # bids/asks, activity score (credit StellarTerm needed?).
     */
+    let assetMetricsList = $('#assetMetricsList')[0],
+        asset = assets[assetMetricsList.dataset.asset_id];
 
+    if (asset) {
+      // Trade Metrics li components
+      let keysToList = {
+        'numTrades24h': 'Number Of Trades (24h)',
+        'volume24h_XLM': 'Total Trade Volume (24h)',
+        'spread': 'Spread',
+        'numBids': 'Number Of Outstanding Bids',
+        'numAsks': 'Number Of Outstanding Asks',
+        'depth10_XLM': 'Market Depth (10%)',
+      },
+      keysUnits = {
+        'volume24h_XLM': ' XLM',
+        'depth10_XLM': ' XLM',
+      },
+      keysNumbers = [ 'numTrades24h', 'numBids', 'numAsks' ],
+      keysPercentages = [ 'spread' ],
+      keysAmounts = [ 'volume24h_XLM', 'depth10_XLM' ];
+
+      for (k in keysToList) {
+        if (k in asset) {
+          let li = document.createElement('li'),
+              keyContainer = document.createElement('span'),
+              valueContainer = document.createElement('strong');
+
+          // Assemble the li with k, v list pairs
+          li.setAttribute('class', 'list-group-item d-flex justify-content-between align-items-center');
+          keyContainer.textContent = keysToList[k];
+
+          // Format the number value
+          let valueUnitText = (k in keysUnits ? keysUnits[k] : "");
+          var valueNumberFormat;
+          if (keysAmounts.includes(k)) {
+            valueNumberFormat = '0,0.00';
+          } else if (keysPercentages.includes(k)) {
+            valueNumberFormat = '0.00%';
+          } else {
+            valueNumberFormat = '0,0';
+          }
+          valueContainer.textContent = numeral(asset[k]).format(valueNumberFormat) + valueUnitText;
+
+          // Append containers
+          li.appendChild(keyContainer);
+          li.appendChild(valueContainer);
+          assetMetricsList.append(li);
+        }
+      }
+    }
   }
 })();

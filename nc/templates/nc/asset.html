@@ -115,6 +115,7 @@
       </p>
       <div class="d-flex flex-wrap justify-content-between align-items-center">
         <div class="btn-group py-1">
+          <!-- TODO: page like followers page listing this user's accounts that trust this asset. button to trust next to each -->
           <a href="" class="btn btn-sm btn-outline-primary">
             <span data-feather="shield"></span>
             Trust
@@ -183,7 +184,20 @@
     {% if object.name %}{{ object.name }} {% endif %}Statistics
   </div>
   <div class="card-body">
-    Put metrics/data here
+    <ul class="list-group">
+      <strong class="py-1">Base Metrics</strong>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>Outstanding Supply</span>
+        <strong>{{ asset.amount|intcomma }}</strong>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>Asset Holders</span>
+        <strong>{{ asset.num_accounts|intcomma }}</strong>
+      </li>
+    </ul>
+    <ul id="assetMetricsList" class="list-group mt-4 mb-2" data-asset_id="{{ object.asset_id }}">
+      <strong class="py-1">Trade Metrics</strong>
+    </ul>
   </div>
 </div>
 {% endblock %}

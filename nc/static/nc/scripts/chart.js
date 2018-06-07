@@ -1,12 +1,11 @@
 (function() {
   /* Initialization of Stellar server */
   // NOTE: won't get asset price data if use testnet URL so default to live for price data
-  var baseAsset, counterAsset, server = new StellarSdk.Server(STELLAR_MAINNET_SERVER_URL);
+  var baseAsset, counterAsset,
+      server = new StellarSdk.Server(STELLAR_MAINNET_SERVER_URL);
 
   // Plot the current asset's trade aggregation data
-  // TODO: Why is tradeAggregation endpoint data appearing as one day prior to now for end?
-  // Is is something to do with time series format for Highstock versus for Horizon?
-  plotAssetValues(moment().subtract(1.25, 'years').valueOf(), moment().valueOf());
+  plotAssetValues(moment().subtract(1.25, 'year').valueOf(), moment().valueOf());
 
   function plotAssetValues(start, end) {
     /*
@@ -33,7 +32,7 @@
         .then(function(data){
           // Parse the record data to get an appropriate format for chart plotting
           // i.e. [ [timestamp, avg] ]
-          // TODO: check if next has any records (length != 0)
+          // TODO: check if next has any records
           var plotData = [];
           $.each(data.records, function(j, record) {
             plotData.push([ record.timestamp, parseFloat(record.avg) ]);
@@ -53,7 +52,7 @@
   function getResolution(start, end) {
     /*
     Returns the resolution in milliseconds for Stellar tradeAggregation call.
-    Resolution values chosen so that only 2 API calls required. TODO: iterative fetching
+    Resolution values chosen so that only 2 API calls required.
 
     Based off: https://github.com/highcharts/highcharts/blob/master/samples/data/from-sql.php
     */
@@ -82,6 +81,7 @@
 
     Iteratively collect next records, parse, then plot in current chart
     */
+    // TODO!
   }
 
   function afterSetExtremes(e) {
@@ -99,7 +99,6 @@
     .then(function(data){
       // Parse the record data to get an appropriate format for chart plotting
       // i.e. [ [timestamp, avg] ]
-      // TODO: check if next has any records (length != 0)
       var firstVal, lastVal;
       $.each(data.records, function(j, record) {
         plotData.push([ record.timestamp, parseFloat(record.avg) ]);
@@ -177,30 +176,79 @@
            buttons: [{
                type: 'day',
                count: 1,
-               text: '1d'
+               text: '1d',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'week',
                count: 1,
-               text: '1w'
+               text: '1w',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'month',
                count: 1,
-               text: '1m'
+               text: '1m',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'month',
                count: 3,
-               text: '3m'
+               text: '3m',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'month',
                count: 6,
-               text: '6m'
+               text: '6m',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'year',
                count: 1,
-               text: '1y'
+               text: '1y',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }, {
                type: 'all',
-               text: 'All'
+               text: 'All',
+               events: {
+                 click: function(e) {
+                   // Add an offset so that end date is at current time
+                   let offset = moment().valueOf() - Highcharts.charts[0].xAxis[0].dataMax;
+                   this._offsetMax = (offset > 0 ? offset : 0);
+                 }
+               }
            }],
            selected: 6,
            inputEnabled: false
@@ -209,7 +257,7 @@
          events: {
            afterSetExtremes: afterSetExtremes
          },
-         minRange: 3600 * 1000 // one hour
+         minRange: 3600 * 1000, // one hour
        },
        yAxis: {
          floor: 0
