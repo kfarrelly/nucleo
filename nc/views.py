@@ -33,7 +33,7 @@ from .models import (
 
 # Web app views
 ## User
-class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+class UserDetailView(mixins.PrefetchedSingleObjectMixin,
     mixins.IndexContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
@@ -116,13 +116,13 @@ class UserDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
             context['followers_count'] = self.object.profile.followers.count()
             context['following_count'] = self.object.profiles_following.count()
             context['is_following'] = self.object.profile.followers\
-                .filter(id=self.request.user.id).exists()
+                .filter(id=self.request.user.id).exists() if self.request.user else False
 
             # Update the context for cryptographically signed username
             # Include the account creation form as well for Nucleo to store
             # the verified public key
             context['verification_key'] = settings.STELLAR_DATA_VERIFICATION_KEY
-            if self.request.user == self.object:
+            if self.request.user and self.request.user == self.object:
                 context['signed_user'] = signing.dumps(self.request.user.id)
                 context['account_form'] = forms.AccountCreateForm()
         return context
@@ -354,7 +354,7 @@ class AccountDeleteView(LoginRequiredMixin, mixins.IndexContextMixin, generic.De
         """
         return self.request.user.accounts.all()
 
-class AccountOperationListView(LoginRequiredMixin, mixins.JSONResponseMixin, generic.TemplateView):
+class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
     template_name = 'nc/account_operation_list.html'
 
     def render_to_response(self, context):
@@ -469,7 +469,7 @@ class AccountOperationListView(LoginRequiredMixin, mixins.JSONResponseMixin, gen
 
 
 ## Asset
-class AssetDetailView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+class AssetDetailView(mixins.PrefetchedSingleObjectMixin,
     mixins.IndexContextMixin, generic.DetailView):
     model = Asset
     slug_field = 'asset_id'
