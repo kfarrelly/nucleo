@@ -95,6 +95,7 @@
       );
     });
 
+    /** Bootstrap createStellarModalForm close **/
     $('#createStellarModal').on('hidden.bs.modal', function (e) {
       // Clear out forms
       resetStellarForms();

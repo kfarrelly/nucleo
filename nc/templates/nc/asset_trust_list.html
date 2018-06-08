@@ -1,0 +1,152 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_follow_list.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Trustlines for {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only"></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:user-detail' request.user.username %}">
+        <span data-feather="user"></span>
+        Profile <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Change Trust</h1>
+</div>
+
+<div class="d-flex flex-wrap mx-4 mt-4 mb-0">
+  <h5 class="text-secondary">
+    {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}
+  </h5>
+</div>
+
+<div class="my-2">
+  <a href="{% url 'nc:asset-detail' object.asset_id %}">Back</a>
+</div>
+
+<ul class="list-group">
+  {% for acc in page_obj %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div class="d-inline-flex justify-content-start align-items-center">
+      <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if acc.pic %} src="{{ acc.pic.url }}"{% endif %} alt="">
+      <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+        <strong>{{ acc.name }}</strong>
+        <small class="text-muted">{{ acc.public_key|truncatechars:13 }}{{ acc.public_key|slice:"-10:" }}</small>
+      </div>
+    </div>
+    {% with trust|get_item:acc.public_key as trust_item %}
+    {% if not trust_item.already_trusts %}
+    <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#signStellarModal" data-public_key="{{ acc.public_key }}" data-will_trust="true">
+      <span data-feather="shield"></span>
+      Trust {{ object.code }}
+    </button>
+    {% else %}
+    <button class="btn btn-sm btn-outline-primary active" type="button" data-public_key="{{ acc.public_key }}" {% if trust_item.can_change_trust %}data-toggle="modal" data-target="#signStellarModal" data-will_trust="false"{% else %}data-toggle="tooltip" data-placement="top" title="{{ object.code }} asset balance must be zero to remove trust" disabled{% endif %}>
+      <span data-feather="shield"></span>
+      Trusted
+    </button>
+    {% endif %}
+    {% endwith %}
+  </div>
+  {% endfor %}
+</ul>
+
+<div class="pagination mt-2">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+<!-- Sign Stellar Transaction Modal -->
+<div class="modal fade" id="signStellarModal" tabindex="-1" role="dialog" aria-labelledby="signStellarModalTitle" aria-hidden="true">
+  <form method="POST" id="signStellarModalForm" data-asset_code="{{ object.code }}" data-asset_issuer="{{ object.issuer_address }}" data-success="{% url 'nc:asset-trust-list' object.asset_id %}?page={{ page_obj.number }}">
+    {% csrf_token %}
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="signStellarModalTitle">Sign Transaction</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 class="pt-1 mb-3 modal-body-header">Please enter your secret key to submit this transaction</h5>
+          <div class="input-group">
+            <input name="public_key" type="text" class="d-none" value="">
+            <input name="will_trust" type="checkbox" class="d-none" value="">
+            <input type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" disabled>
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
+            </div>
+          </div>
+          <p class="mt-3">
+            By clicking Submit, a transaction with <a href="https://www.stellar.org/developers/guides/concepts/list-of-operations.html#change-trust" class="text-info" target="_blank">Change Trust</a> operation will be added to the Stellar Network.
+          </p>
+          <div class="text-danger mt-4">
+            <strong>Security Notes</strong>
+            <ul>
+              <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+              <li>Nucleo uses your secret key to sign off on this modification to the Stellar ledger.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block nc_script %}
+<script src="{% static 'nc/scripts/asset_trust.js' %}"></script>
+{% endblock %}

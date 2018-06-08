@@ -116,9 +116,9 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center">
         <div class="btn-group py-1">
           <!-- TODO: page like followers page listing this user's accounts that trust this asset. button to trust next to each -->
-          <a href="" class="btn btn-sm btn-outline-primary">
+          <a href="{% url 'nc:asset-trust-list' object.asset_id %}" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
             <span data-feather="shield"></span>
-            Trust
+            Change Trust
           </a>
           {% if object.issuer and object.issuer.user.id == request.user.id %}
           <a href="{% url 'nc:asset-update' object.asset_id %}" class="btn btn-sm btn-outline-secondary">

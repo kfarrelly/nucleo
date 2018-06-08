@@ -564,6 +564,60 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         return reverse('nc:asset-detail', kwargs={'slug': self.object.asset_id})
 
 
+class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
+    template_name = 'nc/asset_trust_list.html'
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        """
+        Add a boolean for template to determine if listing followers
+        or following.
+        """
+        context = super(AssetTrustListView, self).get_context_data(**kwargs)
+
+        # Add the asset to the context
+        context['object'] = self.object
+        context['is_native'] = (self.object.issuer_address == None)
+
+        # Build the addresses dict
+        addresses = {
+            account.public_key: Address(address=account.public_key,
+                network=settings.STELLAR_NETWORK)
+            for account in self.object_list
+        }
+        # NOTE: This is expensive! Might have to roll out into JS with loader
+        # Need to decouple Address initialization from get() method to work!
+        for k, a in addresses.iteritems():
+            a.get()
+
+        # Build the trust dict with appropriate booleans: { public_key: {already_trusts: bool, can_change_trust: bool} }
+        # NOTE: for now, ignore minimum balance issues
+        trust = {}
+        for k, a in addresses.iteritems():
+            already_trusts = False
+            can_change_trust = True
+            for b in a.balances:
+                is_the_asset = (b.get('asset_issuer', None) == self.object.issuer_address\
+                    and b.get('asset_code', None) == self.object.code)
+                if is_the_asset:
+                    already_trusts = True
+                    if float(b['balance']) > 0.0:
+                        # Can't remove trust if have a balance of this asset
+                        can_change_trust = False
+            trust[k] = {'already_trusts': already_trusts, 'can_change_trust': can_change_trust}
+
+        context['addresses'] = addresses
+        context['trust'] = trust
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is this user's accounts but store the Asset instance as well.
+        """
+        self.object = get_object_or_404(Asset, asset_id=self.kwargs['slug'])
+        return self.request.user.accounts.all()
+
+
 # TODO: For way later down the line in the roadmap.
 # Refactor this so it's in a separate 'api' Django app
 # API Viewsets
