@@ -18,7 +18,7 @@
     <li class="nav-item">
       <a class="nav-link" href="#">
         <span data-feather="activity"></span>
-        Feed <span class="sr-only"></span>
+        Feed
       </a>
     </li>
     <li class="nav-item">
@@ -28,7 +28,7 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
         <span data-feather="trending-up"></span>
         Trade
       </a>
@@ -157,7 +157,7 @@
             {% endwith %}
             {% endwith %}
             {% else %}
-            <div style="font-weight: 500;"></div>
+            <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% endif %}</div>
             <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}</small></div>
             {% endif %}
           </div>

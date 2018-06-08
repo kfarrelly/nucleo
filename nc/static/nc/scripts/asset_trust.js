@@ -40,6 +40,7 @@
 
     // Obtain the modal header to display errors under if POSTings fail
     // and fill in asset, willTrust values
+    // NOTE: On testnet, change trust will fail if issuer id isn't the same as on mainnet
     let modalHeader = $(this).find('.modal-body-header')[0],
         asset = new StellarSdk.Asset(this.dataset.asset_code, this.dataset.asset_issuer),
         publicKey = this.elements["public_key"].value,

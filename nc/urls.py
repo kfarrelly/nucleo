@@ -22,4 +22,9 @@ urlpatterns = [
     url(r'^asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
+
+    # Trade
+    url(r'^trade/$', views.TradeRedirectView.as_view(), name='trade-redirect'),
+    url(r'^trade/exchange/$', views.TradeExchangeView.as_view(), name='trade-exchange'),
+    url(r'^trade/assets/top/$', views.AssetTopListView.as_view(), name='top-asset-list'),
 ]

@@ -18,7 +18,7 @@
     <li class="nav-item">
       <a class="nav-link" href="#">
         <span data-feather="activity"></span>
-        Feed <span class="sr-only"></span>
+        Feed
       </a>
     </li>
     <li class="nav-item">
@@ -28,7 +28,7 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
         <span data-feather="trending-up"></span>
         Trade
       </a>
@@ -126,17 +126,17 @@
             Edit Asset
           </a>
           {% else %}
-          <a href="#" class="btn btn-sm btn-outline-secondary">
+          <a href="{% url 'nc:trade-exchange' %}" class="btn btn-sm btn-outline-secondary">
             <span data-feather="trending-up"></span>
             Trade
           </a>
           {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <button type="button" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:top-asset-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
-            <span class="asset-score">100</span>
-          </button>
+            <span class="asset-score"></span>
+          </a>
         </div>
       </div>
     </div>
@@ -153,6 +153,84 @@
     </div>
   </div>
 </div>
+{% if request.user.is_authenticated %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <div class="w-50 mr-2 dropup dropup-buy-sell">
+    <button type="button" class="btn btn-sm btn-block btn-outline-primary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Buy
+    </button>
+    <div class="dropdown-menu">
+      <form id="buyForm" method="POST" class="px-4 py-3">
+        {% csrf_token %}
+        <h6>Buy {{ object.code }}</h6>
+        <h5 class="text-center py-1">
+          <span id="buyEstimate">0.000</span> {{ object.code }}
+        </h5>
+        <div class="form-group">
+          <label for="buyAmount">Amount</label>
+          <div class="input-group">
+            <input type="number" class="form-control" id="buyAmount" min="0" step="0.1" required>
+            <div class="input-group-append">
+              <span class="input-group-text">XLM</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+            <input type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" disabled>
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
+            </div>
+          </div>
+        </div>
+        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Received {{ object.code }} estimated from current market price of 1 {{ object.code }} = <span class="asset-price-xlm"></span></small>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit Buy</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="w-50 ml-2 dropup dropup-buy-sell">
+    <button type="button" class="btn btn-sm btn-block btn-outline-secondary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Sell
+    </button>
+    <div class="dropdown-menu dropdown-menu-right">
+      <form id="sellForm" method="POST" class="px-4 py-3">
+        {% csrf_token %}
+        <h6>Sell {{ object.code }}</h6>
+        <h5 class="text-center py-1">
+          <span id="sellEstimate">0.000</span> XLM
+        </h5>
+        <div class="form-group">
+          <label for="sellAmount">Amount</label>
+          <div class="input-group">
+            <input type="number" class="form-control" id="sellAmount" min="0" step="0.1" required>
+            <div class="input-group-append">
+              <span class="input-group-text">{{ object.code }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+            <input type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" disabled>
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
+            </div>
+          </div>
+        </div>
+        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Received XLM estimated from current market price of 1 {{ object.code }} = <span class="asset-price-xlm"></span></small>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-secondary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit Sell</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endif %}
 
 

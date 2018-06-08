@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy, sys
+import copy, requests, sys
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -9,7 +9,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import signing
 from django.db.models import (
-    BooleanField, Case, prefetch_related_objects, Value, When,
+    BooleanField, Case, ExpressionWrapper, F, FloatField,
+    prefetch_related_objects, Value, When,
 )
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
@@ -33,8 +34,8 @@ from .models import (
 
 # Web app views
 ## User
-class UserDetailView(mixins.PrefetchedSingleObjectMixin,
-    mixins.IndexContextMixin, generic.DetailView):
+class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
+    mixins.LoginRedirectContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
@@ -469,8 +470,8 @@ class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
 
 
 ## Asset
-class AssetDetailView(mixins.PrefetchedSingleObjectMixin,
-    mixins.IndexContextMixin, generic.DetailView):
+class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
+    mixins.LoginRedirectContextMixin, generic.DetailView):
     model = Asset
     slug_field = 'asset_id'
     template_name = 'nc/asset.html'
@@ -501,6 +502,7 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin,
             json = horizon.assets(params=params)
 
             # Store the asset record from Horizon in context
+            # NOTE: On testnet, won't get a record if mainnet issuer id isn't the same as testnet's
             record = None
             if '_embedded' in json and 'records' in json['_embedded'] and json['_embedded']['records']:
                 record = json['_embedded']['records'][0]
@@ -616,6 +618,67 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.L
         """
         self.object = get_object_or_404(Asset, asset_id=self.kwargs['slug'])
         return self.request.user.accounts.all()
+
+
+class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
+    generic.ListView):
+    template_name = "nc/asset_top_list.html"
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        """
+        Add a boolean for template to determine if listing followers
+        or following.
+        """
+        context = super(AssetTopListView, self).get_context_data(**kwargs)
+
+        # Set ticker assets and rank of asset on top of current page
+        context['ticker_assets'] = self.ticker_assets
+        page_obj = context['page_obj']
+        context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
+
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is assets with asset_id in StellarTerm ticker list.
+        """
+        # Fetch the StellarTerm ticker json and store
+        r = requests.get(settings.STELLARTERM_TICKER_URL)
+        json = r.json()
+        ticker_assets = json.get('assets', [])
+
+        # Clean the asset list
+        cleaned_ticker_assets = [ a for a in ticker_assets
+            if 'activityScore' in a and a['activityScore'] > 0 ]
+
+        # Parse to get asset_ids for queryset filter
+        top_asset_ids = [ a['id'] for a in cleaned_ticker_assets ]
+
+        # Store the dict version of ticker assets
+        self.ticker_assets = {
+            a['id']: a
+            for a in cleaned_ticker_assets
+        }
+
+        # Order the qset by activityScore
+        # TODO: Figure out how to annotate qset properly
+        assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))
+        for a in assets:
+            a.score = self.ticker_assets[a.asset_id]['activityScore']
+        assets.sort(key=lambda a: a.score, reverse=True)
+
+        return assets
+
+
+class TradeRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:trade-exchange'
+
+
+class TradeExchangeView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
+    generic.TemplateView):
+    template_name = "nc/trade_exchange.html"
 
 
 # TODO: For way later down the line in the roadmap.

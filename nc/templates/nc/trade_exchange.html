@@ -1,0 +1,71 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/trade.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Exchange{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="activity"></span>
+        Feed
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:user-redirect' %}">
+        <span data-feather="user"></span>
+        Profile
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:trade-redirect' %}">
+        <span data-feather="trending-up"></span>
+        Trade <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<nav class="nav nav-trade nav-pills nav-justified p-4" role="tablist">
+  <a href="{% url 'nc:trade-exchange' %}" class="nav-item nav-link active d-flex flex-column justify-content-center align-items-center">
+    <span data-feather="repeat"></span>
+    Exchange
+  </a>
+  <a href="{% url 'nc:top-asset-list' %}" class="nav-item nav-link d-flex flex-column justify-content-center align-items-center">
+    <span data-feather="star"></span>
+    Top Assets
+  </a>
+  <a href="" class="nav-item nav-link d-flex flex-column justify-content-center align-items-center">
+    <span data-feather="award"></span>
+    Leaderboard
+  </a>
+</nav>
+
+<div class="card p-3 p-md-5 bg-white rounded box-shadow">
+  EXCHANGE!!!
+</div>
+{% endblock %}
+
+
+{% block nc_script %}
+<script src="{% static 'nc/scripts/ticker.js' %}"></script>
+<script src="{% static 'nc/scripts/trade.js' %}"></script>
+{% endblock %}

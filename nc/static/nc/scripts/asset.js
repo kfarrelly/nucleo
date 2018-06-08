@@ -1,5 +1,8 @@
 (function() {
   $(document).ready(function() {
+    // Resetting the buy/sell forms
+    resetBuySellForms();
+
     // Fetch compiled asset prices, vol, etc. from StellarTerm
     // when ready.
     $.when(getTickerAssets())
@@ -7,6 +10,39 @@
       populateAssetValues(assets);
       populateAssetDetails(assets);
     });
+  });
+
+  /** Initialization of forms **/
+  function resetBuySellForms() {
+    // Clear out the user input from forms
+    $('#buyForm')[0].reset();
+    $('#sellForm')[0].reset();
+  };
+
+  // TODO: Retrieve market price for BUY and SELL forms from orderbook!
+  // Do it everytime user toggles open the form?
+  // https://www.stellar.org/developers/horizon/reference/endpoints/orderbook-details.html
+
+  /*
+  Buy/Sell dropdown toggle so doesn't clock when click form
+  NOTE: see https://stackoverflow.com/questions/26639346/prevent-bootstrap-dropdown-from-closing-on-clicks/27759926
+  */
+  $('.dropup.dropup-buy-sell').on({
+      "click": function(event) {
+        if ($(event.target).closest('.dropup-buy-sell-toggle').length) {
+          $(this).data('closable', true);
+        } else {
+          $(this).data('closable', false);
+        }
+      },
+      "hide.bs.dropdown": function(event) {
+        hide = $(this).data('closable');
+        $(this).data('closable', true);
+        return hide;
+      },
+      "hidden.bs.dropdown": function(event) {
+        resetBuySellForms();
+      }
   });
 
   function populateAssetValues(data) {

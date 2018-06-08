@@ -88,3 +88,18 @@ class IndexContextMixin(object):
             },
         })
         return kwargs
+
+
+class LoginRedirectContextMixin(object):
+    """
+    A mixin that adds a link to login page with next url as
+    current request page.
+
+    Meant for views that don't require authenticated user access.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(LoginRedirectContextMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'login_redirect': '%s?next=%s' % (settings.LOGIN_URL, self.request.path),
+        })
+        return kwargs
