@@ -1,0 +1,151 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/feed.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | News{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:feed-redirect' %}">
+        <span data-feather="activity"></span>
+        Feed <span class="sr-only">(current)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:user-redirect' %}">
+        <span data-feather="user"></span>
+        Profile
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">
+        <span data-feather="send"></span>
+        Send
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="list-group my-4">
+  <div class="list-group-item flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <div class="d-flex flex-row align-items-center">
+        <img class="rounded img-object-fit-cover m-2" style="height: 40px; width: 40px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
+        <h5 class="m-2">{{ request.user.get_full_name }}</h5>
+      </div>
+      <span class="text-secondary" style="font-weight: 500">@{{ request.user.username }}</span>
+    </div>
+    <div class="mx-2">
+      <button type="button" class="btn btn-sm btn-light">
+        Followers: {{ profile.followers.count }}
+      </button>
+      <button type="button" class="btn btn-sm btn-light">
+        Following: {{ request.user.profiles_following.count }}
+      </button>
+      <button type="button" class="btn btn-sm btn-light">
+        <span data-feather="award"></span>
+        #{{ profile.rank }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card card-feed">
+  <div class="card-header border-0 d-flex justify-content-between align-items-center">
+    <ul class="nav nav-pills card-header-pills">
+      <li class="nav-item">
+        <a href="{% url 'nc:feed-news' %}" class="nav-item nav-link active">
+          <span data-feather="rss"></span>
+          News
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'nc:feed-activity' %}" class="nav-item nav-link">
+          <span data-feather="activity"></span>
+          Activity
+        </a>
+      </li>
+    </ul>
+    <a href="https://cryptopanic.com/" target="_blank" class="text-muted"><small>CryptoPanic.com</small></a>
+  </div>
+  <div class="card-body p-0">
+    <div id="newsList" class="list-group">
+      {% for object in object_list %}
+      <a href="{{ object.url }}" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
+        <div class="d-flex w-100 justify-content-between">
+          <h6 class="mb-1">{{ object.title }}</h6>
+          <small class="time-since pl-1 text-right" data-created_at="{{ object.created_at }}"></small>
+        </div>
+        <p class="mb-2 text-muted">{{ object.domain }}</p>
+        <small class="d-flex flex-wrap justify-content-start align-items-center">
+          {% with object.votes as votes %}
+          {% if votes.positive > 0 %}
+          <span class="mr-2 text-success">
+          <span data-feather="arrow-up"></span>
+          {{ votes.positive }}
+          </span>
+          {% endif %}
+          {% if votes.negative > 0 %}
+          <span class="mr-2 text-danger">
+          <span data-feather="arrow-down"></span>
+          {{ votes.negative }}
+          </span>
+          {% endif %}
+          {% if votes.important > 0 %}
+          <span class="mr-2 text-warning">
+          <span data-feather="alert-triangle"></span>
+          {{ votes.important }}
+          </span>
+          {% endif %}
+          {% if votes.liked > 0 %}
+          <span class="mr-2">
+          <span data-feather="thumbs-up"></span>
+          {{ votes.liked }}
+          </span>
+          {% endif %}
+          {% if votes.disliked > 0 %}
+          <span class="mr-2">
+          <span data-feather="thumbs-down"></span>
+          {{ votes.disliked }}
+          </span>
+          {% endif %}
+          {% if votes.saved > 0 %}
+          <span class="mr-2">
+          <span data-feather="star"></span>
+          {{ votes.saved }}
+          </span>
+          {% endif %}
+          {% endwith %}
+        </small>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-footer border-0 d-flex justify-content-start align-items-center">
+    <button id="moreButton" type="button" class="btn btn-sm btn-link more p-0" data-parent="#newsList" data-url="{{ next }}" {% if next %}data-has_more="true"{% else %}data-has_more="false"{% endif %}>More</button>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block nc_script %}
+<script src="{% static 'nc/scripts/feed_news.js' %}"></script>
+{% endblock %}

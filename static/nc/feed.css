@@ -1,0 +1,16 @@
+.card {
+    overflow: hidden;
+}
+.card-body {
+    word-wrap: break-word;
+}
+
+.card-feed .list-group-item {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+}
+
+.modal-body abbr {
+  word-wrap: break-word;
+}

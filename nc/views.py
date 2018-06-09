@@ -681,6 +681,78 @@ class TradeExchangeView(mixins.IndexContextMixin, mixins.LoginRedirectContextMix
     template_name = "nc/trade_exchange.html"
 
 
+class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:feed-news'
+
+
+class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.JSONResponseMixin, generic.ListView):
+    template_name = "nc/feed_news.html"
+
+    def render_to_response(self, context):
+        """
+        Look for a 'format=json' GET argument to determine if response
+        should be HTML or JSON.
+        """
+        # Look for a 'format=json' GET argument
+        if self.request.GET.get('format') == 'json':
+            return self.render_to_json_response(context)
+        else:
+            return super(FeedNewsListView, self).render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        """
+        Add previous, next urls and prefetched user object for profile.
+        """
+        context = super(FeedNewsListView, self).get_context_data(**kwargs)
+        if self.request.GET.get('format') == 'json':
+            # Look for a 'format=json' GET argument and only store the object
+            # list as 'results' if JSON response expected
+            context = { 'results': context['object_list'] }
+        else:
+            # Include user profile
+            context['profile'] = self.request.user.profile
+
+        # Set the next link urls
+        context['next'] = '{0}?page={1}&format=json'.format(self.request.path, self.next_page) if self.next_page else None
+
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is paginated news list from CryptoPanic.
+        """
+        params = self.request.GET.copy()
+        # Fetch the news items from CryptoPanic
+        base_url = settings.CRYPTOPANIC_STELLAR_POST_URL
+        kwargs = {
+            'auth_token': settings.CRYPTOPANIC_API_KEY,
+            'currencies': 'XLM',
+            'public': True
+        }
+        if 'page' in params:
+            kwargs.update({ 'page': params.get('page', '') })
+
+        params.update(kwargs)
+        full_url = '{0}?{1}'.format(base_url, params.urlencode())
+
+        r = requests.get(full_url)
+        json = r.json()
+
+        # Store the next page numbers
+        next = json.get('next', None)
+        self.next_page = QueryDict(urlparse(next).query).get('page', None) if next else None
+
+        # Return the results
+        return json['results']
+
+
+class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    generic.TemplateView):
+    template_name = "nc/feed_activity.html"
+
+
 # TODO: For way later down the line in the roadmap.
 # Refactor this so it's in a separate 'api' Django app
 # API Viewsets

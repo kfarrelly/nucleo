@@ -27,4 +27,9 @@ urlpatterns = [
     url(r'^trade/$', views.TradeRedirectView.as_view(), name='trade-redirect'),
     url(r'^trade/exchange/$', views.TradeExchangeView.as_view(), name='trade-exchange'),
     url(r'^trade/assets/top/$', views.AssetTopListView.as_view(), name='top-asset-list'),
+
+    # Feed
+    url(r'^feed/$', views.FeedRedirectView.as_view(), name='feed-redirect'),
+    url(r'^feed/news/$', views.FeedNewsListView.as_view(), name='feed-news'),
+    url(r'^feed/activity/$', views.FeedActivityListView.as_view(), name='feed-activity'),
 ]

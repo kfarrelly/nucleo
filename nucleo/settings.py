@@ -143,7 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Allauth
-LOGIN_REDIRECT_URL = '/profile/'
+LOGIN_REDIRECT_URL = '/feed/'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -154,6 +154,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/profile/'
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_SESSION_REMEMBER = False
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
@@ -259,3 +260,7 @@ else:
 
 # StellarTerm
 STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
+
+# CryptoPanic
+CRYPTOPANIC_API_KEY = 'b3765edc7efa6d8eec22e20370ac86cffea4bae1'
+CRYPTOPANIC_STELLAR_POST_URL = 'https://cryptopanic.com/api/posts/'
