@@ -160,16 +160,16 @@
       Buy
     </button>
     <div class="dropdown-menu">
-      <form id="buyForm" method="POST" class="px-4 py-3">
+      <form id="buyForm" method="POST" class="px-4 py-3" data-success="{% url 'nc:user-redirect' %}#assets">
         {% csrf_token %}
-        <h6>Buy {{ object.code }}</h6>
+        <h6 class="form-header">Buy {{ object.code }}</h6>
         <h5 class="text-center py-1">
-          <span id="buyEstimate">0.000</span> {{ object.code }}
+          <span id="buyEstimate">0.0000000</span> {{ object.code }}
         </h5>
         <div class="form-group">
           <label for="buyAmount">Amount</label>
           <div class="input-group">
-            <input type="number" class="form-control" id="buyAmount" min="0" step="0.1" required>
+            <input type="number" name="amount" class="form-control" id="buyAmount" min="0" step="0.0000001" required>
             <div class="input-group-append">
               <span class="input-group-text">XLM</span>
             </div>
@@ -185,7 +185,7 @@
             </div>
           </div>
         </div>
-        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated {{ object.code }} amount from current market price of 1 {{ object.code }} = <span class="asset-price-xlm"></span></small>
+        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated {{ object.code }} amount from current market price of 1 {{ object.code }} = <span id="buyPrice"></span> XLM (lowest ask price)</small>
         <div class="mt-3">
           <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit Buy</span></button>
         </div>
@@ -197,16 +197,16 @@
       Sell
     </button>
     <div class="dropdown-menu dropdown-menu-right">
-      <form id="sellForm" method="POST" class="px-4 py-3">
+      <form id="sellForm" method="POST" class="px-4 py-3" data-success="{% url 'nc:user-redirect' %}#assets">
         {% csrf_token %}
-        <h6>Sell {{ object.code }}</h6>
+        <h6 class="form-header">Sell {{ object.code }}</h6>
         <h5 class="text-center py-1">
-          <span id="sellEstimate">0.000</span> XLM
+          <span id="sellEstimate">0.0000000</span> XLM
         </h5>
         <div class="form-group">
           <label for="sellAmount">Amount</label>
           <div class="input-group">
-            <input type="number" class="form-control" id="sellAmount" min="0" step="0.1" required>
+            <input type="number" name="amount" class="form-control" id="sellAmount" min="0" step="0.0000001" required>
             <div class="input-group-append">
               <span class="input-group-text">{{ object.code }}</span>
             </div>
@@ -222,7 +222,7 @@
             </div>
           </div>
         </div>
-        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated XLM amount from current market price of 1 {{ object.code }} = <span class="asset-price-xlm"></span></small>
+        <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated XLM amount from current market price of 1 {{ object.code }} = <span id="sellPrice"></span> XLM (highest bid price)</small>
         <div class="mt-3">
           <button type="submit" class="btn btn-secondary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit Sell</span></button>
         </div>
@@ -282,6 +282,15 @@
 
 
 {% block nc_script %}
+<script>
+  const ASSET_CODE = "{{ object.code }}",
+        ASSET_ISSUER = "{{ object.issuer_address }}",
+        {% if is_native %}
+        IS_NATIVE = true;
+        {% else %}
+        IS_NATIVE = false;
+        {% endif %}
+</script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
 <script src="{% static 'nc/scripts/chart.js' %}"></script>
 <script src="{% static 'nc/scripts/asset.js' %}"></script>

@@ -1,10 +1,16 @@
 function displayError(obj, errorMessage, before=false) {
   // Inserts an error alert panel before/after (before=true/false)
   // the given DOM object.
+  displayAlert(obj, errorMessage, 'alert-danger', before);
+}
+
+function displayAlert(obj, alertMessage, alertClass, before=false) {
+  // Inserts an error alert panel before/after (before=true/false)
+  // the given DOM object.
 
   // Example:
-  // <div class="alert alert-danger alert-dismissible fade show" role="alert">
-  //  An error message!
+  // <div class="alert alert-success alert-dismissible fade show" role="alert">
+  //  An alert message!
   //  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
   //    <span aria-hidden="true">&times;</span>
   //  </button>
@@ -12,12 +18,12 @@ function displayError(obj, errorMessage, before=false) {
 
   // Create the alert container
   var alertDiv = document.createElement("div");
-  alertDiv.setAttribute("class", "alert alert-danger alert-dismissible fade show");
+  alertDiv.setAttribute("class", "alert " + alertClass + " alert-dismissible fade show");
   alertDiv.setAttribute("role", "alert");
 
-  // Insert the error text
-  var errorText = document.createTextNode(errorMessage);
-  alertDiv.appendChild(errorText);
+  // Insert the alert text
+  var alertText = document.createTextNode(alertMessage);
+  alertDiv.appendChild(alertText);
 
   // Add a button to close the panel
   var closeButton = document.createElement("button");

@@ -209,6 +209,7 @@ BOWER_INSTALLED_APPS = (
     'numeral',
     'ladda-bootstrap',
     'highcharts',
+    'bignumber.js',
 )
 
 # Algolia
