@@ -671,6 +671,7 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixi
         return assets
 
 
+## Trade
 class TradeRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
     pattern_name = 'nc:trade-exchange'
@@ -681,6 +682,7 @@ class TradeExchangeView(mixins.IndexContextMixin, mixins.LoginRedirectContextMix
     template_name = "nc/trade_exchange.html"
 
 
+## Feed
 class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
     pattern_name = 'nc:feed-news'
@@ -751,6 +753,16 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
     generic.TemplateView):
     template_name = "nc/feed_activity.html"
+
+
+## Send
+class SendRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:send-detail'
+
+class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
+    generic.TemplateView):
+    template_name = "nc/send.html"
 
 
 # TODO: For way later down the line in the roadmap.

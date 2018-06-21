@@ -69,7 +69,7 @@
     // Set up attributes and content for headingDiv
     headingDiv.setAttribute("class", "d-flex w-100 justify-content-between");
     titleContainer.setAttribute("class", "mb-1");
-    titleContainer.textContent = record.title;
+    titleContainer.innerHTML = record.title;
     timeSinceContainer.setAttribute("class", "pl-1 text-right");
     timeSinceContainer.textContent = moment(record.created_at).fromNow();
     domainContainer.setAttribute("class", "mb-2 text-muted");

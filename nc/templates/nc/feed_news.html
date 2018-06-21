@@ -34,7 +34,7 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
         <span data-feather="send"></span>
         Send
       </a>
@@ -91,7 +91,7 @@
       {% for object in object_list %}
       <a href="{{ object.url }}" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
         <div class="d-flex w-100 justify-content-between">
-          <h6 class="mb-1">{{ object.title }}</h6>
+          <h6 class="mb-1">{{ object.title | safe }}</h6>
           <small class="time-since pl-1 text-right" data-created_at="{{ object.created_at }}"></small>
         </div>
         <p class="mb-2 text-muted">{{ object.domain }}</p>

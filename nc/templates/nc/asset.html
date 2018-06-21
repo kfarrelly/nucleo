@@ -34,7 +34,7 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
         <span data-feather="send"></span>
         Send
       </a>
@@ -178,11 +178,13 @@
         <div class="form-group">
           <div class="input-group">
             <input type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
+            <!-- TODO:
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="button" disabled>
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
+          -->
           </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated {{ object.code }} amount from current market price of 1 {{ object.code }} = <span id="buyPrice"></span> XLM (lowest ask price)</small>
@@ -215,11 +217,13 @@
         <div class="form-group">
           <div class="input-group">
             <input type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
+            <!-- TODO:
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="button" disabled>
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
+          -->
           </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated XLM amount from current market price of 1 {{ object.code }} = <span id="sellPrice"></span> XLM (highest bid price)</small>
@@ -292,6 +296,6 @@
         {% endif %}
 </script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
-<script src="{% static 'nc/scripts/chart.js' %}"></script>
+<script src="{% static 'nc/scripts/asset_chart.js' %}"></script>
 <script src="{% static 'nc/scripts/asset.js' %}"></script>
 {% endblock %}

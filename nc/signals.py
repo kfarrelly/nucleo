@@ -9,18 +9,25 @@ from .models import Asset, Profile
 
 # Profile
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def update_profile_full_name(sender, instance, created, **kwargs):
+def update_model_full_name(sender, instance, created, **kwargs):
     """
-    Keep profile.full_name in sync with user.get_full_name().
+    Keep profile.full_name, account.user_full_name in sync with user.get_full_name().
 
-    Need to use profile.save() versus update since index.ProfileIndex
-    is synced to the post_save signal of Profile model.
+    Need to use .save() versus update since index.ProfileIndex, index.AccountIndex
+    are synced to the post_save signal of Profile, Account models.
     """
     # Ignore created instance because it won't have a profile
     if instance.id and not created:
+        # Change profile full name attr
         profile = instance.profile
         profile.full_name = instance.get_full_name()
         profile.save()
+
+        # Iterate through all the accounts user has as well
+        # NOTE: this is expensive if have many many accounts so another incentive to cap account #
+        for account in instance.accounts.all():
+            account.user_full_name = instance.get_full_name()
+            account.save()
 
 
 @receiver(m2m_changed, sender=Profile.followers.through)

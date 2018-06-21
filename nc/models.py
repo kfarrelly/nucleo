@@ -109,6 +109,10 @@ class Account(models.Model):
         null=True, blank=True, default=None
     )
 
+    # NOTE: user.get_full_name() duplicated here
+    # so Algolia search index updates work when user updates occur (kept in sync through signals.py)
+    user_full_name = models.CharField(max_length=200, null=True, blank=True, default=None)
+
     def username(self):
         """
         Have this method as a proxy for the search index.

@@ -147,8 +147,6 @@
       // Clear out the user input from forms
       $('#buyForm')[0].reset();
       $('#sellForm')[0].reset();
-
-      // TODO: change number displayed to zero in form panel
     };
 
     function getMarketPrices(asset) {

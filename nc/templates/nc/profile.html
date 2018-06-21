@@ -34,7 +34,7 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
         <span data-feather="send"></span>
         Send
       </a>
@@ -239,22 +239,26 @@
             <label class="control-label sr-only">Issuing Account</label>
             <div class="input-group">
               <input type="password" name="issuer_secret_key" class="form-control" placeholder="Issuing Account (e.x. SBUVRVHRRGNBFYY...)" aria-label="Issuing Account Secret Key" required>
+              <!-- TODO:
               <div class="input-group-append">
                 <button class="btn btn-outline-secondary" type="button" disabled>
                   <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
                 </button>
               </div>
+            -->
             </div>
           </div>
           <div class="form-group">
             <label class="control-label sr-only">Distribution Account</label>
             <div class="input-group">
               <input type="password" name="distributer_secret_key" class="form-control" placeholder="Distribution Account (e.x. SB4YQ6LEODDJRZY...)" aria-label="Distributing Account Secret Key" required>
+              <!-- TODO:
               <div class="input-group-append">
                 <button class="btn btn-outline-secondary" type="button" disabled>
                   <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
                 </button>
               </div>
+            -->
             </div>
           </div>
           <h6 class="mt-3">
@@ -297,10 +301,11 @@
         Edit Account
       </a>
       {% elif is_following %}
+      <!-- TODO:
       <a href="#" class="btn btn-sm btn-outline-primary float-right">
         <span data-feather="copy"></span>
         Mirror Assets
-      </a>
+      </a>-->
       {% endif %}
 
       {# TODO: PUT THE MINIMUM BALANCE SOMEWHERE HERE PLUS ASSET LIMITS! #}
@@ -407,11 +412,13 @@
           <h5 class="pt-1 mb-3 modal-body-header">Please enter your secret key to verify account ownership</h5>
           <div class="input-group">
             <input type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
+            <!-- TODO:
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="button" disabled>
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
+          -->
           </div>
           <div class="text-danger mt-4">
             <strong>Security Notes</strong>

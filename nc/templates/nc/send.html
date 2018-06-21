@@ -1,0 +1,140 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/send.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Send{% endblock %}
+
+{% block nav %}
+<div class="sidebar-sticky">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:feed-redirect' %}">
+        <span data-feather="activity"></span>
+        Feed
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:user-redirect' %}">
+        <span data-feather="user"></span>
+        Profile
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
+        <span data-feather="trending-up"></span>
+        Trade
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'nc:send-redirect' %}">
+        <span data-feather="send"></span>
+        Send <span class="sr-only">(current)</span>
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block main %}
+<div class="card my-4 bg-white rounded box-shadow">
+  <h5 class="card-header">Send Payment</h5>
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="control-label" for="from">Send From</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon-from">From:</span>
+          </div>
+          <input id="from" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
+        </div>
+        <div class="d-none">
+          From account card or just the public key?
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="to">Send To</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon-to">To:</span>
+          </div>
+          <input id="accountSearchInput" type="text" class="form-control" placeholder="Public key, @username, full name" aria-label="Account Search" aria-describedby="basic-addon-to" autocomplete="off" autocorrect="false" spellcheck="false" type="search">
+          <input id="to" type="text" name="to" class="d-none" aria-label="To">
+          <div id="accountSearchDropdown" class="dropdown-menu search-dropdown">
+            <small class="dropdown-item">Powered by <a class="text-muted" href="https://www.algolia.com/">Algolia</a></small>
+            <div class="dropdown-divider"></div>
+            <h6 class="dropdown-header">Accounts</h6>
+            <ul class="list-group" id="searchAccountHits"></ul>
+          </div>
+        </div>
+        <div class="d-none">
+          To account card if it exists in our system. Or just keep the search box there?
+        </div>
+      </div>
+      <hr>
+      <div class="form-group">
+        <label for="asset">Asset</label>
+        <select class="custom-select" id="asset" required="">
+          <option value="">Choose...</option>
+          <option>XLM</option>
+          <option>MOBI</option>
+          <option>SLT</option>
+        </select>
+        <div class="invalid-feedback">
+          Please select a valid asset.
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="amount">Amount</label>
+        <div class="input-group">
+          <input type="number" name="amount" class="form-control" id="amount" min="0" step="0.0000001" required>
+          <div class="input-group-append">
+            <span class="input-group-text"><!-- TODO: ASSET CODE CHANGE BASED ON SELECTED OPTION-->XLM</span>
+          </div>
+        </div>
+        <small class="text-muted">Available asset balance: 10000 XLM</small>
+      </div>
+      <hr>
+      <div class="form-group">
+        <label for="memo-type">Memo Type</label>
+        <select class="custom-select" id="memo-type" required="">
+          <option value="">None</option>
+          <option>Memo Text</option>
+          <option>Memo ID</option>
+          <option>Memo Hash</option>
+          <option>Memo Return</option>
+        </select>
+        <div class="invalid-feedback">
+          Please select a valid asset.
+        </div>
+      </div>
+      <div id="memoContentFormGroup" class="form-group" style="display: none;">
+        <label class="control-label" for="memo-content">Memo Content</label>
+        <div class="input-group">
+          <input id="memoContent" type="text" name="memo-content" class="form-control" placeholder="Up to 28 bytes of text" aria-label="Memo">
+        </div>
+        <div class="d-none">
+          To account card if it exists in our system. Or just keep the search box there?
+        </div>
+      </div>
+      <div class="form-group mt-4 mb-0">
+        <button type="button" class="btn btn-secondary">Clear</button>
+        <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}

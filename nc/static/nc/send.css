@@ -1,0 +1,10 @@
+.card {
+    overflow: hidden;
+}
+.card-body {
+    word-wrap: break-word;
+}
+
+.modal-body abbr {
+  word-wrap: break-word;
+}

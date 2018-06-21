@@ -11,9 +11,9 @@ class ProfileIndex(AlgoliaIndex):
     }
 
 class AccountIndex(AlgoliaIndex):
-    fields = ('public_key', 'username', 'name', 'pic_url', 'href')
+    fields = ('public_key', 'username', 'user_full_name', 'name', 'pic_url', 'href')
     settings = {
-        'searchableAttributes': ['public_key', 'username', 'name'],
+        'searchableAttributes': ['public_key', 'username', 'user_full_name', 'name'],
         'highlightPreTag': '<mark>',
         'highlightPostTag': '</mark>',
     }
