@@ -189,3 +189,38 @@ class AssetUpdateForm(forms.ModelForm):
             'conditions': forms.TextInput(attrs={'placeholder': 'Conditions on the token (e.x. There will only ever be 500 million Nucleons)'}),
             'domain': forms.TextInput(attrs={'placeholder': 'example.com'}),
         }
+
+
+class FeedActivityCreateForm(forms.Form):
+    """
+    Form to add new activity to request.user's feed.
+    """
+    tx_hash = forms.CharField(max_length=64)
+
+    def __init__(self, *args, **kwargs):
+        """
+        Override __init__ to store authenticated user
+        """
+        self.request_user = kwargs.pop('request_user', None)
+        super(FeedActivityCreateForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        """
+        Override to obtain transaction details from given tx_hash.
+        """
+        # Call the super
+        super(FeedActivityCreateForm, self).clean()
+
+        # Obtain form input parameter
+        tx_hash = self.cleaned_data.get("tx_hash")
+
+        # TODO: GET THE TRANSACTION FROM HORIZON. ISSUES WITH NUMBER OF OPERATIONS IN THERE?
+        # TODO: GET OPS ASSOCIATED WITH TRANSACTION HASH!
+        print tx_hash
+
+        return self.cleaned_data
+
+    def save(self):
+        # TODO: IMPLEMENT SUCH THAT ADD TO REQUEST.USER FEED ON STREAM
+        # TAKE THE RETRIEVED TX STORED BY self.clean() and parse ops to create
+        # the needed activities on stream feed.

@@ -9,9 +9,10 @@ from .models import Asset, Profile
 
 # Profile
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def update_model_full_name(sender, instance, created, **kwargs):
+def update_model_user_details(sender, instance, created, **kwargs):
     """
-    Keep profile.full_name, account.user_full_name in sync with user.get_full_name().
+    Keep profile.full_name, account.user_full_name, account.user_pic_url
+    in sync with user instance.
 
     Need to use .save() versus update since index.ProfileIndex, index.AccountIndex
     are synced to the post_save signal of Profile, Account models.
@@ -27,6 +28,7 @@ def update_model_full_name(sender, instance, created, **kwargs):
         # NOTE: this is expensive if have many many accounts so another incentive to cap account #
         for account in instance.accounts.all():
             account.user_full_name = instance.get_full_name()
+            account.user_pic_url = profile.pic.url if profile.pic else None
             account.save()
 
 

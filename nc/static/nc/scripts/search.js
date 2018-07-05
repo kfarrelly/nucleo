@@ -33,7 +33,7 @@
   // Set event listeners for dropdown on search input
   $('#searchInput').on('input', function(e) {
     // Get the toggle and the dropdown
-    let dropdownIsOpen = $('#searchDropdown')[0].classList.contains('show');
+    let dropdownIsOpen = $('#searchDropdown')[0].classList.contains('show'),
         toggle = $('#searchToggle')[0];
 
     if ((this.value != "" && !dropdownIsOpen) || (this.value == "" && dropdownIsOpen)) {

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy, requests, sys
+import copy, requests, stream, sys
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -23,6 +23,8 @@ from django.views import generic
 from stellar_base.address import Address
 from stellar_base.operation import Operation
 from stellar_base.stellarxdr import Xdr
+
+from stream_django.feed_manager import feed_manager
 
 from urlparse import urlparse
 
@@ -223,7 +225,6 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
         """
         if self.success_url:
             return self.success_url
-
         return reverse('nc:user-detail', kwargs={'slug': self.object.username})
 
     def post(self, request, *args, **kwargs):
@@ -236,10 +237,28 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
         if self.object and self.object != self.request.user:
             is_following = self.object.profile.followers\
                 .filter(id=request.user.id).exists()
+
+            # Add/remove from followers list and notify stream API of follow/unfollow
             if is_following:
                 self.object.profile.followers.remove(request.user)
+                feed_manager.unfollow_user(request.user.id, self.object.id)
             else:
                 self.object.profile.followers.add(request.user)
+                feed_manager.follow_user(request.user.id, self.object.id)
+
+                # Add new activity to feed of user following
+                # NOTE: Not using stream-django model mixin because don't want Follow model
+                # instances in the Nucleo db. Adapted from feed_manager.add_activity_to_feed()
+                feed = feed_manager.get_feed(settings.STREAM_USER_FEED, request.user.id)
+                result = feed.add_activity({
+                    'actor': request.user.id,
+                    'verb': 'follow',
+                    'object': self.object.id,
+                    'actor_username': request.user.username,
+                    'actor_pic_url': request.user.profile.pic_url(),
+                    'object_username': self.object.username,
+                    'object_pic_url': self.object.profile.pic_url()
+                })
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -562,7 +581,6 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         """
         if self.success_url:
             return self.success_url
-
         return reverse('nc:asset-detail', kwargs={'slug': self.object.asset_id})
 
 
@@ -687,7 +705,7 @@ class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
     pattern_name = 'nc:feed-news'
 
-
+### News
 class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
     mixins.JSONResponseMixin, generic.ListView):
     template_name = "nc/feed_news.html"
@@ -749,10 +767,40 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
         # Return the results
         return json['results']
 
-
+### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
     generic.TemplateView):
     template_name = "nc/feed_activity.html"
+
+class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
+    generic.CreateView):
+    form_class = forms.FeedActivityCreateForm
+    template_name = "nc/feed_activity_form.html"
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in the request for authenticated user.
+
+        Pop instance key since FeedActivityCreateForm is not actually a ModelForm,
+        as we don't want to store Activity data in our db.
+        """
+        kwargs = super(FeedActivityCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'request_user': self.request.user
+        })
+
+        kwargs.pop('instance')
+        return kwargs
+
+    def get_success_url(self):
+        """
+        If success url passed into query param, then use for redirect.
+        Otherwise, simply redirect to accounts section of actor user's profile page.
+        """
+        if self.success_url:
+            return self.success_url
+        print '{0}#accounts'.format(reverse('nc:user-detail', kwargs={'slug': self.request.user.username}))
+        return '{0}#accounts'.format(reverse('nc:user-detail', kwargs={'slug': self.request.user.username}))
 
 
 ## Send
@@ -761,7 +809,7 @@ class SendRedirectView(LoginRequiredMixin, generic.RedirectView):
     pattern_name = 'nc:send-detail'
 
 class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
-    generic.TemplateView):
+    mixins.ActivityFormContextMixin, generic.TemplateView):
     template_name = "nc/send.html"
 
 

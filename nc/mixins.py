@@ -5,6 +5,8 @@ from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
 from django.views.generic.detail import SingleObjectMixin
 
+from . import forms
+
 
 class PrefetchedSingleObjectMixin(SingleObjectMixin):
     """
@@ -86,6 +88,18 @@ class IndexContextMixin(object):
                 model.__name__: algoliasearch_django.get_adapter(model).index_name
                 for model in algoliasearch_django.get_registered_model()
             },
+        })
+        return kwargs
+
+
+class ActivityFormContextMixin(object):
+    """
+    A mixin that adds the create feed activity form to the context data.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(ActivityFormContextMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'activity_form': forms.FeedActivityCreateForm(),
         })
         return kwargs
 

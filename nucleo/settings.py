@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'betterforms',
     'algoliasearch_django',
+    'stream_django',
 ]
 
 MIDDLEWARE = [
@@ -155,6 +156,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/profile/'
+ACCOUNT_LOGOUT_REDIRECT_URL ='/accounts/login/'
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_SESSION_REMEMBER = False
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
@@ -265,3 +267,8 @@ STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 # CryptoPanic
 CRYPTOPANIC_API_KEY = 'b3765edc7efa6d8eec22e20370ac86cffea4bae1'
 CRYPTOPANIC_STELLAR_POST_URL = 'https://cryptopanic.com/api/posts/'
+
+# Stream
+STREAM_API_KEY = '98fduvhpxemp'
+STREAM_API_SECRET = 'hbc7arbds4jpkudpfjg3zut2jr4n4jmqymka7vfawspca9dn6emr4vusku2mm992'
+STREAM_USER_FEED = 'user'

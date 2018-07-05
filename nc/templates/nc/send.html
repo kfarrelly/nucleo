@@ -47,47 +47,42 @@
 <div class="card my-4 bg-white rounded box-shadow">
   <h5 class="card-header">Send Payment</h5>
   <div class="card-body">
-    <form method="POST">
+    <form id="sendPaymentForm" method="POST">
       {% csrf_token %}
       <div class="form-group">
-        <label class="control-label" for="from">Send From</label>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text" id="basic-addon-from">From:</span>
-          </div>
-          <input id="from" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
-        </div>
-        <div class="d-none">
-          From account card or just the public key?
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="control-label" for="to">Send To</label>
+        <label class="control-label" for="sendToInput">Send To</label>
         <div class="input-group">
           <div class="input-group-prepend">
             <span class="input-group-text" id="basic-addon-to">To:</span>
           </div>
-          <input id="accountSearchInput" type="text" class="form-control" placeholder="Public key, @username, full name" aria-label="Account Search" aria-describedby="basic-addon-to" autocomplete="off" autocorrect="false" spellcheck="false" type="search">
-          <input id="to" type="text" name="to" class="d-none" aria-label="To">
-          <div id="accountSearchDropdown" class="dropdown-menu search-dropdown">
-            <small class="dropdown-item">Powered by <a class="text-muted" href="https://www.algolia.com/">Algolia</a></small>
-            <div class="dropdown-divider"></div>
-            <h6 class="dropdown-header">Accounts</h6>
-            <ul class="list-group" id="searchAccountHits"></ul>
-          </div>
+          <input id="sendToInput" type="text" class="form-control" placeholder="Public key, @username, full name" aria-label="Account Search" aria-describedby="basic-addon-to" autocomplete="off" autocorrect="false" spellcheck="false" type="search">
         </div>
         <div class="d-none">
           To account card if it exists in our system. Or just keep the search box there?
         </div>
       </div>
+      <div class="w-100">
+        <div id="sendToDropdown">
+          <small class="dropdown-item">Powered by <a class="text-muted" href="https://www.algolia.com/">Algolia</a></small>
+          <h6 class="dropdown-header">Accounts</h6>
+          <ul class="list-group" id="sendToAccountHits"></ul>
+          <div id="sendToAccountPagination"></div>
+        </div>
+      </div>
       <hr>
       <div class="form-group">
+        <label class="control-label" for="sendFromInput">Send From</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon-from">From:</span>
+          </div>
+          <input id="sendFromInput" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
+        </div>
+      </div>
+      <div class="form-group">
         <label for="asset">Asset</label>
-        <select class="custom-select" id="asset" required="">
+        <select class="custom-select" id="assetSelect" name="asset" required="">
           <option value="">Choose...</option>
-          <option>XLM</option>
-          <option>MOBI</option>
-          <option>SLT</option>
         </select>
         <div class="invalid-feedback">
           Please select a valid asset.
@@ -96,22 +91,22 @@
       <div class="form-group">
         <label for="amount">Amount</label>
         <div class="input-group">
-          <input type="number" name="amount" class="form-control" id="amount" min="0" step="0.0000001" required>
+          <input type="number" name="amount" class="form-control" id="amount" min="0" max="" step="0.0000001" required>
           <div class="input-group-append">
-            <span class="input-group-text"><!-- TODO: ASSET CODE CHANGE BASED ON SELECTED OPTION-->XLM</span>
+            <span id="amountInputAssetCode" class="input-group-text"></span>
           </div>
         </div>
-        <small class="text-muted">Available asset balance: 10000 XLM</small>
+        <small class="text-muted">Available asset balance: <span id="amountInputAvailable"></span></small>
       </div>
       <hr>
       <div class="form-group">
-        <label for="memo-type">Memo Type</label>
-        <select class="custom-select" id="memo-type" required="">
-          <option value="">None</option>
-          <option>Memo Text</option>
-          <option>Memo ID</option>
-          <option>Memo Hash</option>
-          <option>Memo Return</option>
+        <label for="memoTypeSelect">Memo Type</label>
+        <select class="custom-select" id="memoTypeSelect" name="memo-type" required="">
+          <option>None</option>
+          <option data-memo_placeholder="Memo ID number">Memo ID</option>
+          <option data-memo_placeholder="Up to 28 bytes of text">Memo Text</option>
+          <option data-memo_placeholder="64 character hexadecimal encoded string">Memo Hash</option>
+          <option data-memo_placeholder="64 character hexadecimal encoded string">Memo Return</option>
         </select>
         <div class="invalid-feedback">
           Please select a valid asset.
@@ -120,21 +115,50 @@
       <div id="memoContentFormGroup" class="form-group" style="display: none;">
         <label class="control-label" for="memo-content">Memo Content</label>
         <div class="input-group">
-          <input id="memoContent" type="text" name="memo-content" class="form-control" placeholder="Up to 28 bytes of text" aria-label="Memo">
+          <input id="memoContent" type="text" name="memo-content" class="form-control" placeholder="" aria-label="Memo">
         </div>
         <div class="d-none">
           To account card if it exists in our system. Or just keep the search box there?
         </div>
       </div>
       <div class="form-group mt-4 mb-0">
-        <button type="button" class="btn btn-secondary">Clear</button>
+        <button id="sendPaymentFormReset" type="reset" class="btn btn-secondary">Reset</button>
         <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit</span></button>
       </div>
     </form>
   </div>
 </div>
+
+<!-- Activity Tx Hash Form -->
+<form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
+  {% csrf_token %}
+  <!-- TODO: need tx hash input in activity_form. actor is just request.user -->
+  {{ activity_form }}
+</form>
 {% endblock %}
 
 
 {% block nc_script %}
+{% verbatim %}
+<script type="text/html" id="sendToAccountHitTemplate">
+  <a href="?query={{{ public_key }}}" data-public_key="{{{ public_key }}}" class="dropdown-item d-flex flex-wrap justify-content-start align-items-center border-0 py-3">
+    <div class="position-relative">
+      <img class="img-object-fit-cover img-thumbnail" style="height: 60px; width: 60px;" src="{{{ pic_url }}}" alt="">
+      <img class="img-object-fit-cover img-thumbnail position-absolute" style="height: 40px; width: 40px; top: -15px; left: -15px;" src="{{{ user_pic_url }}}" alt="">
+    </div>
+    <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+      <strong>{{{ _highlightResult.name.value }}}</strong>
+      <span class="text-secondary">{{{ _highlightResult.user_full_name.value }}} (@{{{ _highlightResult.username.value }}})</span>
+      <small class="text-muted" style="font-size: 0.6em">{{{ _highlightResult.public_key.value }}}</small>
+    </div>
+  </a>
+</script>
+<script type="text/html" id="sendToEmptyTemplate">
+  <div class="list-group-item d-flex list-group-item-action justify-content-start align-items-center border-left-0 border-right-0 rounded-0">
+    No results
+  </div>
+</script>
+{% endverbatim %}
+
+<script src="{% static 'nc/scripts/send.js' %}"></script>
 {% endblock %}

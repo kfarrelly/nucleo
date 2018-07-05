@@ -82,7 +82,7 @@
             Follow
           </button>
           {% endif %}
-          <a href="#" class="btn btn-sm btn-outline-secondary">
+          <a href="{% url 'nc:send-detail' %}?query={{ object.username }}" class="btn btn-sm btn-outline-secondary">
             <span data-feather="send"></span>
             Send
           </a>

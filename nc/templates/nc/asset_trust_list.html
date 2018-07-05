@@ -62,7 +62,7 @@
     <div class="d-inline-flex justify-content-start align-items-center">
       <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if acc.pic %} src="{{ acc.pic.url }}"{% endif %} alt="">
       <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
-        <strong>{{ acc.name }}</strong>
+        <strong>{% if acc.name %}{{ acc.name }}{% else %}&nbsp;{% endif %}</strong>
         <small class="text-muted">{{ acc.public_key|truncatechars:13 }}{{ acc.public_key|slice:"-10:" }}</small>
       </div>
     </div>
@@ -119,11 +119,13 @@
             <input name="public_key" type="text" class="d-none" value="">
             <input name="will_trust" type="checkbox" class="d-none" value="">
             <input type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
+            <!-- TODO:
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="button" disabled>
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
+            -->
           </div>
           <p class="mt-3">
             By clicking Submit, a transaction with <a href="https://www.stellar.org/developers/guides/concepts/list-of-operations.html#change-trust" class="text-info" target="_blank">Change Trust</a> operation will be added to the Stellar Network.
