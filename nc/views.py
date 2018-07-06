@@ -250,7 +250,7 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                 # NOTE: Not using stream-django model mixin because don't want Follow model
                 # instances in the Nucleo db. Adapted from feed_manager.add_activity_to_feed()
                 feed = feed_manager.get_feed(settings.STREAM_USER_FEED, request.user.id)
-                result = feed.add_activity({
+                feed.add_activity({
                     'actor': request.user.id,
                     'verb': 'follow',
                     'object': self.object.id,
@@ -259,6 +259,8 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                     'object_username': self.object.username,
                     'object_pic_url': self.object.profile.pic_url()
                 })
+
+                # TODO: Send an email to user being followed
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -795,12 +797,13 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
     def get_success_url(self):
         """
         If success url passed into query param, then use for redirect.
-        Otherwise, simply redirect to accounts section of actor user's profile page.
+
+        Otherwise, simply redirect to assets section of actor user's
+        profile page for immediate feedback.
         """
         if self.success_url:
             return self.success_url
-        print '{0}#accounts'.format(reverse('nc:user-detail', kwargs={'slug': self.request.user.username}))
-        return '{0}#accounts'.format(reverse('nc:user-detail', kwargs={'slug': self.request.user.username}))
+        return reverse('nc:user-detail', kwargs={'slug': self.request.user.username})
 
 
 ## Send

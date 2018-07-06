@@ -244,7 +244,7 @@
           }
         }
         if (!trusts) {
-          throw new Error('Recipient does not yet trust the sending asset. Choose a different asset to send.');
+          throw new Error('Recipient does not trust the sending asset. Choose a different asset to send.');
         }
       }
 

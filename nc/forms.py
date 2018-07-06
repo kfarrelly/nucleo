@@ -14,8 +14,11 @@ from django.utils.translation import ugettext_lazy as _
 from stellar_base.address import Address
 from stellar_base.memo import TextMemo
 from stellar_base.operation import CreateAccount
+from stellar_base.stellarxdr import Xdr
 from stellar_base.transaction import Transaction
 from stellar_base.transaction_envelope import TransactionEnvelope as Te
+
+from stream_django.feed_manager import feed_manager
 
 from .models import Account, Asset, Profile
 
@@ -214,13 +217,72 @@ class FeedActivityCreateForm(forms.Form):
         # Obtain form input parameter
         tx_hash = self.cleaned_data.get("tx_hash")
 
-        # TODO: GET THE TRANSACTION FROM HORIZON. ISSUES WITH NUMBER OF OPERATIONS IN THERE?
-        # TODO: GET OPS ASSOCIATED WITH TRANSACTION HASH!
-        print tx_hash
+        # Make a call to Horizon to get tx and all ops associated with given tx hash
+        horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
+        ops_json = horizon.transaction_operations(tx_hash=tx_hash)
+
+        # Store the ops for save method and verify source account
+        self.ops = ops_json['_embedded']['records'] if '_embedded' in ops_json and 'records' in ops_json['_embedded'] else None
+
+        # Store the time created and check current user has added account associated with tx
+        first_op = self.ops[0]
+        self.time = first_op['created_at']
+        if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
+            raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
+
+        # Retrieve and store stream feed of current user
+        self.feed = feed_manager.get_feed(settings.STREAM_USER_FEED, self.request_user.id)
 
         return self.cleaned_data
 
     def save(self):
-        # TODO: IMPLEMENT SUCH THAT ADD TO REQUEST.USER FEED ON STREAM
-        # TAKE THE RETRIEVED TX STORED BY self.clean() and parse ops to create
-        # the needed activities on stream feed.
+        """
+        Add new activity associated with given tx ops to request_user
+        stream feed.
+        """
+        kwargs = {
+            'actor': self.request_user.id,
+            'actor_username': self.request_user.username,
+            'actor_pic_url': self.request_user.profile.pic_url(),
+            'foreign_id': self.cleaned_data.get("tx_hash"),
+            'time': self.time,
+        }
+        # Determine activity type and update kwargs for stream call
+        if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.PAYMENT:
+            record = self.ops[0]
+
+            # Get the user associated with to account if registered in our db
+            try:
+                object = get_user_model().objects.get(accounts__public_key=record['to'])
+            except ObjectDoesNotExist:
+                object = None
+            object_id = object.id if object else None
+            object_username = object.username if object else None
+            object_pic_url = object.profile.pic_url() if object else None
+
+            # Get the details of asset sent if registered in our db
+            try:
+                asset_id = '{0}-{1}'.format(record['asset_code'], record['asset_issuer'])\
+                    if record['asset_type'] != 'native' else 'XLM-native'
+                asset = Asset.objects.get(asset_id=asset_id)
+            except ObjectDoesNotExist:
+                asset = None
+            asset_pic_url = asset.pic_url() if asset else None
+            asset_href = asset.href() if asset else None
+
+            kwargs.update({
+                'verb': 'send',
+                'asset_type': record['asset_type'],
+                'asset_code': record.get('asset_code', None),
+                'asset_issuer': record.get('asset_issuer', None),
+                'asset_pic_url': asset_pic_url,
+                'asset_href': asset_href,
+                'amount': record['amount'],
+                'object': object_id,
+                'object_username': object_username,
+                'object_pic_url': object_pic_url
+            })
+
+            # TODO: send an email to user receiving funds
+
+        return self.feed.add_activity(kwargs)

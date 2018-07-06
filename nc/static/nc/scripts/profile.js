@@ -303,6 +303,7 @@
         return server.submitTransaction(transaction);
       })
       .then(function(result) {
+        // TODO: submit to activity form for token issuance
         // Server side will create new asset model upon user profile retrieval,
         // so simply can redirect
         window.location.href = successUrl;
