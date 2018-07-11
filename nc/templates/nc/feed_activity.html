@@ -28,9 +28,9 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
-        <span data-feather="trending-up"></span>
-        Trade
+      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
+        <span data-feather="award"></span>
+        Leaderboard
       </a>
     </li>
     <li class="nav-item">
@@ -45,7 +45,7 @@
 
 {% block main %}
 <div class="list-group my-4">
-  <div class="list-group-item flex-column align-items-start">
+  <a href="{% url 'nc:user-redirect' %}" class="list-group-item list-group-item-action flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
       <div class="d-flex flex-row align-items-center">
         <img class="rounded img-object-fit-cover m-2" style="height: 40px; width: 40px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
@@ -60,12 +60,14 @@
       <button type="button" class="btn btn-sm btn-light">
         Following: {{ request.user.profiles_following.count }}
       </button>
+      {% if profile.rank %}
       <button type="button" class="btn btn-sm btn-light">
         <span data-feather="award"></span>
-        #{{ profile.rank }}
+        {{ profile.rank }}
       </button>
+      {% endif %}
     </div>
-  </div>
+  </a>
 </div>
 
 <div class="card card-feed">

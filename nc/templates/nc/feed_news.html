@@ -28,9 +28,9 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
-        <span data-feather="trending-up"></span>
-        Trade
+      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
+        <span data-feather="award"></span>
+        Leaderboard
       </a>
     </li>
     <li class="nav-item">
@@ -60,10 +60,12 @@
       <button type="button" class="btn btn-sm btn-light">
         Following: {{ request.user.profiles_following.count }}
       </button>
+      {% if profile.rank %}
       <button type="button" class="btn btn-sm btn-light">
         <span data-feather="award"></span>
-        #{{ profile.rank }}
+        {{ profile.rank }}
       </button>
+      {% endif %}
     </div>
   </a>
 </div>

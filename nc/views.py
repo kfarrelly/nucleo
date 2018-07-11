@@ -325,6 +325,48 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin, generi
             .prefetch_related('profile')
 
 
+class UserTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
+    generic.ListView):
+    template_name = "nc/profile_top_list.html"
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        """
+        Add the users plus page related data.
+        """
+        context = super(UserTopListView, self).get_context_data(**kwargs)
+
+        # Add date span and associated performance attribute to use to the context
+        context['date_span'] = self.date_span
+        context['allowed_date_orderings'] = self.allowed_date_orderings
+        context['performance_attr'] = 'performance_{0}'.format(self.date_span)
+
+        # TODO: get rid of this!
+        context['fake_performance'] = .3651940193
+
+        # Set rank of asset on top of current page
+        page_obj = context['page_obj']
+        context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
+
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is users sorted by performance rank given date span from query param.
+
+        Default date span is 24h.
+        """
+        # Ordering in query param to give flexibility of performance_1w, performance_1m, etc.
+        # Only return top 100 users
+        self.allowed_date_orderings = [ '1d', '1w', '1m', '3m', '6m', '1y' ]
+        self.date_span = self.request.GET.get('span')
+        if self.date_span not in self.allowed_date_orderings:
+            self.date_span = self.allowed_date_orderings[-1] # default to 1y
+        order = 'profile__performance_{0}'.format(self.date_span)
+
+        return get_user_model().objects.prefetch_related('profile')\
+            .order_by(F(order).asc(nulls_last=True))[:100]
+
 ## Account
 class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
     mixins.IndexContextMixin, generic.CreateView):
@@ -647,8 +689,7 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixi
 
     def get_context_data(self, **kwargs):
         """
-        Add a boolean for template to determine if listing followers
-        or following.
+        Add the assets plus page related data.
         """
         context = super(AssetTopListView, self).get_context_data(**kwargs)
 
@@ -691,15 +732,10 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixi
         return assets
 
 
-## Trade
-class TradeRedirectView(LoginRequiredMixin, generic.RedirectView):
+## Leaderboard
+class LeaderboardRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
-    pattern_name = 'nc:trade-exchange'
-
-
-class TradeExchangeView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
-    generic.TemplateView):
-    template_name = "nc/trade_exchange.html"
+    pattern_name = 'nc:top-user-list'
 
 
 ## Feed
@@ -773,6 +809,17 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
     generic.TemplateView):
     template_name = "nc/feed_activity.html"
+
+    def get_context_data(self, **kwargs):
+        """
+        Add prefetched user object for profile.
+        """
+        context = super(FeedActivityListView, self).get_context_data(**kwargs)
+
+        # Include user profile
+        context['profile'] = self.request.user.profile
+
+        return context
 
 class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
     generic.CreateView):

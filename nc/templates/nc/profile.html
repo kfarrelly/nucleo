@@ -28,9 +28,9 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:trade-redirect' %}">
-        <span data-feather="trending-up"></span>
-        Trade
+      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
+        <span data-feather="award"></span>
+        Leaderboard
       </a>
     </li>
     <li class="nav-item">
@@ -89,6 +89,14 @@
           </form>
           {% endif %}
         </div>
+        {% if object.profile.rank %}
+        <div class="btn-group py-1">
+          <a href="{% url 'nc:top-user-list' %}" title="Leaderboard Ranking" class="btn btn-sm btn-warning">
+            <span data-feather="award"></span>
+            {{ object.profile.rank }}
+          </a>
+        </div>
+        {% endif %}
       </div>
     </div>
 </div>

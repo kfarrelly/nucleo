@@ -35,6 +35,9 @@ def model_file_directory_path(instance, filename, field):
         instance.id, field, new_filename)
 
 # TODO: need management command to create Profile for admininstrator account
+# TODO: add fields for rank, performance at 1d, 1w, 1m, 3m, 6m, 1y interval points
+# (or some similar variation). Rank is ordering of users for 1y performance
+# TODO: Time series data for portfolio values in XLM. Likely need to fetch market prices prior
 @python_2_unicode_compatible
 class Profile(models.Model):
     """
@@ -60,6 +63,17 @@ class Profile(models.Model):
         related_name='profiles_following'
     )
     accounts_created = models.PositiveSmallIntegerField(default=0)
+
+    # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y
+    performance_1d = models.FloatField(null=True, blank=True, default=None)
+    performance_1w = models.FloatField(null=True, blank=True, default=None)
+    performance_1m = models.FloatField(null=True, blank=True, default=None)
+    performance_3m = models.FloatField(null=True, blank=True, default=None)
+    performance_6m = models.FloatField(null=True, blank=True, default=None)
+    performance_1y = models.FloatField(null=True, blank=True, default=None)
+
+    # Rank is ordering of users for 1y performance. Only rank top 100
+    rank = models.PositiveIntegerField(null=True, blank=True, default=None)
 
     # NOTE: user.get_full_name(), followers.count() are duplicated here
     # so Algolia search index updates work when user, follower updates occur (kept in sync through signals.py)

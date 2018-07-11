@@ -1,0 +1,24 @@
+.card {
+    overflow: hidden;
+}
+.card-body {
+    word-wrap: break-word;
+}
+
+.modal-body abbr {
+  word-wrap: break-word;
+}
+
+.nav-leaderboard.nav-pills > a.nav-link {
+  color: var(--dark);
+}
+
+.nav-leaderboard.nav-pills > a.nav-link:hover, .nav-leaderboard.nav-pills > a.nav-link:focus {
+  color: var(--gray);
+}
+
+.nav-leaderboard.nav-pills > a.active, .nav-leaderboard.nav-pills > a.active:hover, .nav-leaderboard.nav-pills > a.active:focus {
+  background-color: var(--dark);
+  color: var(--dark);
+  color: white;
+}

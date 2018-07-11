@@ -23,10 +23,10 @@ urlpatterns = [
     url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
 
-    # Trade
-    url(r'^trade/$', views.TradeRedirectView.as_view(), name='trade-redirect'),
-    url(r'^trade/exchange/$', views.TradeExchangeView.as_view(), name='trade-exchange'),
-    url(r'^trade/assets/top/$', views.AssetTopListView.as_view(), name='top-asset-list'),
+    # Leaderboard
+    url(r'^leaderboard/$', views.LeaderboardRedirectView.as_view(), name='leaderboard-redirect'),
+    url(r'^leaderboard/profile/top/$', views.UserTopListView.as_view(), name='top-user-list'),
+    url(r'^leaderboard/asset/top/$', views.AssetTopListView.as_view(), name='top-asset-list'),
 
     # Feed
     url(r'^feed/$', views.FeedRedirectView.as_view(), name='feed-redirect'),
