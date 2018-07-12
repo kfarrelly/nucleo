@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
 from stellar_base.address import Address
+from stellar_base.asset import Asset
 from stellar_base.operation import Operation
 from stellar_base.stellarxdr import Xdr
 
@@ -866,3 +867,67 @@ class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
 # TODO: For way later down the line in the roadmap.
 # Refactor this so it's in a separate 'api' Django app
 # API Viewsets
+
+
+# Worker environment views
+## Cron job tasks (AWS worker tier)
+## TODO: spin this off into a management command so can properly test locally?
+class PerformanceCreateView(generic.View):
+    """
+    Creates records of portfolio performance for each user every day. Portfolio
+    consists of all accounts associated with user profile.
+
+    AWS EB worker tier cron job POSTs to url endpoint associated with
+    this view.
+    """
+    def _assemble_asset_prices(self):
+        """
+        Assemble a dictionary { asset_id: xlm_price } of current
+        market prices in xlm of all assets in our db.
+        """
+        asset_prices = {}
+        for model_asset in Asset.objects.all():
+            asset = Asset(model_asset.code, model_asset.issuer_address)
+            xlm = Asset.native()
+            if asset.is_native():
+                # Then a is native so price in XLM is simply 1.0
+                asset_prices[model_asset.asset_id] = 1.0
+            else:
+                # Get the orderbook. Portfolio value is market price user
+                # can sell asset at for XLM.
+                # Retrieve asset record from Horizon
+                horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
+                params = {
+                    'selling_asset_type': asset.type,
+                    'selling_asset_code': asset.code,
+                    'selling_asset_issuer': asset.issuer,
+                    'buying_asset_type': xlm.type,
+                    'buying_asset_code': xlm.code
+                }
+                json = horizon.order_book(params=params)
+
+                # Use the first bid price if there is one
+                price = 0.0
+                if 'bids' in json and len(json['bids']) > 0:
+                    price = float(json['bids'][0]['price'])
+                asset_prices[model_asset.asset_id] = price
+        return asset_prices
+
+    def post(self, request, *args, **kwargs):
+        # If worker environment, then can process cron job
+        if settings.ENV_NAME == 'work':
+            # Get asset prices in XLM
+            asset_prices = self._assemble_asset_prices()
+
+            # Bulk create portfolio value time series records for all accounts in db
+            # TODO: use django-timeseries?
+
+            # TODO: For all profiles in db, recalculate performance stats
+
+            # TODO: Update rank values of top 100 users. Reset all existing rank
+            # TODO: values first in bulk update to None.
+
+
+            return Response("", status=status.HTTP_200_OK)
+        else:
+            return Response("Not found", status=status.HTTP_404_NOT_FOUND)
