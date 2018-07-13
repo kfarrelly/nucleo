@@ -322,4 +322,8 @@ class FeedActivityCreateForm(forms.Form):
 
             # TODO: send a bulk email to all followers that a new token has been issued
 
+        # TODO: buy/sell trade add to activity! then client side retrieve activity with verb types
+        # TODO: 1. issue, 2. send, 3. buy, 4. sell, 5. follow
+        # TODO: only issue and send should trigger emails/push
+
         return self.feed.add_activity(kwargs)
