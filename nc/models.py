@@ -12,6 +12,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from functools import partial
 
+from stellar_base.asset import Asset as StellarAsset
+
 from . import managers, validators
 
 
@@ -234,6 +236,14 @@ class Asset(models.Model):
         Have this method as a proxy for the search index.
         """
         return reverse('nc:asset-detail', kwargs={'slug': self.asset_id})
+
+    def type(self):
+        """
+        Have this method as a proxy for stellar asset type so don't have to
+        rewrite guess() from stellar_base.
+        """
+        stellar_asset = StellarAsset(self.code, self.issuer_address)
+        return stellar_asset.type
 
     def update_from_toml(self, toml_url=None):
         """

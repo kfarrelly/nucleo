@@ -265,10 +265,10 @@ else:
 STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 
 # CryptoPanic
-CRYPTOPANIC_API_KEY = 'b3765edc7efa6d8eec22e20370ac86cffea4bae1'
+CRYPTOPANIC_API_KEY = os.environ.get('CRYPTOPANIC_API_KEY')
 CRYPTOPANIC_STELLAR_POST_URL = 'https://cryptopanic.com/api/posts/'
 
 # Stream
-STREAM_API_KEY = '98fduvhpxemp'
-STREAM_API_SECRET = 'hbc7arbds4jpkudpfjg3zut2jr4n4jmqymka7vfawspca9dn6emr4vusku2mm992'
+STREAM_API_KEY = os.environ.get('STREAM_API_KEY')
+STREAM_API_SECRET = os.environ.get('STREAM_API_SECRET')
 STREAM_USER_FEED = 'user'

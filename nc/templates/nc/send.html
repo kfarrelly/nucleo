@@ -132,7 +132,6 @@
 <!-- Activity Tx Hash Form -->
 <form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
   {% csrf_token %}
-  <!-- TODO: need tx hash input in activity_form. actor is just request.user -->
   {{ activity_form }}
 </form>
 {% endblock %}

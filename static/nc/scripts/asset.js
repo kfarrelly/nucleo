@@ -19,7 +19,7 @@
       // For each check for an asset in the fetched data
       let asset = data[assetTickerDiv.dataset.asset_id];
       if (asset) {
-        // If fetched asset exists, set USD val and % change
+        // If fetched asset exists, set USD, XLM val and % change
         // data as container text.
         let usdValue = asset.price_USD,
             usdPercentChange = asset.change24h_USD/100,
@@ -29,7 +29,7 @@
 
         // Set inner content for asset values
         // NOTE: Not using numeral() to format here and
-        // trusting Stellar term returned price val for sig figs
+        // trusting StellarTerm returned price val for sig figs
         $(assetTickerDiv).find('.asset-price-usd').each(function(i, assetPriceUsd) {
           if (usdValue) {
             assetPriceUsd.textContent = numeral(usdValue).format('$0,0.0000');

@@ -271,8 +271,7 @@
     // Store the user inputted asset detail values and the success redirect URL
     let tokenCode = this.elements["token_code"].value,
         numberOfTokens = this.elements["token_number"].value,
-        issuerHomeDomain = this.elements["issuer_domain"].value,
-        successUrl = this.dataset.success;
+        issuerHomeDomain = this.elements["issuer_domain"].value;
 
     // If successful on KeyPair generation, load account to prep for manage data transaction
     // Start Ladda animation for UI loading
@@ -316,10 +315,11 @@
         return server.submitTransaction(transaction);
       })
       .then(function(result) {
-        // TODO: submit to activity form for token issuance
-        // Server side will create new asset model upon user profile retrieval,
-        // so simply can redirect
-        window.location.href = successUrl;
+        // Submit the tx hash to Nucleo servers to create sent payment
+        // activity in user feeds
+        let activityForm = $('#activityForm')[0];
+        activityForm.elements["tx_hash"].value = result.hash;
+        activityForm.submit();
       })
       .catch(function(error) {
         // Stop the button loading animation then display the error

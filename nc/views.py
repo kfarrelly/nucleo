@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
 from stellar_base.address import Address
-from stellar_base.asset import Asset
+from stellar_base.asset import Asset as StellarAsset
 from stellar_base.operation import Operation
 from stellar_base.stellarxdr import Xdr
 
@@ -38,7 +38,7 @@ from .models import (
 # Web app views
 ## User
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
-    mixins.LoginRedirectContextMixin, generic.DetailView):
+    mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
@@ -661,14 +661,20 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.L
         for k, a in addresses.iteritems():
             already_trusts = False
             can_change_trust = True
-            for b in a.balances:
-                is_the_asset = (b.get('asset_issuer', None) == self.object.issuer_address\
-                    and b.get('asset_code', None) == self.object.code)
-                if is_the_asset:
-                    already_trusts = True
-                    if float(b['balance']) > 0.0:
-                        # Can't remove trust if have a balance of this asset
-                        can_change_trust = False
+            if k == self.object.issuer_address:
+                # Then this account is the asset issuer so implicitly trusts
+                already_trusts = True
+                can_change_trust = False
+            else:
+                # Otherwise check balances for account to see if asset is there
+                for b in a.balances:
+                    is_the_asset = (b.get('asset_issuer', None) == self.object.issuer_address\
+                        and b.get('asset_code', None) == self.object.code)
+                    if is_the_asset:
+                        already_trusts = True
+                        if float(b['balance']) > 0.0:
+                            # Can't remove trust if have a balance of this asset
+                            can_change_trust = False
             trust[k] = {'already_trusts': already_trusts, 'can_change_trust': can_change_trust}
 
         context['addresses'] = addresses
@@ -887,8 +893,8 @@ class PerformanceCreateView(generic.View):
         """
         asset_prices = {}
         for model_asset in Asset.objects.all():
-            asset = Asset(model_asset.code, model_asset.issuer_address)
-            xlm = Asset.native()
+            asset = StellarAsset(model_asset.code, model_asset.issuer_address)
+            xlm = StellarAsset.native()
             if asset.is_native():
                 # Then a is native so price in XLM is simply 1.0
                 asset_prices[model_asset.asset_id] = 1.0
@@ -912,6 +918,12 @@ class PerformanceCreateView(generic.View):
                     price = float(json['bids'][0]['price'])
                 asset_prices[model_asset.asset_id] = price
         return asset_prices
+
+    def _record_portfolio_values(self, asset_prices):
+        """
+        Use the given asset_prices dictionary to record current
+        portfolio values for all user profiles in our db.
+        """
 
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job

@@ -223,7 +223,7 @@
 
 <!-- Issue Stellar Token Modal -->
 <div class="modal fade" id="issueStellarToken" tabindex="-1" role="dialog" aria-labelledby="issueStellarModalTitle" aria-hidden="true">
-  <form method="POST" id="issueStellarModalForm" class="form-issue-token" data-success="{% url 'nc:user-redirect' %}">
+  <form method="POST" id="issueStellarModalForm" class="form-issue-token">
     {% csrf_token %}
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -293,6 +293,11 @@
     </div>
   </form>
 </div>
+<!-- Activity Tx Hash Form -->
+<form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
+  {% csrf_token %}
+  {{ activity_form }}
+</form>
 {% endif %}
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">

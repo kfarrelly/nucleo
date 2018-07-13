@@ -73,7 +73,7 @@
       Trust {{ object.code }}
     </button>
     {% else %}
-    <button class="btn btn-sm btn-outline-primary active" type="button" data-public_key="{{ acc.public_key }}" {% if trust_item.can_change_trust %}data-toggle="modal" data-target="#signStellarModal" data-will_trust="false"{% else %}data-toggle="tooltip" data-placement="top" title="{{ object.code }} asset balance must be zero to remove trust" disabled{% endif %}>
+    <button class="btn btn-sm btn-outline-primary active" type="button" data-public_key="{{ acc.public_key }}" {% if trust_item.can_change_trust %}data-toggle="modal" data-target="#signStellarModal" data-will_trust="false"{% elif object.issuer_address == acc.public_key %}disabled{% else %}data-toggle="tooltip" data-placement="top" title="{{ object.code }} asset balance must be zero to remove trust" disabled{% endif %}>
       <span data-feather="shield"></span>
       Trusted
     </button>

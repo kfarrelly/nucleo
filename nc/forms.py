@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from stellar_base.address import Address
+from stellar_base.asset import Asset as StellarAsset
 from stellar_base.memo import TextMemo
 from stellar_base.operation import CreateAccount
 from stellar_base.stellarxdr import Xdr
@@ -240,14 +241,17 @@ class FeedActivityCreateForm(forms.Form):
         Add new activity associated with given tx ops to request_user
         stream feed.
         """
+        request_user_profile = self.request_user.profile
         kwargs = {
             'actor': self.request_user.id,
             'actor_username': self.request_user.username,
-            'actor_pic_url': self.request_user.profile.pic_url(),
+            'actor_pic_url': request_user_profile.pic_url(),
+            'actor_href': request_user_profile.href(),
             'foreign_id': self.cleaned_data.get("tx_hash"),
             'time': self.time,
         }
         # Determine activity type and update kwargs for stream call
+        # Payment
         if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.PAYMENT:
             record = self.ops[0]
 
@@ -258,7 +262,10 @@ class FeedActivityCreateForm(forms.Form):
                 object = None
             object_id = object.id if object else None
             object_username = object.username if object else None
-            object_pic_url = object.profile.pic_url() if object else None
+
+            object_profile = object.profile if object else None
+            object_pic_url = object_profile.pic_url() if object_profile else None
+            object_href = object_profile.href() if object_profile else None
 
             # Get the details of asset sent if registered in our db
             try:
@@ -280,9 +287,39 @@ class FeedActivityCreateForm(forms.Form):
                 'amount': record['amount'],
                 'object': object_id,
                 'object_username': object_username,
-                'object_pic_url': object_pic_url
+                'object_pic_url': object_pic_url,
+                'object_href': object_href
             })
 
             # TODO: send an email to user receiving funds
+
+        # Token issuance
+        elif len(self.ops) == 3 and self.ops[0]['type_i'] == Xdr.const.CHANGE_TRUST\
+            and self.ops[1]['type_i'] == Xdr.const.PAYMENT\
+            and self.ops[0]['asset_code'] == self.ops[1]['asset_code']\
+            and self.ops[0]['asset_issuer'] == self.ops[1]['asset_issuer']:
+            payment_record = self.ops[1]
+
+            # Get account for issuer and either retrieve or create new asset in our db
+            issuer = self.request_user.accounts.get(public_key=payment_record['source_account'])
+            asset, created = Asset.objects.get_or_create(
+                code=payment_record['asset_code'],
+                issuer_address=payment_record['asset_issuer'],
+                issuer=issuer
+            )
+
+            # Set the kwargs for feed activity
+            kwargs.update({
+                'verb': 'issue',
+                'amount': payment_record['amount'],
+                'object': asset.id,
+                'object_type': asset.type(),
+                'object_code': asset.code,
+                'object_issuer': asset.issuer_address,
+                'object_pic_url': asset.pic_url(),
+                'object_href': asset.href()
+            })
+
+            # TODO: send a bulk email to all followers that a new token has been issued
 
         return self.feed.add_activity(kwargs)

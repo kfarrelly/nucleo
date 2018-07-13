@@ -21,23 +21,36 @@
       // For each check for an asset in the fetched data
       let asset = data[assetTickerDiv.dataset.asset_id];
       if (asset) {
-        // If fetched asset exists, set USD val and % change
+        // If fetched asset exists, set val and % change
         // data as container text.
-        let value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance),
-            percentChange = asset.change24h_USD/100,
-            valueChange = value * percentChange;
+        var value, valueText, percentChange, valueChange, valueChangeText;
+        if (asset.id == 'XLM-native') {
+          // Reference to USD val and % change
+          value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
+          valueText = numeral(value).format('$0,0.00');
+          percentChange = asset.change24h_USD/100;
+          valueChange = value * percentChange;
+          valueChangeText = numeral(valueChange).format('$0,0.00');
+        } else {
+          // Reference to XLM val and % change
+          value = asset.price_XLM * parseFloat(assetTickerDiv.dataset.asset_balance);
+          valueText = value + ' XLM';
+          percentChange = asset.change24h_XLM/100;
+          valueChange = value * percentChange;
+          valueChangeText = valueChange + ' XLM';
+        }
 
         // Create the asset value div and append to ticker div
         assetValueDiv = document.createElement('div');
         assetValueDiv.classList.add('text-muted');
-        assetValueDiv.textContent = numeral(value).format('$0,0.00');
+        assetValueDiv.textContent = valueText;
         assetTickerDiv.appendChild(assetValueDiv);
 
         // Create the 24H change div
         assetChangeDiv = document.createElement('small');
         assetChangeDiv.setAttribute('title', 'Change 24h');
         assetChangeDiv.classList.add('font-weight-bold');
-        changeText = numeral(valueChange).format('$0,0.00') + ' (' + numeral(percentChange).format('0.00%') + ')';
+        changeText = valueChangeText + ' (' + numeral(percentChange).format('0.00%') + ')';
         assetChangeText = document.createTextNode(changeText);
         assetChangeDiv.appendChild(assetChangeText);
 
@@ -258,8 +271,7 @@
     // Store the user inputted asset detail values and the success redirect URL
     let tokenCode = this.elements["token_code"].value,
         numberOfTokens = this.elements["token_number"].value,
-        issuerHomeDomain = this.elements["issuer_domain"].value,
-        successUrl = this.dataset.success;
+        issuerHomeDomain = this.elements["issuer_domain"].value;
 
     // If successful on KeyPair generation, load account to prep for manage data transaction
     // Start Ladda animation for UI loading
@@ -303,10 +315,11 @@
         return server.submitTransaction(transaction);
       })
       .then(function(result) {
-        // TODO: submit to activity form for token issuance
-        // Server side will create new asset model upon user profile retrieval,
-        // so simply can redirect
-        window.location.href = successUrl;
+        // Submit the tx hash to Nucleo servers to create sent payment
+        // activity in user feeds
+        let activityForm = $('#activityForm')[0];
+        activityForm.elements["tx_hash"].value = result.hash;
+        activityForm.submit();
       })
       .catch(function(error) {
         // Stop the button loading animation then display the error
