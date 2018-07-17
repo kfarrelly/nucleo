@@ -1,3 +1,5 @@
+import urlparse
+
 from django.conf import settings
 from django.db.models.signals import (
     m2m_changed, pre_save, post_save,
@@ -61,3 +63,12 @@ def update_asset(sender, instance, **kwargs):
         instance.asset_id = '{0}-{1}'.format(instance.code, instance.issuer_address)
     else:
         instance.asset_id = '{0}-{1}'.format(instance.code, 'native')
+
+    # Check that toml and toml_pic URLField entries use https
+    url_attrs = [ 'toml', 'toml_pic' ]
+    for attr in url_attrs:
+        url_val = getattr(instance, attr, None)
+        if url_val:
+            # Parse url and replace protocol so always https
+            new_url_val = urlparse.urlparse(url_val)._replace(scheme='https').geturl()
+            setattr(instance, attr, new_url_val)
