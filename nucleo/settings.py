@@ -27,11 +27,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ENV_TYPE = os.environ.get('ENV_TYPE') # to distinguish between dev v.s. prod
 ENV_NAME = os.environ.get('ENV_NAME') # to distinguish between web v.s. work(er)
+
+# SECURITY WARNING: don't run with debug turned on in production!
+if ENV_TYPE == 'prod':
+    DEBUG = False
+else:
+    DEBUG = True
 
 if ENV_TYPE == 'dev' or ENV_NAME == 'work':
     # Localhost set for aws worker tier and HTTP needed
@@ -81,6 +84,7 @@ INSTALLED_APPS = [
     'betterforms',
     'algoliasearch_django',
     'stream_django',
+    'timeseries',
 ]
 
 MIDDLEWARE = [

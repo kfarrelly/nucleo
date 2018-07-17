@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import os, requests, toml, urlparse
 
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -13,6 +15,9 @@ from django.utils.translation import ugettext_lazy as _
 from functools import partial
 
 from stellar_base.asset import Asset as StellarAsset
+from stellar_base.address import Address
+
+from timeseries.utils import TimeSeriesModel, TimeSeriesManager
 
 from . import managers, validators
 
@@ -37,9 +42,7 @@ def model_file_directory_path(instance, filename, field):
         instance.id, field, new_filename)
 
 # TODO: need management command to create Profile for admininstrator account
-# TODO: add fields for rank, performance at 1d, 1w, 1m, 3m, 6m, 1y interval points
-# (or some similar variation). Rank is ordering of users for 1y performance
-# TODO: Time series data for portfolio values in XLM. Likely need to fetch market prices prior
+# TODO: when create profile, also create portfolio instance!
 @python_2_unicode_compatible
 class Profile(models.Model):
     """
@@ -65,17 +68,6 @@ class Profile(models.Model):
         related_name='profiles_following'
     )
     accounts_created = models.PositiveSmallIntegerField(default=0)
-
-    # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y
-    performance_1d = models.FloatField(null=True, blank=True, default=None)
-    performance_1w = models.FloatField(null=True, blank=True, default=None)
-    performance_1m = models.FloatField(null=True, blank=True, default=None)
-    performance_3m = models.FloatField(null=True, blank=True, default=None)
-    performance_6m = models.FloatField(null=True, blank=True, default=None)
-    performance_1y = models.FloatField(null=True, blank=True, default=None)
-
-    # Rank is ordering of users for 1y performance. Only rank top 100
-    rank = models.PositiveIntegerField(null=True, blank=True, default=None)
 
     # NOTE: user.get_full_name(), followers.count() are duplicated here
     # so Algolia search index updates work when user, follower updates occur (kept in sync through signals.py)
@@ -307,3 +299,87 @@ class Asset(models.Model):
         else:
             asset_id = '{0}-{1}'.format(instance.code, 'native')
         return asset_id
+
+
+@python_2_unicode_compatible
+class Portfolio(models.Model):
+    """
+    Stores time series data tracking cumulative value (in XLM) user has
+    in all accounts associated with their user profile.
+    """
+    profile = models.OneToOneField(Profile,
+        on_delete=models.CASCADE, related_name='portfolio', primary_key=True)
+
+    # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y
+    performance_1d = models.FloatField(null=True, blank=True, default=None)
+    performance_1w = models.FloatField(null=True, blank=True, default=None)
+    performance_1m = models.FloatField(null=True, blank=True, default=None)
+    performance_3m = models.FloatField(null=True, blank=True, default=None)
+    performance_6m = models.FloatField(null=True, blank=True, default=None)
+    performance_1y = models.FloatField(null=True, blank=True, default=None)
+
+    # Rank is ordering of users for 1y performance. Only rank top 100
+    rank = models.PositiveIntegerField(null=True, blank=True, default=None)
+
+    objects = TimeSeriesManager()
+
+    def __str__(self):
+        return 'Portfolio: ' + self.profile.user.username
+
+
+@python_2_unicode_compatible
+class RawPortfolioData(TimeSeriesModel):
+    TIMESERIES_INTERVAL = timedelta(days=1)  # update daily N.B integers in seconds also work
+    NOT_AVAILABLE = -1.0
+
+    portfolio = models.ForeignKey(Portfolio, related_name='rawdata')
+    xlm_value = models.FloatField(default=NOT_AVAILABLE)
+    usd_value = models.FloatField(default=NOT_AVAILABLE)
+
+    def __str__(self):
+        return str(self.portfolio) + ': ' + str(self.value) + ' (' + str(self.created) + ')'
+
+
+def portfolio_data_collector(queryset, asset_prices):
+    """
+    Should return an iterable that yields dictionaries of data
+    needed to successfully create a RawPortfolioData instance.
+
+    asset_prices is a dict with asset_id: current_market_price, with
+    market prices as float.
+    If not native, market prices in XLM. Otherwise, in USD.
+    """
+    # Store the xlm price in USD from asset_prices dict
+    usd_xlm_price = asset_prices['XLM-native']
+
+    # Accumulate stellar addresses for each user
+    portfolio_addresses = [
+        { pt.id: [
+            Address(address=a.public_key, network=settings.STELLAR_NETWORK)
+            for a in pt.profile.user.accounts.all()
+        ] }
+        for pt in queryset.prefetch_related('profile__user__accounts')
+    ]
+
+    # Retrieve addresses from Horizon then calculate portfolio value
+    # given asset balances
+    ret = []
+    for pt_id, pt_addrs in portfolio_addresses.iteritems():
+        # Only record portfolio value if user has registered at least one account
+        if pt_addrs:
+            # Get xlm_val added for each asset held in each account
+            xlm_val = 0.0
+            for a in pt_addrs:
+                a.get()
+                for b in a.balances:
+                    if b['asset_type'] == 'native':
+                        xlm_val += float(b['balance'])
+                    else:
+                        asset_id = '{0}-{1}'.format(b['asset_code'], b['asset_issuer'])
+                        price = asset_prices.get(asset_id, 0.0)
+                        xlm_val += float(b['balance']) * price
+
+            # Append to return iterable a dict of the data
+            ret.append({ 'portfolio_id': pt_id, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })
+
+    return ret

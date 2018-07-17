@@ -24,21 +24,12 @@
         // If fetched asset exists, set val and % change
         // data as container text.
         var value, valueText, percentChange, valueChange, valueChangeText;
-        if (asset.id == 'XLM-native') {
-          // Reference to USD val and % change
-          value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
-          valueText = numeral(value).format('$0,0.00');
-          percentChange = asset.change24h_USD/100;
-          valueChange = value * percentChange;
-          valueChangeText = numeral(valueChange).format('$0,0.00');
-        } else {
-          // Reference to XLM val and % change
-          value = asset.price_XLM * parseFloat(assetTickerDiv.dataset.asset_balance);
-          valueText = value + ' XLM';
-          percentChange = asset.change24h_XLM/100;
-          valueChange = value * percentChange;
-          valueChangeText = valueChange + ' XLM';
-        }
+        // Reference to USD val and % change
+        value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
+        valueText = numeral(value).format('$0,0.00');
+        percentChange = asset.change24h_USD/100;
+        valueChange = value * percentChange;
+        valueChangeText = numeral(valueChange).format('$0,0.00');
 
         // Create the asset value div and append to ticker div
         assetValueDiv = document.createElement('div');

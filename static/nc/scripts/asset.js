@@ -353,6 +353,7 @@
             return server.submitTransaction(transaction);
           })
           .then(function(result) {
+            // TODO: SUBMIT TO ACTIVITY FEED TX FORM
             // Then redirect to the user's profile page with successUrl
             window.location.href = successUrl;
           })
@@ -494,6 +495,7 @@
           })
           .then(function(result) {
             // Then redirect to the user's profile page with successUrl
+            // TODO: SUBMIT TO ACTIVITY FEED TX FORM
             window.location.href = successUrl;
           })
           .catch(function(error) {

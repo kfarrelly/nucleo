@@ -91,7 +91,7 @@
         {% if object.verified %}
          <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span> <small>Verified</small></button>
         {% elif object.issuer and object.issuer.user.id == request.user.id %}
-         <button id="assetVerified" type="button" class="btn btn-sm m-1 btn-outline-danger" title="Unverified asset"><span data-feather="alert-octagon"></span> Verify asset</button>
+         <button id="assetVerified" type="button" class="btn btn-sm m-1 btn-outline-danger" data-toggle="tooltip" data-placement="top" {% if object.domain %}title="Upload a stellar.toml file to https://{{ object.domain }}/.well-known/stellar.toml"{% else %}title="Upload a stellar.toml file to your home domain"{% endif %}><span data-feather="alert-octagon"></span> Verify asset</button>
         {% else %}
          <button id="assetVerified" type="button" class="btn bg-white p-1 text-danger" title="Unverified asset"><span data-feather="alert-octagon"></span> <small>Unverified</small></button>
         {% endif %}
@@ -115,7 +115,6 @@
       </p>
       <div class="d-flex flex-wrap justify-content-between align-items-center">
         <div class="btn-group py-1">
-          <!-- TODO: page like followers page listing this user's accounts that trust this asset. button to trust next to each -->
           <a href="{% url 'nc:asset-trust-list' object.asset_id %}" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
             <span data-feather="shield"></span>
             Change Trust

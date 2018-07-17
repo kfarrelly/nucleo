@@ -232,15 +232,19 @@
       // Throw error if receiver doesn't trust sending asset yet
       if (!asset.isNative()) {
         var trusts = false;
-        for (var i=0; i < receiverAccount.balances.length; i++) {
-          let balance = receiverAccount.balances[i];
+        if (asset.getIssuer() == receiverAccount.accountId()) {
+          trusts = true;
+        } else {
+          for (var i=0; i < receiverAccount.balances.length; i++) {
+            let balance = receiverAccount.balances[i];
 
-          if (balance.asset_type != 'native') {
-            trusts = trusts || (asset.code == balance.asset_code && asset.issuer == balance.asset_issuer);
-          }
+            if (balance.asset_type != 'native') {
+              trusts = trusts || (asset.code == balance.asset_code && asset.issuer == balance.asset_issuer);
+            }
 
-          if (trusts) {
-            break;
+            if (trusts) {
+              break;
+            }
           }
         }
         if (!trusts) {

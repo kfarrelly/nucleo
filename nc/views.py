@@ -20,6 +20,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
+from functools import partial
+
 from stellar_base.address import Address
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.operation import Operation
@@ -31,7 +33,7 @@ from urlparse import urlparse
 
 from . import forms, mixins
 from .models import (
-    Account, Asset, Profile,
+    Account, Asset, Portfolio, portfolio_data_collector, Profile, RawPortfolioData,
 )
 
 
@@ -803,14 +805,19 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
         full_url = '{0}?{1}'.format(base_url, params.urlencode())
 
         r = requests.get(full_url)
-        json = r.json()
+        ret = []
+        next_page = None
+        if r.status_code == requests.codes.ok:
+            json = r.json()
+            next = json.get('next', None)
+            next_page = QueryDict(urlparse(next).query).get('page', None) if next else None
+            ret = json['results']
 
         # Store the next page numbers
-        next = json.get('next', None)
-        self.next_page = QueryDict(urlparse(next).query).get('page', None) if next else None
+        self.next_page = next_page
 
         # Return the results
-        return json['results']
+        return ret
 
 ### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
@@ -893,11 +900,16 @@ class PerformanceCreateView(generic.View):
         """
         asset_prices = {}
         for model_asset in Asset.objects.all():
+            # NOTE: Expensive! but no other way to implement as far as I see.
             asset = StellarAsset(model_asset.code, model_asset.issuer_address)
             xlm = StellarAsset.native()
             if asset.is_native():
-                # Then a is native so price in XLM is simply 1.0
-                asset_prices[model_asset.asset_id] = 1.0
+                # Then a is native so retrieve current price in USD
+                # from StellarTerm
+                r = requests.get(settings.STELLARTERM_TICKER_URL)
+                json = r.json()
+                usd_price = float(json['_meta']['externalPrices']['USD_XLM'])
+                asset_prices[model_asset.asset_id] = usd_price
             else:
                 # Get the orderbook. Portfolio value is market price user
                 # can sell asset at for XLM.
@@ -922,8 +934,62 @@ class PerformanceCreateView(generic.View):
     def _record_portfolio_values(self, asset_prices):
         """
         Use the given asset_prices dictionary to record current
-        portfolio values for all user profiles in our db.
+        portfolio values for all accounts in our db.
         """
+        Portolio.objects.update_timeseries('rawdata',
+            partial(portfolio_data_collector, asset_prices=asset_prices))
+
+    def _recalculate_performance_stats(self):
+        """
+        Recalculate performance stats for all profile portfolios in our db.
+        """
+        # TODO: ADD BULK UPDATE MODULE
+        # TODO: Figure out how to implement this with aggregates so not looping over queries
+        updated_portfolios = []
+        for portfolio in Portfolio.objects.prefetch_latest('rawdata'):
+            # NOTE: Expensive!
+            # NOTE: portfolio.latest_rawdata will have the last raw data entry given prefetch_latest()
+
+            # TODO: do queries where filter on created > now - timedelta(1d, 1w, etc.) and
+            # not equal to the default of unavailable
+            # take the first() off that qset. Use USD val
+            # 1d, 1w, 1m, 3m, 6m, 1y
+            now = timezone.now()
+
+            # NOTE: qset.last() gives None if qset is empty. otherwise, last entry. Using
+            # last because TimeSeriesModel has ordering '-created'.
+            attr_oldest = {
+                'performance_1d': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=1))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+                'performance_1w': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(weeks=1))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+                'performance_1m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=1))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+                'performance_3m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=3))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+                'performance_6m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=6))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+                'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(years=1))\
+                    .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
+            }
+
+            attr_data = {
+                k: (portfolio.latest_rawdata.usd_value - oldest_data.usd_value) / oldest_data.usd_value
+
+                else k: None
+                for k, oldest_data in attr_oldest.iteritems()
+            }
+            for attr, oldest_data in attr_oldest.iteritems():
+                if oldest_data and oldest_data.usd_value != RawPortfolioData.NOT_AVAILABLE\
+                    and portfolio.latest_rawdata != RawPortfolioData.NOT_AVAILABLE:
+                    performance = (portfolio.latest_rawdata.usd_value - oldest_data.usd_value) / oldest_data.usd_value
+                else:
+                    performance = None
+                setattr(portfolio, attr, performance)
+
+            updated_portfolios.append(portfolio)
+
+        # TODO: then bulk update
 
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job
@@ -932,9 +998,10 @@ class PerformanceCreateView(generic.View):
             asset_prices = self._assemble_asset_prices()
 
             # Bulk create portfolio value time series records for all accounts in db
-            # TODO: use django-timeseries?
+            self._record_portfolio_values(asset_prices)
 
             # TODO: For all profiles in db, recalculate performance stats
+            self._recalculate_performance_stats()
 
             # TODO: Update rank values of top 100 users. Reset all existing rank
             # TODO: values first in bulk update to None.
