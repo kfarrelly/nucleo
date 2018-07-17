@@ -10,4 +10,4 @@ class Command(BaseCommand):
         User = get_user_model()
         admin_email = 'admin@nucleo.fi'
         if not User.objects.filter(email=admin_email).exists():
-            User.objects.create_superuser(email=admin_email, password="tobereplaced")
+            User.objects.create_superuser(username="admin", email=admin_email, password="tobereplaced")
