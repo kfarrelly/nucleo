@@ -972,13 +972,6 @@ class PerformanceCreateView(generic.View):
                 'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(years=1))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
             }
-
-            attr_data = {
-                k: (portfolio.latest_rawdata.usd_value - oldest_data.usd_value) / oldest_data.usd_value
-
-                else k: None
-                for k, oldest_data in attr_oldest.iteritems()
-            }
             for attr, oldest_data in attr_oldest.iteritems():
                 if oldest_data and oldest_data.usd_value != RawPortfolioData.NOT_AVAILABLE\
                     and portfolio.latest_rawdata != RawPortfolioData.NOT_AVAILABLE:
