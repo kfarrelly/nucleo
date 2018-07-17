@@ -42,7 +42,6 @@ def model_file_directory_path(instance, filename, field):
         instance.id, field, new_filename)
 
 # TODO: need management command to create Profile for admininstrator account
-# TODO: when create profile, also create portfolio instance!
 @python_2_unicode_compatible
 class Profile(models.Model):
     """
