@@ -193,7 +193,15 @@ USE_TZ = True
 
 
 # Email
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+if ENV_TYPE == 'prod':
+    EMAIL_HOST = os.environ.get('AWS_SES_HOSTNAME')
+    EMAIL_PORT = os.environ.get('AWS_SES_PORT')
+    EMAIL_HOST_USER = os.environ.get('AWS_SES_USERNAME')
+    EMAIL_HOST_PASSWORD = os.environ.get('AWS_SES_PASSWORD')
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = 'Nucleo <notification@mail.nucleo.fi>'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -220,6 +228,7 @@ if ENV_TYPE == 'prod':
     STATICFILES_STORAGE = 'custom_storages.StaticStorage'
 
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+
 
 # UPLOAD SIZE MAX (10 MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10*1024**2
