@@ -71,7 +71,7 @@
       // Clear out the user input from forms
       $('#addStellarModalForm')[0].reset();
       $('#addStellarPublicKeyForm')[0].reset();
-      $('#issueStellarModalForm')[0].reset();
+      $('#issueStellarModalForm')[0].reset(); // TODO: FIX: if don't have min # accts, this form won't be on html template
 
       // Remove any randomly generated keypair data for new account
       createStellarKeypair = null;
