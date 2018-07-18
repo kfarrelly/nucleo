@@ -240,7 +240,17 @@ class FeedActivityCreateForm(forms.Form):
         """
         Add new activity associated with given tx ops to request_user
         stream feed.
+
+        Activity types we send to stream:
+            1. Payments (verb: send)
+            2. Token issuance (verb: issue)
+            3. Buy/sell of asset (verb: offer)
+            4. Follow user (verb: follow; not handled by this form but
+                instead in UserFollowUpdateView)
+
+        Only verb = 'issue', 'send' should trigger email(s)/notif(s).
         """
+        # Determine activity type and update kwargs for stream call
         request_user_profile = self.request_user.profile
         kwargs = {
             'actor': self.request_user.id,
@@ -250,7 +260,7 @@ class FeedActivityCreateForm(forms.Form):
             'foreign_id': self.cleaned_data.get("tx_hash"),
             'time': self.time,
         }
-        # Determine activity type and update kwargs for stream call
+
         # Payment
         if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.PAYMENT:
             record = self.ops[0]
@@ -322,8 +332,34 @@ class FeedActivityCreateForm(forms.Form):
 
             # TODO: send a bulk email to all followers that a new token has been issued
 
-        # TODO: buy/sell trade add to activity! then client side retrieve activity with verb types
-        # TODO: 1. issue, 2. send, 3. buy, 4. sell, 5. follow
-        # TODO: only issue and send should trigger emails/push
+        # Buy/sell of asset
+        if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
+            record = self.ops[0]
+
+            # Given we only allow buying/selling of token with respect to XLM,
+            # the offer_type is the non-XLM side.
+            # TODO: Generalize for non XLM related offers
+            offer_type = 'buying' if record['buying_asset_type'] != 'native' else 'selling'
+
+            # Get account for issuer and either retrieve or create new asset in our db
+            asset, created = Asset.objects.get_or_create(
+                code=record[offer_type + '_asset_code'],
+                issuer_address=record[offer_type + '_asset_issuer']
+            )
+
+            # Set the kwargs for feed activity
+            kwargs.update({
+                'verb': 'offer',
+                'offer_type': offer_type,
+                'amount': record['amount'],
+                'price': record['price'],
+                'object': asset.id,
+                'object_type': asset.type(),
+                'object_code': asset.code,
+                'object_issuer': asset.issuer_address,
+                'object_pic_url': asset.pic_url(),
+                'object_href': asset.href()
+            })
+
 
         return self.feed.add_activity(kwargs)

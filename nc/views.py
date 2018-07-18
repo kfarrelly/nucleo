@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy, requests, stream, sys
+import copy, datetime, requests, stream, sys
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -17,6 +17,7 @@ from django.http import HttpResponseRedirect
 from django.http.request import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
@@ -44,7 +45,7 @@ class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixi
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
-    prefetch_related_lookups = ['accounts', 'profile']
+    prefetch_related_lookups = ['accounts', 'profile__portfolio']
 
     def get_context_data(self, **kwargs):
         """
@@ -253,14 +254,17 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                 # NOTE: Not using stream-django model mixin because don't want Follow model
                 # instances in the Nucleo db. Adapted from feed_manager.add_activity_to_feed()
                 feed = feed_manager.get_feed(settings.STREAM_USER_FEED, request.user.id)
+                request_user_profile = request.user.profile
                 feed.add_activity({
                     'actor': request.user.id,
                     'verb': 'follow',
                     'object': self.object.id,
                     'actor_username': request.user.username,
-                    'actor_pic_url': request.user.profile.pic_url(),
+                    'actor_pic_url': request_user_profile.pic_url(),
+                    'actor_href': request_user_profile.href(),
                     'object_username': self.object.username,
-                    'object_pic_url': self.object.profile.pic_url()
+                    'object_pic_url': self.object.profile.pic_url(),
+                    'object_href': self.object.profile.href(),
                 })
 
                 # TODO: Send an email to user being followed
@@ -344,9 +348,6 @@ class UserTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin
         context['allowed_date_orderings'] = self.allowed_date_orderings
         context['performance_attr'] = 'performance_{0}'.format(self.date_span)
 
-        # TODO: get rid of this!
-        context['fake_performance'] = .3651940193
-
         # Set rank of asset on top of current page
         page_obj = context['page_obj']
         context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
@@ -365,10 +366,10 @@ class UserTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin
         self.date_span = self.request.GET.get('span')
         if self.date_span not in self.allowed_date_orderings:
             self.date_span = self.allowed_date_orderings[-1] # default to 1y
-        order = 'profile__performance_{0}'.format(self.date_span)
+        order = 'profile__portfolio__performance_{0}'.format(self.date_span)
 
-        return get_user_model().objects.prefetch_related('profile')\
-            .order_by(F(order).asc(nulls_last=True))[:100]
+        return get_user_model().objects.prefetch_related('profile__portfolio')\
+            .order_by(F(order).desc(nulls_last=True))[:100]
 
 ## Account
 class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
@@ -779,7 +780,7 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
             context = { 'results': context['object_list'] }
         else:
             # Include user profile
-            context['profile'] = self.request.user.profile
+            context['profile'] = prefetch_related_objects([self.request.user.profile], *['portfolio'])
 
         # Set the next link urls
         context['next'] = '{0}?page={1}&format=json'.format(self.request.path, self.next_page) if self.next_page else None
@@ -831,7 +832,7 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         context = super(FeedActivityListView, self).get_context_data(**kwargs)
 
         # Include user profile
-        context['profile'] = self.request.user.profile
+        context['profile'] = prefetch_related_objects([self.request.user.profile], *['portfolio'])
 
         return context
 
@@ -884,7 +885,6 @@ class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 # Worker environment views
 ## Cron job tasks (AWS worker tier)
-## TODO: spin this off into a management command so can properly test locally?
 class PerformanceCreateView(generic.View):
     """
     Creates records of portfolio performance for each user every day. Portfolio
@@ -943,16 +943,13 @@ class PerformanceCreateView(generic.View):
         """
         Recalculate performance stats for all profile portfolios in our db.
         """
-        # TODO: ADD BULK UPDATE MODULE
-        # TODO: Figure out how to implement this with aggregates so not looping over queries
-        updated_portfolios = []
+        # TODO: Expensive! Figure out how to implement this with aggregates so not looping over queries
+        # NOTE: portfolio.latest_rawdata will have the last raw data entry given prefetch_latest()
+        portfolios = []
         for portfolio in Portfolio.objects.prefetch_latest('rawdata'):
-            # NOTE: Expensive!
-            # NOTE: portfolio.latest_rawdata will have the last raw data entry given prefetch_latest()
-
-            # TODO: do queries where filter on created > now - timedelta(1d, 1w, etc.) and
+            # Run queries where filter on created > now - timedelta(1d, 1w, etc.) and
             # not equal to the default of unavailable
-            # take the first() off that qset. Use USD val
+            # take the last() off that qset. Use USD val.
             # 1d, 1w, 1m, 3m, 6m, 1y
             now = timezone.now()
 
@@ -980,26 +977,45 @@ class PerformanceCreateView(generic.View):
                     performance = None
                 setattr(portfolio, attr, performance)
 
-            updated_portfolios.append(portfolio)
+            portfolios.append(portfolio)
 
-        # TODO: then bulk update
+        # Then bulk update
+        Portfolio.objects.bulk_update(portfolios)
+
+    def _update_rank_values(self):
+        """
+        Update rank values of top 100 users by performance over last year.
+        Reset all existing rank values first in update to None.
+        """
+        # Reset all existing first so can easily just start from scratch in
+        # storing rank list.
+        Portfolio.objects.exclude(rank=None).update(rank=None)
+
+        # Iterate through top 100 on yearly performance, and store the rank.
+        portfolios = []
+        for i, p in enumerate(list(Portfolio.objects\
+            .exclude(performance_1y=None).order_by('-performance_1y')[:100])):
+            p.rank = i + 1
+            portfolios.append(p)
+
+        # Bulk update the top ten performing portfolios
+        Portfolio.objects.bulk_update(portfolios)
 
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job
         if settings.ENV_NAME == 'work':
-            # Get asset prices in XLM
+            # Get asset prices
             asset_prices = self._assemble_asset_prices()
 
             # Bulk create portfolio value time series records for all accounts in db
             self._record_portfolio_values(asset_prices)
 
-            # TODO: For all profiles in db, recalculate performance stats
+            # For all profiles in db, recalculate performance stats
             self._recalculate_performance_stats()
 
-            # TODO: Update rank values of top 100 users. Reset all existing rank
-            # TODO: values first in bulk update to None.
+            # Update rank values of top performing users.
+            self._update_rank_values()
 
-
-            return Response("", status=status.HTTP_200_OK)
+            return Response("", status=status.HTTP_200_OK) # TODO: status is not defined so find for django non rest how to do this. Response as well... is it httpResponse?
         else:
             return Response("Not found", status=status.HTTP_404_NOT_FOUND)

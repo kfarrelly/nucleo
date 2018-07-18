@@ -60,10 +60,10 @@
       <button type="button" class="btn btn-sm btn-light">
         Following: {{ request.user.profiles_following.count }}
       </button>
-      {% if profile.rank %}
+      {% if profile.portfolio.rank %}
       <button type="button" class="btn btn-sm btn-light">
         <span data-feather="award"></span>
-        {{ profile.rank }}
+        {{ profile.portfolio.rank }}
       </button>
       {% endif %}
     </div>

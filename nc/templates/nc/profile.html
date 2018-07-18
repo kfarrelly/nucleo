@@ -89,11 +89,11 @@
           </form>
           {% endif %}
         </div>
-        {% if object.profile.rank %}
+        {% if object.profile.portfolio.rank %}
         <div class="btn-group py-1">
           <a href="{% url 'nc:top-user-list' %}" title="Leaderboard Ranking" class="btn btn-sm btn-warning">
             <span data-feather="award"></span>
-            {{ object.profile.rank }}
+            {{ object.profile.portfolio.rank }}
           </a>
         </div>
         {% endif %}

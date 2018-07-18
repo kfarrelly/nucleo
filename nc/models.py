@@ -17,7 +17,7 @@ from functools import partial
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.address import Address
 
-from timeseries.utils import TimeSeriesModel, TimeSeriesManager
+from timeseries.utils import TimeSeriesModel
 
 from . import managers, validators
 
@@ -309,7 +309,8 @@ class Portfolio(models.Model):
     profile = models.OneToOneField(Profile,
         on_delete=models.CASCADE, related_name='portfolio', primary_key=True)
 
-    # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y
+    # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y.
+    # NOTE: Fractional values (i.e. need to mult by 100 to get percentages)
     performance_1d = models.FloatField(null=True, blank=True, default=None)
     performance_1w = models.FloatField(null=True, blank=True, default=None)
     performance_1m = models.FloatField(null=True, blank=True, default=None)
@@ -320,7 +321,8 @@ class Portfolio(models.Model):
     # Rank is ordering of users for 1y performance. Only rank top 100
     rank = models.PositiveIntegerField(null=True, blank=True, default=None)
 
-    objects = TimeSeriesManager()
+    # Portfolio manager
+    objects = managers.PortfolioManager()
 
     def __str__(self):
         return 'Portfolio: ' + self.profile.user.username
