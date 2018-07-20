@@ -9,11 +9,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         User = get_user_model()
-        admin_email = 'admin@nucleo.fi'
+        admin_email = 'help@nucleo.fi'
 
         # Create the user account if necessary
         try:
-            user = User.objects.get(username="admin")
+            user = User.objects.get(username="nucleo")
         except User.DoesNotExist:
             user = User.objects.create_superuser(username="admin", email=admin_email, password="tobereplaced")
 
