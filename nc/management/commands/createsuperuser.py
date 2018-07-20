@@ -15,7 +15,7 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(username="nucleo")
         except User.DoesNotExist:
-            user = User.objects.create_superuser(username="admin", email=admin_email, password="tobereplaced")
+            user = User.objects.create_superuser(username="nucleo", email=admin_email, password="tobereplaced")
 
 
         # Create the associated profile if needed
