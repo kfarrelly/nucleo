@@ -538,7 +538,7 @@ class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
 
 ## Asset
 class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
-    mixins.LoginRedirectContextMixin, generic.DetailView):
+    mixins.ActivityFormContextMixin, mixins.LoginRedirectContextMixin, generic.DetailView):
     model = Asset
     slug_field = 'asset_id'
     template_name = 'nc/asset.html'

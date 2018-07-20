@@ -244,8 +244,7 @@
 
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
-      let formHeader = $(this).find('.form-header')[0],
-          successUrl = this.dataset.success;
+      let formHeader = $(this).find('.form-header')[0];
 
       // Attempt to generate Keypair
       var sourceKeys;
@@ -353,9 +352,11 @@
             return server.submitTransaction(transaction);
           })
           .then(function(result) {
-            // TODO: SUBMIT TO ACTIVITY FEED TX FORM
-            // Then redirect to the user's profile page with successUrl
-            window.location.href = successUrl;
+            // Submit the tx hash to Nucleo servers to create sent payment
+            // activity in user feeds
+            let activityForm = $('#activityForm')[0];
+            activityForm.elements["tx_hash"].value = result.hash;
+            activityForm.submit();
           })
           .catch(function(error) {
             // Stop the button loading animation then display the error
@@ -382,8 +383,7 @@
 
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
-      let formHeader = $(this).find('.form-header')[0],
-          successUrl = this.dataset.success;
+      let formHeader = $(this).find('.form-header')[0];
 
       // Attempt to generate Keypair
       var sourceKeys;
@@ -494,9 +494,11 @@
             return server.submitTransaction(transaction);
           })
           .then(function(result) {
-            // Then redirect to the user's profile page with successUrl
-            // TODO: SUBMIT TO ACTIVITY FEED TX FORM
-            window.location.href = successUrl;
+            // Submit the tx hash to Nucleo servers to create sent payment
+            // activity in user feeds
+            let activityForm = $('#activityForm')[0];
+            activityForm.elements["tx_hash"].value = result.hash;
+            activityForm.submit();
           })
           .catch(function(error) {
             // Stop the button loading animation then display the error

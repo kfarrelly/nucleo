@@ -154,7 +154,7 @@
       Buy
     </button>
     <div class="dropdown-menu">
-      <form id="buyForm" method="POST" class="px-4 py-3" data-success="{% url 'nc:user-redirect' %}#assets">
+      <form id="buyForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
         <h6 class="form-header">Buy {{ object.code }}</h6>
         <h5 class="text-center py-1">
@@ -193,7 +193,7 @@
       Sell
     </button>
     <div class="dropdown-menu dropdown-menu-right">
-      <form id="sellForm" method="POST" class="px-4 py-3" data-success="{% url 'nc:user-redirect' %}#assets">
+      <form id="sellForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
         <h6 class="form-header">Sell {{ object.code }}</h6>
         <h5 class="text-center py-1">
@@ -228,6 +228,12 @@
     </div>
   </div>
 </div>
+
+<!-- Activity Tx Hash Form -->
+<form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
+  {% csrf_token %}
+  {{ activity_form }}
+</form>
 {% endif %}
 {% endif %}
 
