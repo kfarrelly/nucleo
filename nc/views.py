@@ -13,7 +13,7 @@ from django.db.models import (
     prefetch_related_objects, Value, When,
 )
 from django.db.models.functions import Lower
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.http.request import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
@@ -779,8 +779,10 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
             # list as 'results' if JSON response expected
             context = { 'results': context['object_list'] }
         else:
-            # Include user profile
-            context['profile'] = prefetch_related_objects([self.request.user.profile], *['portfolio'])
+            # Include user profile with related portfolio prefetched
+            profile = self.request.user.profile
+            prefetch_related_objects([profile], *['portfolio'])
+            context['profile'] = profile
 
         # Set the next link urls
         context['next'] = '{0}?page={1}&format=json'.format(self.request.path, self.next_page) if self.next_page else None
@@ -832,7 +834,9 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         context = super(FeedActivityListView, self).get_context_data(**kwargs)
 
         # Include user profile
-        context['profile'] = prefetch_related_objects([self.request.user.profile], *['portfolio'])
+        profile = self.request.user.profile
+        prefetch_related_objects([profile], *['portfolio'])
+        context['profile'] = profile
 
         return context
 
@@ -919,7 +923,7 @@ class PerformanceCreateView(generic.View):
                     'selling_asset_type': asset.type,
                     'selling_asset_code': asset.code,
                     'selling_asset_issuer': asset.issuer,
-                    'buying_asset_type': xlm.type,
+                    'buying_asset_type': 'native',
                     'buying_asset_code': xlm.code
                 }
                 json = horizon.order_book(params=params)
@@ -936,7 +940,7 @@ class PerformanceCreateView(generic.View):
         Use the given asset_prices dictionary to record current
         portfolio values for all accounts in our db.
         """
-        Portolio.objects.update_timeseries('rawdata',
+        Portfolio.objects.update_timeseries('rawdata',
             partial(portfolio_data_collector, asset_prices=asset_prices))
 
     def _recalculate_performance_stats(self):
@@ -944,9 +948,7 @@ class PerformanceCreateView(generic.View):
         Recalculate performance stats for all profile portfolios in our db.
         """
         # TODO: Expensive! Figure out how to implement this with aggregates so not looping over queries
-        # NOTE: portfolio.latest_rawdata will have the last raw data entry given prefetch_latest()
-        portfolios = []
-        for portfolio in Portfolio.objects.prefetch_latest('rawdata'):
+        for portfolio in Portfolio.objects.all():
             # Run queries where filter on created > now - timedelta(1d, 1w, etc.) and
             # not equal to the default of unavailable
             # take the last() off that qset. Use USD val.
@@ -955,32 +957,31 @@ class PerformanceCreateView(generic.View):
 
             # NOTE: qset.last() gives None if qset is empty. otherwise, last entry. Using
             # last because TimeSeriesModel has ordering '-created'.
+            portfolio_latest_rawdata = portfolio.rawdata.first()
             attr_oldest = {
                 'performance_1d': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=1))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
                 'performance_1w': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(weeks=1))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_1m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=1))\
+                'performance_1m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=30))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_3m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=3))\
+                'performance_3m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=90))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_6m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(months=6))\
+                'performance_6m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=180))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(years=1))\
+                'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=365))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
             }
+
             for attr, oldest_data in attr_oldest.iteritems():
                 if oldest_data and oldest_data.usd_value != RawPortfolioData.NOT_AVAILABLE\
-                    and portfolio.latest_rawdata != RawPortfolioData.NOT_AVAILABLE:
-                    performance = (portfolio.latest_rawdata.usd_value - oldest_data.usd_value) / oldest_data.usd_value
+                    and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE:
+                    performance = (portfolio_latest_rawdata.usd_value - oldest_data.usd_value) / oldest_data.usd_value
                 else:
                     performance = None
                 setattr(portfolio, attr, performance)
 
-            portfolios.append(portfolio)
-
-        # Then bulk update
-        Portfolio.objects.bulk_update(portfolios)
+            portfolio.save()
 
     def _update_rank_values(self):
         """
@@ -992,14 +993,11 @@ class PerformanceCreateView(generic.View):
         Portfolio.objects.exclude(rank=None).update(rank=None)
 
         # Iterate through top 100 on yearly performance, and store the rank.
-        portfolios = []
+        # TODO: Expensive! Incorporate django_bulk_update and create custom util.TimeSeries classes
         for i, p in enumerate(list(Portfolio.objects\
             .exclude(performance_1y=None).order_by('-performance_1y')[:100])):
             p.rank = i + 1
-            portfolios.append(p)
-
-        # Bulk update the top ten performing portfolios
-        Portfolio.objects.bulk_update(portfolios)
+            p.save()
 
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job
@@ -1016,6 +1014,6 @@ class PerformanceCreateView(generic.View):
             # Update rank values of top performing users.
             self._update_rank_values()
 
-            return Response("", status=status.HTTP_200_OK) # TODO: status is not defined so find for django non rest how to do this. Response as well... is it httpResponse?
+            return HttpResponse()
         else:
-            return Response("Not found", status=status.HTTP_404_NOT_FOUND)
+            return HttpResponseNotFound()

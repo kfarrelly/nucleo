@@ -71,7 +71,12 @@
       // Clear out the user input from forms
       $('#addStellarModalForm')[0].reset();
       $('#addStellarPublicKeyForm')[0].reset();
-      $('#issueStellarModalForm')[0].reset(); // TODO: FIX: if don't have min # accts, this form won't be on html template
+
+      // NOTE: If don't have minimum number of accts, this form won't be on html template
+      let issueStellarModalForm = $('#issueStellarModalForm')[0];
+      if (issueStellarModalForm) {
+        issueStellarModalForm.reset();
+      }
 
       // Remove any randomly generated keypair data for new account
       createStellarKeypair = null;
@@ -473,11 +478,11 @@
 
         var verb = (op.type_i == STELLAR_OPERATION_CREATE_PASSIVE_OFFER ? "Passively offered": "Offered");
 
-        // "Offered 300 MOBI for 200 KIN (price: 1.50 MOBI/KIN, amount: 100)"
-        var buyingAsset = (op.buying.asset_type != 'native' ? op.buying.asset_code : 'XLM'),
-            sellingAsset = (op.selling.asset_type != 'native' ? op.selling.asset_code : 'XLM'),
-            buyingTotal = op.price_r.n * parseFloat(op.amount),
-            sellingTotal = op.price_r.d * parseFloat(op.amount);
+        // "Offered 300 MOBI for 200 KIN (price: 1.50 MOBI/KIN, amount: 200)"
+        var buyingAsset = (op.buying_asset_type != 'native' ? op.buying_asset_code : 'XLM'),
+            sellingAsset = (op.selling_asset_type != 'native' ? op.selling_asset_code : 'XLM'),
+            buyingTotal = parseFloat(op.price) * parseFloat(op.amount),
+            sellingTotal = parseFloat(op.amount);
 
         description = verb + " " + buyingTotal + " " + buyingAsset + " for " + sellingTotal + " " + sellingAsset +
           " (price: " + op.price + " " + buyingAsset + "/" + sellingAsset + ", amount: " + op.amount + ")";

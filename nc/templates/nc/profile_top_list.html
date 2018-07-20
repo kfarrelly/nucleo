@@ -75,7 +75,7 @@
           <small class="text-muted">@{{ u.username }}</small>
         </div>
       </div>
-      {% with u.profile.portfolio|get_attribute:performance_attr as peformance %}
+      {% with u.profile.portfolio|get_attribute:performance_attr as performance %}
       {% if performance %}
       <div class="btn-group py-1">
         <button type="button" title="Performance" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>

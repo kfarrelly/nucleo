@@ -17,7 +17,7 @@ from functools import partial
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.address import Address
 
-from timeseries.utils import TimeSeriesModel
+from timeseries.utils import TimeSeriesModel, TimeSeriesManager
 
 from . import managers, validators
 
@@ -41,7 +41,6 @@ def model_file_directory_path(instance, filename, field):
     return '{0}/{1}/{2}/{3}'.format(type(instance).__name__.lower(),
         instance.id, field, new_filename)
 
-# TODO: need management command to create Profile for admininstrator account
 @python_2_unicode_compatible
 class Profile(models.Model):
     """
@@ -322,7 +321,7 @@ class Portfolio(models.Model):
     rank = models.PositiveIntegerField(null=True, blank=True, default=None)
 
     # Portfolio manager
-    objects = managers.PortfolioManager()
+    objects = TimeSeriesManager()
 
     def __str__(self):
         return 'Portfolio: ' + self.profile.user.username
@@ -330,7 +329,7 @@ class Portfolio(models.Model):
 
 @python_2_unicode_compatible
 class RawPortfolioData(TimeSeriesModel):
-    TIMESERIES_INTERVAL = timedelta(days=1)  # update daily N.B integers in seconds also work
+    TIMESERIES_INTERVAL = timedelta(days=0.5)  # update daily on cron job but put min interval at 1/2 day to be safe
     NOT_AVAILABLE = -1.0
 
     portfolio = models.ForeignKey(Portfolio, related_name='rawdata')
@@ -338,7 +337,7 @@ class RawPortfolioData(TimeSeriesModel):
     usd_value = models.FloatField(default=NOT_AVAILABLE)
 
     def __str__(self):
-        return str(self.portfolio) + ': ' + str(self.value) + ' (' + str(self.created) + ')'
+        return str(self.portfolio) + ': ' + str(self.usd_value) + ' (' + str(self.created) + ')'
 
 
 def portfolio_data_collector(queryset, asset_prices):
@@ -355,17 +354,22 @@ def portfolio_data_collector(queryset, asset_prices):
 
     # Accumulate stellar addresses for each user
     portfolio_addresses = [
-        { pt.id: [
-            Address(address=a.public_key, network=settings.STELLAR_NETWORK)
-            for a in pt.profile.user.accounts.all()
-        ] }
+        {
+            'portfolio': pt,
+            'addresses': [
+                Address(address=a.public_key, network=settings.STELLAR_NETWORK)
+                for a in pt.profile.user.accounts.all()
+            ]
+        }
         for pt in queryset.prefetch_related('profile__user__accounts')
     ]
 
     # Retrieve addresses from Horizon then calculate portfolio value
     # given asset balances
     ret = []
-    for pt_id, pt_addrs in portfolio_addresses.iteritems():
+    for obj in portfolio_addresses:
+        pt = obj['portfolio']
+        pt_addrs = obj['addresses']
         # Only record portfolio value if user has registered at least one account
         if pt_addrs:
             # Get xlm_val added for each asset held in each account
@@ -381,6 +385,6 @@ def portfolio_data_collector(queryset, asset_prices):
                         xlm_val += float(b['balance']) * price
 
             # Append to return iterable a dict of the data
-            ret.append({ 'portfolio_id': pt_id, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })
+            ret.append({ 'portfolio': pt, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })
 
     return ret

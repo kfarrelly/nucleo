@@ -85,7 +85,6 @@ INSTALLED_APPS = [
     'algoliasearch_django',
     'stream_django',
     'timeseries',
-    'django_bulk_update',
 ]
 
 MIDDLEWARE = [

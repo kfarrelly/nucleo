@@ -1,7 +1,5 @@
 from algoliasearch_django import update_records
 from django.db import models
-from django_bulk_update.manager import BulkUpdateManager
-from timeseries.utils import TimeSeriesManager
 
 
 class AssetManager(models.Manager):
@@ -22,10 +20,3 @@ class AssetManager(models.Manager):
 
         # Return created assets
         return created
-
-
-class PortfolioManager(TimeSeriesManager, BulkUpdateManager):
-    """
-    Need both timeseries and bulk update properties for the portfolio manager.
-    """
-    pass

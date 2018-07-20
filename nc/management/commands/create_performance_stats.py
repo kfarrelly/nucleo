@@ -12,7 +12,6 @@ class Command(BaseCommand):
         storing performance related data for all profile portfolios
         in our db.
         """
-        # TODO: what else do I need to instantiate view?
         performance_view = PerformanceCreateView()
 
         # Get asset prices

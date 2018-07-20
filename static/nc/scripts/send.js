@@ -166,6 +166,7 @@
 
 
   // sendPaymentForm submission.
+  // TODO: Throw more descriptive error message if token sending has auth restrictions on it
   $('#sendPaymentForm').submit(function(event) {
     event.preventDefault();
 
