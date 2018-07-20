@@ -478,14 +478,13 @@
 
         var verb = (op.type_i == STELLAR_OPERATION_CREATE_PASSIVE_OFFER ? "Passively offered": "Offered");
 
-        // "Offered 300 MOBI for 200 KIN (price: 1.50 MOBI/KIN, amount: 200)"
+        // "Offered 300 MOBI for 200 KIN"
         var buyingAsset = (op.buying_asset_type != 'native' ? op.buying_asset_code : 'XLM'),
             sellingAsset = (op.selling_asset_type != 'native' ? op.selling_asset_code : 'XLM'),
             buyingTotal = parseFloat(op.price) * parseFloat(op.amount),
             sellingTotal = parseFloat(op.amount);
 
-        description = verb + " " + buyingTotal + " " + buyingAsset + " for " + sellingTotal + " " + sellingAsset +
-          " (price: " + op.price + " " + buyingAsset + "/" + sellingAsset + ", amount: " + op.amount + ")";
+        description = verb + " " + buyingTotal + " " + buyingAsset + " for " + sellingTotal + " " + sellingAsset;
 
         break;
       case STELLAR_OPERATION_SET_OPTIONS:
