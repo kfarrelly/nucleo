@@ -226,10 +226,16 @@ class FeedActivityCreateForm(forms.Form):
         self.ops = ops_json['_embedded']['records'] if '_embedded' in ops_json and 'records' in ops_json['_embedded'] else None
 
         # Store the time created and check current user has added account associated with tx
-        first_op = self.ops[0]
-        self.time = first_op['created_at']
-        if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
-            raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
+        # TODO: Sometimes the transaction_operations() call returns a 404
+        # for some reason (tx not settling in time?) after POSTing. Eventually
+        # create a listener for txs that POSTs to this endpoint after checking
+        # if an associated account is a part of the tx. Instead of current way
+        # of doing in request/response cycle.
+        if self.ops:
+            first_op = self.ops[0]
+            self.time = first_op['created_at']
+            if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
+                raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
 
         # Retrieve and store stream feed of current user
         self.feed = feed_manager.get_feed(settings.STREAM_USER_FEED, self.request_user.id)
@@ -250,6 +256,12 @@ class FeedActivityCreateForm(forms.Form):
 
         Only verb = 'issue', 'send' should trigger email(s)/notif(s).
         """
+        if not self.ops:
+            # TODO: This is a band-aid for times when tx_ops call gives a 404,
+            # which seems to happen most often on offers (settlement time?).
+            # Get rid of this once implement a transaction_operations nodejs listener?
+            return None
+
         # Determine activity type and update kwargs for stream call
         request_user_profile = self.request_user.profile
         kwargs = {
