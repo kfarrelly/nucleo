@@ -18,8 +18,10 @@ from django.http.request import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
 
 from functools import partial
 
@@ -365,7 +367,7 @@ class UserTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin
         self.allowed_date_orderings = [ '1d', '1w', '1m', '3m', '6m', '1y' ]
         self.date_span = self.request.GET.get('span')
         if self.date_span not in self.allowed_date_orderings:
-            self.date_span = self.allowed_date_orderings[-1] # default to 1y
+            self.date_span = self.allowed_date_orderings[0] # default to 1d
         order = 'profile__portfolio__performance_{0}'.format(self.date_span)
 
         return get_user_model().objects.prefetch_related('profile__portfolio')\
@@ -889,6 +891,7 @@ class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 # Worker environment views
 ## Cron job tasks (AWS worker tier)
+@method_decorator(csrf_exempt, name='dispatch')
 class PerformanceCreateView(generic.View):
     """
     Creates records of portfolio performance for each user every day. Portfolio
@@ -995,7 +998,7 @@ class PerformanceCreateView(generic.View):
         # Iterate through top 100 on yearly performance, and store the rank.
         # TODO: Expensive! Incorporate django_bulk_update and create custom util.TimeSeries classes
         for i, p in enumerate(list(Portfolio.objects\
-            .exclude(performance_1y=None).order_by('-performance_1y')[:100])):
+            .exclude(performance_1d=None).order_by('-performance_1d')[:100])):
             p.rank = i + 1
             p.save()
 

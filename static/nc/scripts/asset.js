@@ -238,6 +238,11 @@
       $('#sellEstimate').text(numeral(amount).format('0,0.0000000'));
     });
 
+    // TODO: implement listener like in send.js for secret key input to tell the balance of asset currently have!
+    // TODO: outstanding offers!
+
+
+    // TODO: think about giving cushion to offer price above market price so that guaranteed to execute
     /* Submit Buy Order */
     $('#buyForm').submit(function(event) {
       event.preventDefault();

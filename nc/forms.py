@@ -299,6 +299,8 @@ class FeedActivityCreateForm(forms.Form):
             asset_pic_url = asset.pic_url() if asset else None
             asset_href = asset.href() if asset else None
 
+            # TODO: INCLUDE THE MEMO IF MEMO_TEXT IS THERE!
+
             kwargs.update({
                 'verb': 'send',
                 'asset_type': record['asset_type'],

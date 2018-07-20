@@ -317,7 +317,7 @@ class Portfolio(models.Model):
     performance_6m = models.FloatField(null=True, blank=True, default=None)
     performance_1y = models.FloatField(null=True, blank=True, default=None)
 
-    # Rank is ordering of users for 1y performance. Only rank top 100
+    # Rank is ordering of users for 1d performance. Only rank top 100
     rank = models.PositiveIntegerField(null=True, blank=True, default=None)
 
     # Portfolio manager

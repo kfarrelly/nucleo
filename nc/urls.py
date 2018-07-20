@@ -37,4 +37,7 @@ urlpatterns = [
     # Send
     url(r'^send/$', views.SendRedirectView.as_view(), name='send-redirect'),
     url(r'^send/payment/$', views.SendDetailView.as_view(), name='send-detail'),
+
+    # Performance
+    url(r'^performance/create/$', views.PerformanceCreateView.as_view(), name='performance-create'),
 ]
