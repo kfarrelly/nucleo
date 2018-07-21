@@ -36,9 +36,12 @@ if ENV_TYPE == 'prod':
 else:
     DEBUG = True
 
-if ENV_TYPE == 'dev' or ENV_NAME == 'work':
-    # Localhost set for aws worker tier and HTTP needed
+if ENV_TYPE == 'dev':
+    # Defaults: see https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
     ALLOWED_HOSTS = [ ]
+elif ENV_NAME == 'work':
+    # Localhost set for aws worker tier and HTTP needed
+    ALLOWED_HOSTS = [ 'localhost' ]
 else:
     # Otherwise, usual django settings with HTTPS
     ALLOWED_HOSTS = [ '.nucleo.fi' ]
