@@ -268,8 +268,6 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
 
-# TODO: EMAIL SETTINGS FOR AWS! SET UP EMAIL AS WELL
-
 # Initialize a client for decrypting sensitive environment vars
 # https://dzone.com/articles/aws-lambda-encrypted-environment-variables
 kms_client = boto3.client(
