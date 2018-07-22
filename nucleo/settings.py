@@ -233,6 +233,7 @@ if ENV_TYPE == 'prod':
     STATICFILES_STORAGE = 'custom_storages.StaticStorage'
 
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_QUERYSTRING_AUTH = False
 
 
 # UPLOAD SIZE MAX (10 MB)
