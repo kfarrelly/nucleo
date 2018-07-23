@@ -960,19 +960,20 @@ class PerformanceCreateView(generic.View):
 
             # NOTE: qset.last() gives None if qset is empty. otherwise, last entry. Using
             # last because TimeSeriesModel has ordering '-created'.
+            # NOTE: Including extra 0.5d in filter bc cron job timing isn't exact
             portfolio_latest_rawdata = portfolio.rawdata.first()
             attr_oldest = {
-                'performance_1d': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=1))\
+                'performance_1d': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=1.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_1w': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(weeks=1))\
+                'performance_1w': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=7.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_1m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=30))\
+                'performance_1m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=30.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_3m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=90))\
+                'performance_3m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=90.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_6m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=180))\
+                'performance_6m': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=180.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
-                'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=365))\
+                'performance_1y': portfolio.rawdata.filter(created__gte=now-datetime.timedelta(days=365.5))\
                     .exclude(usd_value=RawPortfolioData.NOT_AVAILABLE).last(),
             }
 
