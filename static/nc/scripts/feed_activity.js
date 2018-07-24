@@ -275,8 +275,6 @@
         descriptionSpan.append(document.createTextNode(" " + action + " " + amount + " "));
         descriptionSpan.append(objectA);
         descriptionSpan.append(document.createTextNode(" at a price of " + price + " XLM/" + assetText));
-        descriptionSpan.append(accountA);
-
         break;
       case "follow":
         // Following user activity
