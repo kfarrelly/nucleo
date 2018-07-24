@@ -1,4 +1,4 @@
 {% load i18n %}
 {% autoescape off %}
-{% blocktrans %}@{{ username }} {{ offer_type|title }} {{ amount }} {{ asset }}{% endblocktrans %}
+{% blocktrans %}@{{ username }} {{ offer_type }} {{ amount }} {{ asset }}{% endblocktrans %}
 {% endautoescape %}

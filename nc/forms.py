@@ -421,7 +421,7 @@ class FeedActivityCreateForm(forms.Form):
             recipient_list = [ u.email for u in request_user_profile.followers.all() ]
             offer_type_display = 'bought' if record['buying_asset_type'] != 'native' else 'sold'
             amount_display = str(float(record['price']) * float(record['amount'])) if offer_type == 'buying' else record['amount']
-            price_display = record['price'] if offer_type == 'buying' else str(round(1/float(record['price']), 7))
+            price_display = str(round(1/float(record['price']), 7)) if offer_type == 'buying' else record['price']
             asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
             asset_url = build_absolute_uri(self.request, asset_path)
             ctx_email = {

@@ -271,7 +271,7 @@
 
         let action = (record.offer_type == "buying" ? 'bought' : 'sold'),
             amount = (record.offer_type == "buying" ? String(parseFloat(record.price) * parseFloat(record.amount)) : record.amount),
-            price = (record.offer_type == "buying" ? record.price : String(new BigNumber(1).dividedBy(new BigNumber(record.price).toPrecision(15)).toFixed(7)));
+            price = (record.offer_type == "buying" ? String(new BigNumber(1).dividedBy(new BigNumber(record.price).toPrecision(15)).toFixed(7)) : record.price);
 
         descriptionSpan.append(actorA);
         descriptionSpan.append(document.createTextNode(" " + action + " " + amount + " "));
