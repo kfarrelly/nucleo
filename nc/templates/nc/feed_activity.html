@@ -74,29 +74,38 @@
   <div class="card-header border-0">
     <ul class="nav nav-pills card-header-pills">
       <li class="nav-item">
-        <a href="{% url 'nc:feed-news' %}" class="nav-item nav-link">
-          <span data-feather="rss"></span>
-          News
-        </a>
-      </li>
-      <li class="nav-item">
         <a href="{% url 'nc:feed-activity' %}" class="nav-item nav-link active">
           <span data-feather="activity"></span>
           Activity
         </a>
       </li>
+      <li class="nav-item">
+        <a href="{% url 'nc:feed-news' %}" class="nav-item nav-link">
+          <span data-feather="rss"></span>
+          News
+        </a>
+      </li>
     </ul>
   </div>
   <div class="card-body p-0">
-    <div class="list-group">
-    </div>
+    <ul id="activityList" class="list-group">
+    </ul>
   </div>
   <div class="card-footer border-0 d-flex justify-content-start align-items-center">
-    <button id="moreButton" type="button" class="btn btn-sm btn-link more p-0" data-parent="#newsList" data-url="{{ next }}" {% if next %}data-has_more="true"{% else %}data-has_more="false"{% endif %}>More</button>
+    <button id="moreButton" type="button" class="btn btn-sm btn-link more p-0" data-parent="#activityList" data-has_more="true" data-id_lt="">More</button>
   </div>
 </div>
 {% endblock %}
 
 
 {% block nc_script %}
+<script>
+  const STREAM_API_KEY = "{{ stream_api_key }}",
+        STREAM_TIMELINE_FEED = "{{ stream_timeline_feed }}",
+        STREAM_FEED_ID = "{{ request.user.id }}",
+        STREAM_FEED_TOKEN = "{{ stream_feed_token }}",
+        STREAM_FEED_LIMIT = 25;
+</script>
+<script src="{% static 'getstream/dist/js_min/getstream.js' %}"></script>
+<script src="{% static 'nc/scripts/feed_activity.js' %}"></script>
 {% endblock %}

@@ -426,7 +426,7 @@
 
     // From op, NEED: descriptionSpan (text, username links, etc.),
     // featherIcon, timeSince, txHref, txHash
-    var timeSince = moment(op.created_at).fromNow();
+    var timeSince = moment(op.created_at).fromNow(),
         txHash = op.transaction_hash.substring(0, 7) + '...' + op.transaction_hash.substring(op.transaction_hash.length-7),
         txHref = op._links.transaction.href,
         descriptionSpan = document.createElement("span");

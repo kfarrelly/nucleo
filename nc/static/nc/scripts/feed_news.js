@@ -40,6 +40,7 @@
 
         // If no next URL, then no more records to load
         if (resp.next == null) {
+          button.dataset.has_more = "false";
           button.classList.add("invisible");
         }
       })

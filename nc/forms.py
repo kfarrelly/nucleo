@@ -234,6 +234,7 @@ class FeedActivityCreateForm(forms.Form):
         if self.ops:
             first_op = self.ops[0]
             self.time = first_op['created_at']
+            self.tx_href = first_op['_links']['transaction']['href'] if '_links' in first_op and 'transaction' in first_op['_links'] and 'href' in first_op['_links']['transaction'] else None
             if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
                 raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
 
@@ -264,12 +265,15 @@ class FeedActivityCreateForm(forms.Form):
 
         # Determine activity type and update kwargs for stream call
         request_user_profile = self.request_user.profile
+        tx_hash = self.cleaned_data.get("tx_hash")
         kwargs = {
             'actor': self.request_user.id,
             'actor_username': self.request_user.username,
             'actor_pic_url': request_user_profile.pic_url(),
             'actor_href': request_user_profile.href(),
-            'foreign_id': self.cleaned_data.get("tx_hash"),
+            'tx_hash': self.cleaned_data.get("tx_hash"),
+            'tx_href': self.tx_href,
+            'foreign_id': tx_hash,
             'time': self.time,
         }
 
@@ -298,8 +302,6 @@ class FeedActivityCreateForm(forms.Form):
                 asset = None
             asset_pic_url = asset.pic_url() if asset else None
             asset_href = asset.href() if asset else None
-
-            # TODO: INCLUDE THE MEMO IF MEMO_TEXT IS THERE!
 
             kwargs.update({
                 'verb': 'send',

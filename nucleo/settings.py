@@ -253,6 +253,7 @@ BOWER_INSTALLED_APPS = (
     'ladda-bootstrap',
     'highcharts',
     'bignumber.js',
+    'getstream',
 )
 
 # Algolia
@@ -314,3 +315,4 @@ CRYPTOPANIC_STELLAR_POST_URL = 'https://cryptopanic.com/api/posts/'
 STREAM_API_KEY = os.environ.get('STREAM_API_KEY')
 STREAM_API_SECRET = os.environ.get('STREAM_API_SECRET')
 STREAM_USER_FEED = 'user'
+STREAM_TIMELINE_FEED = 'timeline'

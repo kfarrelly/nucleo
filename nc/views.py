@@ -753,7 +753,7 @@ class LeaderboardRedirectView(LoginRequiredMixin, generic.RedirectView):
 ## Feed
 class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
-    pattern_name = 'nc:feed-news'
+    pattern_name = 'nc:feed-activity'
 
 ### News
 class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
@@ -839,6 +839,12 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         profile = self.request.user.profile
         prefetch_related_objects([profile], *['portfolio'])
         context['profile'] = profile
+
+        # Include non-sensitive stream api key and a current user timeline feed token
+        feed = feed_manager.get_feed(settings.STREAM_TIMELINE_FEED, self.request.user.id)
+        context['stream_api_key'] = settings.STREAM_API_KEY
+        context['stream_timeline_feed'] = settings.STREAM_TIMELINE_FEED
+        context['stream_feed_token'] = feed.get_readonly_token()
 
         return context
 
