@@ -1,5 +1,7 @@
 from allauth.account.adapter import DefaultAccountAdapter
 
+from django.core.mail import send_mass_mail
+
 from .models import Asset, Portfolio, Profile
 
 
@@ -21,21 +23,26 @@ class AccountAdapter(DefaultAccountAdapter):
         return user
 
     def send_mail_to_many(self, template_prefix, recipient_list, context):
-        msg = self.render_mass_mail(template_prefix, recipient_list, context)
-        msg.send()
+        """
+        Use django.core.mail.send_mass_mail() to bulk email.
+
+        https://docs.djangoproject.com/en/2.0/topics/email/#send-mass-mail
+        """
+        # Reformat EmailMessage instances into list of tuples (subject, message, from_email, recipient_list)
+        msgs = self.render_mail_to_many(template_prefix, recipient_list, context)
+        datatuple = ( (msg.subject, msg.body, msg.from_email, msg.to) for msg in msgs )
+        send_mass_mail(datatuple)
 
     def render_mail_to_many(self, template_prefix, recipient_list, context):
         """
         Extends allauth adapter.render_mail to account for multiple recipients.
 
+        Returns iterable of email messages to be sent out.
+
         See: https://github.com/pennersr/django-allauth/blob/master/allauth/account/adapter.py
         """
-        # Use a placeholder value for the email message, then replace
-        # msg.to attribute to full recipient list
-        msg = self.render_mail(template_prefix, recipient_list[0], context)
-        msg.to = recipient_list
-        return msg
-
-
-    # TODO: in form (like with passwordresetform), send out mail to many
-    # see: https://github.com/pennersr/django-allauth/blob/master/allauth/account/forms.py
+        msgs = [
+            self.render_mail(template_prefix, recipient, context)
+            for recipient in recipient_list
+        ]
+        return msgs

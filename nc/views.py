@@ -3,10 +3,14 @@ from __future__ import unicode_literals
 
 import copy, datetime, requests, stream, sys
 
+from allauth.account.adapter import get_adapter
+from allauth.utils import build_absolute_uri
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
 from django.db.models import (
     BooleanField, Case, ExpressionWrapper, F, FloatField,
@@ -269,7 +273,16 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                     'object_href': self.object.profile.href(),
                 })
 
-                # TODO: Send an email to user being followed
+                # Send an email to user being followed
+                profile_path = reverse('nc:user-detail', kwargs={'slug': request.user.username})
+                profile_url = build_absolute_uri(request, profile_path)
+                ctx_email = {
+                    'current_site': get_current_site(request),
+                    'username': request.user.username,
+                    'profile_url': profile_url,
+                }
+                get_adapter(request).send_mail('nc/email/feed_activity_follow',
+                    self.object.email, ctx_email)
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -862,9 +875,8 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         kwargs = super(FeedActivityCreateView, self).get_form_kwargs()
         kwargs.update({
-            'request_user': self.request.user
+            'request': self.request,
         })
-
         kwargs.pop('instance')
         return kwargs
 

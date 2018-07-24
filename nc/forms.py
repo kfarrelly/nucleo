@@ -1,5 +1,8 @@
 import base64
 
+from allauth.account.adapter import get_adapter
+from allauth.utils import build_absolute_uri
+
 from betterforms import multiform
 
 from collections import OrderedDict
@@ -7,8 +10,10 @@ from collections import OrderedDict
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from stellar_base.address import Address
@@ -205,7 +210,8 @@ class FeedActivityCreateForm(forms.Form):
         """
         Override __init__ to store authenticated user
         """
-        self.request_user = kwargs.pop('request_user', None)
+        self.request = kwargs.pop('request', None)
+        self.request_user = self.request.user if self.request else None
         super(FeedActivityCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -255,7 +261,9 @@ class FeedActivityCreateForm(forms.Form):
             4. Follow user (verb: follow; not handled by this form but
                 instead in UserFollowUpdateView)
 
-        Only verb = 'issue', 'send' should trigger email(s)/notif(s).
+        For verb = 'follow', 'send' should trigger email(s)/notif(s) to only
+        recipient of the action. For verb = 'issue', 'offer' send email(s)/notif(s)
+        to all followers of the activity actor.
         """
         if not self.ops:
             # TODO: This is a band-aid for times when tx_ops call gives a 404,
@@ -265,6 +273,7 @@ class FeedActivityCreateForm(forms.Form):
 
         # Determine activity type and update kwargs for stream call
         request_user_profile = self.request_user.profile
+        current_site = get_current_site(self.request)
         tx_hash = self.cleaned_data.get("tx_hash")
         kwargs = {
             'actor': self.request_user.id,
@@ -288,6 +297,7 @@ class FeedActivityCreateForm(forms.Form):
                 object = None
             object_id = object.id if object else None
             object_username = object.username if object else None
+            object_email = object.email if object else None
 
             object_profile = object.profile if object else None
             object_pic_url = object_profile.pic_url() if object_profile else None
@@ -317,7 +327,23 @@ class FeedActivityCreateForm(forms.Form):
                 'object_href': object_href
             })
 
-            # TODO: send an email to user receiving funds
+            # Send an email to user receiving funds
+            if object_email:
+                object_account = object.accounts.get(public_key=record['to'])
+                asset_display = record['asset_code'] if record['asset_type'] != 'native' else 'XLM'
+                profile_path = reverse('nc:user-detail', kwargs={'slug': object_username})
+                profile_url = build_absolute_uri(self.request, profile_path)
+                ctx_email = {
+                    'current_site': current_site,
+                    'username': self.request_user.username,
+                    'amount': record['amount'],
+                    'asset': asset_display,
+                    'account_name': object_account.name,
+                    'account_public_key': object_account.public_key,
+                    'profile_url': profile_url,
+                }
+                get_adapter(self.request).send_mail('nc/email/feed_activity_send',
+                    object_email, ctx_email)
 
         # Token issuance
         elif len(self.ops) == 3 and self.ops[0]['type_i'] == Xdr.const.CHANGE_TRUST\
@@ -346,7 +372,21 @@ class FeedActivityCreateForm(forms.Form):
                 'object_href': asset.href()
             })
 
-            # TODO: send a bulk email to all followers that a new token has been issued
+            # Send a bulk email to all followers that a new token has been issued
+            recipient_list = [ u.email for u in request_user_profile.followers.all() ]
+            asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
+            asset_url = build_absolute_uri(self.request, asset_path)
+            ctx_email = {
+                'current_site': current_site,
+                'username': self.request_user.username,
+                'amount': payment_record['amount'],
+                'asset': asset.code,
+                'asset_url': asset_url,
+                'account_name': issuer.name,
+                'account_public_key': issuer.public_key,
+            }
+            get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_issue',
+                recipient_list, ctx_email)
 
         # Buy/sell of asset
         if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
@@ -377,5 +417,23 @@ class FeedActivityCreateForm(forms.Form):
                 'object_href': asset.href()
             })
 
+            # Send a bulk email to all followers that user has made a trade
+            recipient_list = [ u.email for u in request_user_profile.followers.all() ]
+            offer_type_display = 'bought' if record['buying_asset_type'] != 'native' else 'sold'
+            amount_display = str(float(record['price']) * float(record['amount'])) if offer_type == 'buying' else record['amount']
+            price_display = record['price'] if offer_type == 'buying' else str(round(1/float(record['price']), 7))
+            asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
+            asset_url = build_absolute_uri(self.request, asset_path)
+            ctx_email = {
+                'current_site': current_site,
+                'username': self.request_user.username,
+                'offer_type': offer_type_display,
+                'amount': amount_display,
+                'price': price_display,
+                'asset': asset.code,
+                'asset_url': asset_url,
+            }
+            get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_offer',
+                recipient_list, ctx_email)
 
         return self.feed.add_activity(kwargs)

@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Hello from {{ site_name }}!
+
+You're receiving this e-mail because @{{ username }} sent {{ amount }} {{ asset }} to your account {% endblocktrans %}{% if account_name %}{% blocktrans %}{{ account_name }}{% endblocktrans %}: {% endif %}{{ account_public_key }}.
+
+{{ profile_url }}
+
+{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Thank you for using {{ site_name }}!
+{{ site_domain }}{% endblocktrans %}

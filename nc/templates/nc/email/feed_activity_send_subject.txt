@@ -1,0 +1,4 @@
+{% load i18n %}
+{% autoescape off %}
+{% blocktrans %}@{{ username }} Sent You {{ amount }} {{ asset }}{% endblocktrans %}
+{% endautoescape %}

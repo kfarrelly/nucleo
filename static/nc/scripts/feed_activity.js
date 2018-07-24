@@ -31,6 +31,8 @@
       }
 
       // Get records, parse, then add to list of DOMs
+      // TODO: Spin this GET call off into an endpoint on Nucleo servers like news list view?
+      // if so, would then have the active media items for all relevant quantities.
       streamFeed.get(ops).then(function(resp) {
         // Resp Json has key, vals:
         // 'object': {'results': [ActivityItem], 'next': url, 'duration': "ms" },
