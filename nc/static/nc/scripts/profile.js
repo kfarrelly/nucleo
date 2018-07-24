@@ -41,7 +41,7 @@
         assetChangeDiv = document.createElement('small');
         assetChangeDiv.setAttribute('title', 'Change 24h');
         assetChangeDiv.classList.add('font-weight-bold');
-        changeText = valueChangeText + ' (' + numeral(percentChange).format('0.00%') + ')';
+        changeText = (percentChange > 0 ? valueChangeText + ' (+' + numeral(percentChange).format('0.00%') + ')' : valueChangeText + ' (' + numeral(percentChange).format('0.00%') + ')');
         assetChangeText = document.createTextNode(changeText);
         assetChangeDiv.appendChild(assetChangeText);
 

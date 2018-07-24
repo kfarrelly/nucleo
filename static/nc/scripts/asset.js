@@ -37,12 +37,14 @@
         });
         $(assetTickerDiv).find('.asset-price-usd-change').each(function(i, assetPriceUsdChange) {
           if (usdPercentChange) {
-            assetPriceUsdChange.textContent = numeral(usdPercentChange).format('0.00%');
+            var assetPriceUsdChangeTextContent = numeral(usdPercentChange).format('0.00%');
             if (usdPercentChange > 0) {
               assetPriceUsdChange.classList.add('text-success');
+              assetPriceUsdChangeTextContent = '+' + assetPriceUsdChangeTextContent;
             } else if (usdPercentChange < 0) {
               assetPriceUsdChange.classList.add('text-danger');
             }
+            assetPriceUsdChange.textContent = assetPriceUsdChangeTextContent;
           }
         });
         $(assetTickerDiv).find('.asset-price-xlm').each(function(i, assetPriceXlm) {
@@ -53,12 +55,14 @@
         });
         $(assetTickerDiv).find('.asset-price-xlm-change').each(function(i, assetPriceXlmChange) {
           if (xlmPercentChange) {
-            assetPriceXlmChange.textContent = numeral(xlmPercentChange).format('0.00%');
+            var assetPriceXlmChangeTextContent = numeral(xlmPercentChange).format('0.00%');
             if (xlmPercentChange > 0) {
+              assetPriceXlmChangeTextContent = '+' + assetPriceXlmChangeTextContent;
               assetPriceXlmChange.classList.add('text-success');
             } else if (xlmPercentChange < 0) {
               assetPriceXlmChange.classList.add('text-danger');
             }
+            assetPriceXlmChange.textContent = assetPriceXlmChangeTextContent;
           }
         });
         $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
@@ -147,6 +151,10 @@
       // Clear out the user input from forms
       $('#buyForm')[0].reset();
       $('#sellForm')[0].reset();
+
+      // Clear out existing asset available balances
+      resetAvailableBalance('buy');
+      resetAvailableBalance('sell');
     };
 
     function getMarketPrices(asset) {
@@ -238,8 +246,108 @@
       $('#sellEstimate').text(numeral(amount).format('0,0.0000000'));
     });
 
-    // TODO: implement listener like in send.js for secret key input to tell the balance of asset currently have!
-    // TODO: outstanding offers!
+    /* Reset asset available balance to clear out max amount on respective offer type input */
+    function resetAvailableBalance(offerType) {
+      if (offerType != 'buy' && offerType != 'sell') {
+        return false;
+      }
+
+      let amountInput = $('#' + offerType + 'Amount')[0],
+          availableBalanceSpan = $('#' + offerType + 'AmountInputAvailable')[0];
+
+      amountInput.setAttribute("max", "");
+      availableBalanceSpan.textContent = "";
+    }
+
+    // Set event listeners for loading account on buySecretKey/sellSecretKey blur
+    // to notify user of balance of relevant asset currently have.
+    $('#buySecretKey').on('blur', function(event) {
+      if (this.value) {
+        var sourceKeys;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromSecret(this.value);
+        }
+        catch (err) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('buy');
+          return false;
+        }
+
+        // Load account from Horizon server
+        server.loadAccount(sourceKeys.publicKey())
+        .catch(StellarSdk.NotFoundError, function (error) {
+          throw new Error('No Stellar account with that secret key exists yet.');
+        })
+        // If there was no error, load up-to-date information on your account.
+        .then(function(sourceAccount) {
+          // Retrieve the XLM balance
+          var xlmBalance;
+          sourceAccount.balances.forEach(function(balance) {
+            if (balance.asset_type == "native") {
+              xlmBalance = balance.balance;
+            }
+          });
+
+          // Add balance for XLM to available balance and set the max attribute
+          // of amount input
+          if (xlmBalance) {
+            $('#buyAmount')[0].setAttribute("max", xlmBalance);
+            $('#buyAmountInputAvailable')[0].textContent = xlmBalance + ' XLM';
+          }
+        })
+        .catch(function(error) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('buy');
+          return false;
+        });
+      }
+    });
+
+    $('#sellSecretKey').on('blur', function(event) {
+      if (this.value) {
+        var sourceKeys;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromSecret(this.value);
+        }
+        catch (err) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('sell');
+          return false;
+        }
+
+        // Load account from Horizon server
+        server.loadAccount(sourceKeys.publicKey())
+        .catch(StellarSdk.NotFoundError, function (error) {
+          throw new Error('No Stellar account with that secret key exists yet.');
+        })
+        // If there was no error, load up-to-date information on your account.
+        .then(function(sourceAccount) {
+          // Retrieve the asset balance
+          var assetBalance;
+          sourceAccount.balances.forEach(function(balance) {
+            if (balance.asset_code == asset.code && balance.asset_issuer == asset.issuer) {
+              assetBalance = balance.balance;
+            }
+          });
+
+          // Add balance for asset to available balance and set the max attribute
+          // of amount input
+          if (assetBalance) {
+            $('#sellAmount')[0].setAttribute("max", assetBalance);
+            $('#sellAmountInputAvailable')[0].textContent = assetBalance + ' ' + asset.code;
+          }
+        })
+        .catch(function(error) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('sell');
+          return false;
+        });
+      }
+    });
 
 
     // TODO: think about giving cushion to offer price above market price so that guaranteed to execute
