@@ -4,11 +4,14 @@
   */
   $(document).ready(function() {
     isStellarLedgerSupported().then(function(is) {
-      if (!is) {
-        $('.ledger-button').attr("disabled", true);
-      }
+      $('.ledger-button').attr("disabled", !is);
     });
   });
+
+  // TODO: When submitting forms for transactions that have secret key,
+  // implement in profile.js, send.js, etc. a check of whether secretKeyInput is disabled
+  // and if so whether secretKeyInput.dataset.ledger_public_key is there.
+  // Then user the ledger_public_key to fetch sourceAccount.
 
   /*
   Fetch the public key from connected Ledger device and store
@@ -16,13 +19,13 @@
   if successful in fetching.
   */
   $('.ledger-button').on('click', function() {
+    let button = this,
+        secretKeyInput = $(this.dataset.parent)[0],
+        submitButtonName = this.dataset.submit_name,
+        alertInsertPoint = $(this.dataset.alert_ref)[0],
+        alertInsertBefore = (this.dataset.alert_before == "true");
+
     if (!button.disabled) {
-      let button = this,
-          secretKeyInput = $(this.dataset.parent)[0],
-          submitButtonName = this.dataset.submit_name,
-          alertInsertPoint = $(this.dataset.alert_ref)[0],
-          alertInsertBefore = (this.dataset.alert_before == "true");
-          
       if (!button.classList.contains("active")) {
         getStellarLedgerPublicKey().then(function(pk) {
           // Clear out and disable secretKeyInput. Store Ledger public key as data attribute
