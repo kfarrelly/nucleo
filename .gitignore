@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+assets/webpack_bundles/
 build/
 develop-eggs/
 dist/
@@ -17,6 +18,7 @@ eggs/
 lib/
 lib64/
 media/
+node_modules/
 parts/
 sdist/
 var/
@@ -24,6 +26,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+webpack-stats.json
 MANIFEST
 
 # PyInstaller

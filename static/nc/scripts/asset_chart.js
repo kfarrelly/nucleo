@@ -14,7 +14,7 @@
     */
     let resolution = getResolution(start, end);
 
-    // TODO: If asset is native, use coinmarketcap instead of stellar to
+    // TODO: If asset is native, use an exchange instead of Stellar to
     // display USD/XLM price over time!
 
     $('.asset-chart').each(function(i, assetChartDiv) {

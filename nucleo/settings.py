@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'djangobower',
+    'webpack_loader',
     'rest_framework',
     'rest_framework.authtoken',
     'bootstrapform',
@@ -219,6 +220,11 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'djangobower.finders.BowerFinder',
 ]
+STATICFILES_DIRS = [
+    # Webpack: We do this so that django's collectstatic copies over our bundles to
+    # the STATIC_ROOT or syncs them to whatever storage we use.
+    os.path.join(BASE_DIR, 'assets'),
+]
 
 # Media files
 MEDIA_URL = '/media/'
@@ -255,6 +261,12 @@ BOWER_INSTALLED_APPS = (
     'bignumber.js',
     'getstream',
 )
+
+# Webpack
+# NOTE: https://owais.lone.pw/blog/webpack-plus-reactjs-and-django/
+# NOTE: Before deploy, execute cmds
+# python manage.py bower install
+# ./node_modules/.bin/webpack --config webpack.config.js
 
 # Algolia
 ALGOLIA = {

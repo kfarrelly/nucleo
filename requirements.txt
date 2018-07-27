@@ -19,6 +19,7 @@ django-bower==5.2.0
 django-bulk-update==2.2.0
 django-storages==1.6.5
 django-timeseries==1.0.2
+django-webpack-loader==0.6.0
 djangorestframework-jwt==1.11.0
 djangorestframework==3.6.3
 ed25519==1.4

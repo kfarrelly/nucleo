@@ -1,2 +1,2 @@
-# Nucleo
-Social banking on the [Stellar](https://www.stellar.org) network. [Django](https://www.djangoproject.com/) web app implementation.
+# Nucleo.fi
+Social banking on the [Stellar network](https://www.stellar.org). [Django](https://www.djangoproject.com/) web app implementation.

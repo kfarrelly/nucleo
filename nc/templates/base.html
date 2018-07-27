@@ -1,4 +1,5 @@
 {% load static %}
+{% load render_bundle from webpack_loader %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -40,6 +41,7 @@
     <script src='{% static 'bignumber.js/bignumber.min.js' %}'></script>
     <script src='{% static 'ladda-bootstrap/js/spin.min.js' %}'></script>
     <script src='{% static 'ladda-bootstrap/js/ladda.min.js' %}'></script>
+    {% render_bundle 'main' %}
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -87,8 +89,13 @@
 
 <body>
   {% block content %}{% endblock %}
+  {# webpack.utils.js must be first for globals #}
+  <script src="{% static 'nc/scripts/webpack.utils.js' %}"></script>
   <script src="{% static 'nc/scripts/ajax.js' %}"></script>
+  <script src="{% static 'nc/scripts/ledger.js' %}"></script>
+  <script src="{% static 'nc/scripts/ledger.utils.js' %}"></script>
   <script src="{% static 'nc/scripts/stellar.js' %}"></script>
+  <script src="{% static 'nc/scripts/stellarguard.js' %}"></script>
   <script src="{% static 'nc/scripts/stellar.utils.js' %}"></script>
   <script src="{% static 'nc/scripts/utils.js' %}"></script>
   {% block script %}{% endblock %}
