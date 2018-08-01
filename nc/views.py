@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy, datetime, requests, stream, sys
+import datetime, requests, stream, sys
 
 from allauth.account.adapter import get_adapter
 from allauth.utils import build_absolute_uri
@@ -47,84 +47,22 @@ from .models import (
 # Web app views
 ## User
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
-    mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin, generic.DetailView):
+    mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
+    mixins.ViewTypeContextMixin, mixins.UserAssetsContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
     prefetch_related_lookups = ['accounts', 'profile__portfolio']
+    user_field = 'object'
+    view_type = 'profile'
 
     def get_context_data(self, **kwargs):
         """
-        Add in Stellar address dictionary associated with each account plus
-        list of all assets this user owns.
-
         Provide a cryptographically signed username of authenticated user
         for add Stellar account if detail object is current user.
         """
         context = super(UserDetailView, self).get_context_data(**kwargs)
         if self.object:
-            # Build the accounts dict
-            addresses = {
-                account.public_key: Address(address=account.public_key,
-                    network=settings.STELLAR_NETWORK)
-                for account in self.object.accounts.all()
-            }
-            # NOTE: This is expensive! Might have to roll out into JS with loader
-            # Need to decouple Address initialization from get() method to work!
-            for k, a in addresses.iteritems():
-                a.get()
-
-            # Build the total assets list for this user. Keep track of
-            # all the issuers to query if they have User instances with us
-            assets = {}
-            for public_key, address in addresses.iteritems():
-                for b in address.balances:
-                    # NOTE: 'asset_issuer', 'asset_code' are only None for native type
-                    tup = (b.get('asset_issuer', None), b.get('asset_code', None))
-                    asset = assets.get(tup, None)
-                    if not asset:
-                        # Copy the balance to the assets dict
-                        assets[tup] = copy.deepcopy(b)
-                    else:
-                        # Update the total balance of this asset type
-                        asset['balance'] = str(float(asset['balance']) + float(b['balance'])).decode()
-
-            # Build list to see if any issuers of assets are in our db
-            issuer_public_keys = [ k[0] for k in assets if k[0] ]
-            issuers = {
-                acc.public_key: acc
-                for acc in Account.objects.filter(public_key__in=issuer_public_keys)\
-                    .select_related('user')
-            }
-
-            # Build the model assets for pic of token in template
-            # NOTE: Getting all of the assets each issuer offers here versus just those
-            # the current user owns to make the Asset query easier
-            model_assets = {
-                (a.issuer_address, a.code): a
-                for a in Asset.objects\
-                    .filter(issuer_address__in=issuer_public_keys)\
-                    .select_related('issuer')
-            }
-
-            # Build any model assets that aren't in our db
-            # General try, except here because always want to return user obj no matter what
-            try:
-                new_model_assets = self._build_assets(
-                    asset_pairs=set(assets.keys()).difference(set(model_assets.keys())),
-                    issuers=issuers,
-                )
-                model_assets.update(new_model_assets)
-            except:
-                pass
-
-            # Update the context
-            context['addresses'] = addresses
-            context['num_addresses'] = len(addresses.keys())
-            context['assets'] = assets
-            context['issuers'] = issuers
-            context['model_assets'] = model_assets
-
             # Update the context for follow attrs
             context['followers_count'] = self.object.profile.followers.count()
             context['following_count'] = self.object.profiles_following.count()
@@ -140,58 +78,25 @@ class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixi
                 context['account_form'] = forms.AccountCreateForm()
         return context
 
-    def _build_assets(self, asset_pairs, issuers):
-        """
-        Create model instances for any assets we don't have in Nucleo db
-        after retrieve user account balances from Horizon.
 
-        asset_pairs is an iterable of tuples of form [(code, issuer)] needed
-        to build new instances.
-
-        issuers is a dict { public_key: Account } of existing addresses in our
-        db as Account instances.
-
-        Returns {(code, issuer): Asset} dict to use in update of context model_assets
-
-        NOTE: Technically shouldn't be creating on a GET, but ignore this
-        as it might be a good way to incrementally accumulate model assets
-        in the beginning.
-        """
-        # Clean given asset_pairs so only include tuples with code, issuer (no None vals)
-        cleaned_asset_pairs = [ tup for tup in asset_pairs if tup[1] != None ]
-
-        # Create new model assets.
-        # NOTE: Include asset_id since pre_save signal won't fire on bulk_create
-        new_assets = [
-            Asset(code=asset_code, issuer=issuers.get(asset_issuer, None), issuer_address=asset_issuer)
-            if issuers.get(asset_issuer, None) != None
-            else Asset(code=asset_code, issuer_address=asset_issuer)
-            for asset_issuer, asset_code in cleaned_asset_pairs
-        ]
-        created = Asset.objects.bulk_create(new_assets)
-
-        return {
-            (asset.issuer_address, asset.code): asset
-            for asset in created
-        }
-
-
-class UserDetailRedirectView(LoginRequiredMixin, generic.RedirectView):
+class UserRedirectView(LoginRequiredMixin, generic.RedirectView):
     query_string = True
     pattern_name = 'nc:user-detail'
 
     def get_redirect_url(self, *args, **kwargs):
         kwargs.update({ 'slug': self.request.user.username })
-        return super(UserDetailRedirectView, self).get_redirect_url(*args, **kwargs)
+        return super(UserRedirectView, self).get_redirect_url(*args, **kwargs)
 
 
-class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.UpdateView):
+class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
     form_class = forms.UserProfileUpdateMultiForm
     template_name = 'nc/profile_update_form.html'
     success_url = reverse_lazy('nc:user-redirect')
     prefetch_related_lookups = ['profile']
+    view_type = 'profile'
 
     def get_form_kwargs(self):
         """
@@ -214,12 +119,13 @@ class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.Updat
 
 
 class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
-    mixins.IndexContextMixin, generic.UpdateView):
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
     form_class = forms.UserFollowUpdateForm
     template_name = 'nc/profile_follow_update_form.html'
     prefetch_related_lookups = ['profile']
+    view_type = 'profile'
 
     def get_context_data(self, **kwargs):
         context = super(UserFollowUpdateView, self).get_context_data(**kwargs)
@@ -287,9 +193,11 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
         return HttpResponseRedirect(self.get_success_url())
 
 
-class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
+class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.ListView):
     template_name = 'nc/profile_follow_list.html'
     paginate_by = 50
+    view_type = 'profile'
 
     def get_context_data(self, **kwargs):
         """
@@ -316,9 +224,11 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin, generic
             .order_by(Lower('first_name'))\
             .prefetch_related('profile')
 
-class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
+class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.ListView):
     template_name = 'nc/profile_follow_list.html'
     paginate_by = 50
+    view_type = 'profile'
 
     def get_context_data(self, **kwargs):
         """
@@ -346,52 +256,13 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin, generi
             .order_by(Lower('first_name'))\
             .prefetch_related('profile')
 
-
-class UserTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
-    generic.ListView):
-    template_name = "nc/profile_top_list.html"
-    paginate_by = 50
-
-    def get_context_data(self, **kwargs):
-        """
-        Add the users plus page related data.
-        """
-        context = super(UserTopListView, self).get_context_data(**kwargs)
-
-        # Add date span and associated performance attribute to use to the context
-        context['date_span'] = self.date_span
-        context['allowed_date_orderings'] = self.allowed_date_orderings
-        context['performance_attr'] = 'performance_{0}'.format(self.date_span)
-
-        # Set rank of asset on top of current page
-        page_obj = context['page_obj']
-        context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
-
-        return context
-
-    def get_queryset(self):
-        """
-        Queryset is users sorted by performance rank given date span from query param.
-
-        Default date span is 24h.
-        """
-        # Ordering in query param to give flexibility of performance_1w, performance_1m, etc.
-        # Only return top 100 users
-        self.allowed_date_orderings = [ '1d', '1w', '1m', '3m', '6m', '1y' ]
-        self.date_span = self.request.GET.get('span')
-        if self.date_span not in self.allowed_date_orderings:
-            self.date_span = self.allowed_date_orderings[0] # default to 1d
-        order = 'profile__portfolio__performance_{0}'.format(self.date_span)
-
-        return get_user_model().objects.prefetch_related('profile__portfolio')\
-            .order_by(F(order).desc(nulls_last=True))[:100]
-
 ## Account
 class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
-    mixins.IndexContextMixin, generic.CreateView):
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.CreateView):
     model = Account
     form_class = forms.AccountCreateForm
     success_url = reverse_lazy('nc:user-redirect')
+    view_type = 'profile'
 
     def get_form_kwargs(self):
         """
@@ -413,12 +284,14 @@ class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
-class AccountUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.UpdateView):
+class AccountUpdateView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.UpdateView):
     model = Account
     slug_field = 'public_key'
     form_class = forms.AccountUpdateForm
     template_name = 'nc/account_update_form.html'
     success_url = reverse_lazy('nc:user-redirect')
+    view_type = 'profile'
 
     def get_queryset(self):
         """
@@ -426,10 +299,12 @@ class AccountUpdateView(LoginRequiredMixin, mixins.IndexContextMixin, generic.Up
         """
         return self.request.user.accounts.all()
 
-class AccountDeleteView(LoginRequiredMixin, mixins.IndexContextMixin, generic.DeleteView):
+class AccountDeleteView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.DeleteView):
     model = Account
     slug_field = 'public_key'
     success_url = reverse_lazy('nc:user-redirect')
+    view_type = 'profile'
 
     def get_queryset(self):
         """
@@ -552,12 +427,18 @@ class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
 
 
 ## Asset
+class AssetRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:asset-top-list'
+
 class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
-    mixins.ActivityFormContextMixin, mixins.LoginRedirectContextMixin, generic.DetailView):
+    mixins.ActivityFormContextMixin, mixins.LoginRedirectContextMixin,
+    mixins.ViewTypeContextMixin, generic.DetailView):
     model = Asset
     slug_field = 'asset_id'
     template_name = 'nc/asset.html'
     prefetch_related_lookups = ['issuer__user']
+    view_type = 'asset'
 
     def get_context_data(self, **kwargs):
         """
@@ -624,12 +505,13 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
 
 
 class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
-    mixins.IndexContextMixin, generic.UpdateView):
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
     model = Asset
     form_class = forms.AssetUpdateForm
     slug_field = 'asset_id'
     template_name = 'nc/asset_update_form.html'
     prefetch_related_lookups = ['issuer__user']
+    view_type = 'asset'
 
     def get_queryset(self):
         """
@@ -647,9 +529,11 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
         return reverse('nc:asset-detail', kwargs={'slug': self.object.asset_id})
 
 
-class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.ListView):
+class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.ListView):
     template_name = 'nc/asset_trust_list.html'
     paginate_by = 50
+    view_type = 'asset'
 
     def get_context_data(self, **kwargs):
         """
@@ -707,10 +591,12 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin, generic.L
         return self.request.user.accounts.all()
 
 
-class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixin,
-    generic.ListView):
+class AssetTopListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, mixins.UserAssetsContextMixin, generic.ListView):
     template_name = "nc/asset_top_list.html"
     paginate_by = 50
+    user_field = 'request.user'
+    view_type = 'asset'
 
     def get_context_data(self, **kwargs):
         """
@@ -758,9 +644,61 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.LoginRedirectContextMixi
 
 
 ## Leaderboard
-class LeaderboardRedirectView(LoginRequiredMixin, generic.RedirectView):
+class LeaderboardRedirectView(generic.RedirectView):
     query_string = True
-    pattern_name = 'nc:top-user-list'
+    pattern_name = 'nc:leaderboard-list'
+
+class LeaderboardListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.ListView):
+    template_name = "nc/leaderboard_list.html"
+    paginate_by = 50
+    view_type = 'leaderboard'
+
+    def get_context_data(self, **kwargs):
+        """
+        Add the users plus page related data.
+        """
+        context = super(LeaderboardListView, self).get_context_data(**kwargs)
+
+        # Include user profile with related portfolio prefetched
+        profile = self.request.user.profile
+        prefetch_related_objects([profile], *['portfolio'])
+        context['profile'] = profile
+
+        # Add last portfolio USD value and creation date of raw data
+        portfolio_latest_rawdata = profile.portfolio.rawdata.first()
+        context['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
+            if portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
+            else 0.0
+        context['portfolio_latest_created'] = portfolio_latest_rawdata.created
+
+        # Add date span and associated performance attribute to use to the context
+        context['date_span'] = self.date_span
+        context['allowed_date_orderings'] = self.allowed_date_orderings
+        context['performance_attr'] = 'performance_{0}'.format(self.date_span)
+
+        # Set rank of asset on top of current page
+        page_obj = context['page_obj']
+        context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
+
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is users sorted by performance rank given date span from query param.
+
+        Default date span is 24h.
+        """
+        # Ordering in query param to give flexibility of performance_1w, performance_1m, etc.
+        # Only return top 100 users
+        self.allowed_date_orderings = [ '1d', '1w', '1m', '3m', '6m', '1y' ]
+        self.date_span = self.request.GET.get('span')
+        if self.date_span not in self.allowed_date_orderings:
+            self.date_span = self.allowed_date_orderings[0] # default to 1d
+        order = 'profile__portfolio__performance_{0}'.format(self.date_span)
+
+        return get_user_model().objects.prefetch_related('profile__portfolio')\
+            .order_by(F(order).desc(nulls_last=True))[:100]
 
 
 ## Feed
@@ -770,8 +708,9 @@ class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
 
 ### News
 class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.JSONResponseMixin, generic.ListView):
-    template_name = "nc/feed_news.html"
+    mixins.ViewTypeContextMixin, mixins.JSONResponseMixin, generic.ListView):
+    template_name = "nc/feed_news_list.html"
+    view_type = 'feed'
 
     def render_to_response(self, context):
         """
@@ -839,8 +778,9 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 ### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    generic.TemplateView):
-    template_name = "nc/feed_activity.html"
+    mixins.ViewTypeContextMixin, generic.TemplateView):
+    template_name = "nc/feed_activity_list.html"
+    view_type = 'feed'
 
     def get_context_data(self, **kwargs):
         """
@@ -848,7 +788,7 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         context = super(FeedActivityListView, self).get_context_data(**kwargs)
 
-        # Include user profile
+        # Include user profile with related portfolio prefetched
         profile = self.request.user.profile
         prefetch_related_objects([profile], *['portfolio'])
         context['profile'] = profile
@@ -862,9 +802,10 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         return context
 
 class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
-    generic.CreateView):
+    mixins.ViewTypeContextMixin, generic.CreateView):
     form_class = forms.FeedActivityCreateForm
     template_name = "nc/feed_activity_form.html"
+    view_type = 'feed'
 
     def get_form_kwargs(self):
         """
@@ -898,8 +839,9 @@ class SendRedirectView(LoginRequiredMixin, generic.RedirectView):
     pattern_name = 'nc:send-detail'
 
 class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ActivityFormContextMixin, generic.TemplateView):
+    mixins.ViewTypeContextMixin, mixins.ActivityFormContextMixin, generic.TemplateView):
     template_name = "nc/send.html"
+    view_type = 'send'
 
 
 # TODO: For way later down the line in the roadmap.

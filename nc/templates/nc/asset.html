@@ -12,37 +12,6 @@
 
 {% block title %}Nucleo | {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}{% endblock %}
 
-{% block nav %}
-<div class="sidebar-sticky">
-  <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:feed-redirect' %}">
-        <span data-feather="activity"></span>
-        Feed
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link active" href="{% url 'nc:user-redirect' %}">
-        <span data-feather="user"></span>
-        Profile <span class="sr-only">(current)</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
-        <span data-feather="award"></span>
-        Leaderboard
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
-        <span data-feather="send"></span>
-        Send
-      </a>
-    </li>
-  </ul>
-</div>
-{% endblock %}
-
 {% block main %}
 <div class="card mb-4 box-shadow">
   {% if is_native %}
@@ -76,7 +45,7 @@
           </button>
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <a href="{% url 'nc:top-asset-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
             <span class="asset-score">100</span>
           </a>
@@ -128,7 +97,7 @@
           {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <a href="{% url 'nc:top-asset-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
             <span class="asset-score"></span>
           </a>

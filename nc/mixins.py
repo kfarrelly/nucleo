@@ -1,11 +1,16 @@
-import algoliasearch_django
+import algoliasearch_django, copy
 
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
 from django.views.generic.detail import SingleObjectMixin
 
+from operator import attrgetter
+
+from stellar_base.address import Address
+
 from . import forms
+from .models import Account, Asset
 
 
 class PrefetchedSingleObjectMixin(SingleObjectMixin):
@@ -116,4 +121,139 @@ class LoginRedirectContextMixin(object):
         kwargs.update({
             'login_redirect': '%s?next=%s' % (settings.LOGIN_URL, self.request.path),
         })
+        return kwargs
+
+
+class ViewTypeContextMixin(object):
+    """
+    A mixin that adds a view type variable to the context.
+
+    Meant to easily identify which navigation item to highlight in HTML.
+    Allowed values are: "leaderboard", "asset", "send", "feed", "profile".
+    """
+    view_type = ''
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(ViewTypeContextMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'view_type': self.view_type,
+        })
+        return kwargs
+
+
+class UserAssetsContextMixin(object):
+    """
+    A mixin that adds in Stellar address dictionary associated with each account
+    user has plus list of all assets this user owns.
+    """
+    user_field = ''
+
+    def _build_assets(self, asset_pairs, issuers):
+        """
+        Create model instances for any assets we don't have in Nucleo db
+        after retrieve user account balances from Horizon.
+
+        asset_pairs is an iterable of tuples of form [(code, issuer)] needed
+        to build new instances.
+
+        issuers is a dict { public_key: Account } of existing addresses in our
+        db as Account instances.
+
+        Returns {(code, issuer): Asset} dict to use in update of context model_assets
+
+        NOTE: Technically shouldn't be creating on a GET, but ignore this
+        as it might be a good way to incrementally accumulate model assets
+        in the beginning.
+        """
+        # Clean given asset_pairs so only include tuples with code, issuer (no None vals)
+        cleaned_asset_pairs = [ tup for tup in asset_pairs if tup[1] != None ]
+
+        # Create new model assets.
+        # NOTE: Include asset_id since pre_save signal won't fire on bulk_create
+        new_assets = [
+            Asset(code=asset_code, issuer=issuers.get(asset_issuer, None), issuer_address=asset_issuer)
+            if issuers.get(asset_issuer, None) != None
+            else Asset(code=asset_code, issuer_address=asset_issuer)
+            for asset_issuer, asset_code in cleaned_asset_pairs
+        ]
+        created = Asset.objects.bulk_create(new_assets)
+
+        return {
+            (asset.issuer_address, asset.code): asset
+            for asset in created
+        }
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(UserAssetsContextMixin, self).get_context_data(**kwargs)
+
+        try:
+            user = attrgetter(self.user_field)(self)
+        except AttributeError:
+            user = None
+
+        if user:
+            # Build the accounts dict
+            addresses = {
+                account.public_key: Address(address=account.public_key,
+                    network=settings.STELLAR_NETWORK)
+                for account in user.accounts.all()
+            }
+            # NOTE: This is expensive! Might have to roll out into JS with loader
+            # Need to decouple Address initialization from get() method to work!
+            for k, a in addresses.iteritems():
+                a.get()
+
+            # Build the total assets list for this user. Keep track of
+            # all the issuers to query if they have User instances with us
+            assets = {}
+            for public_key, address in addresses.iteritems():
+                for b in address.balances:
+                    # NOTE: 'asset_issuer', 'asset_code' are only None for native type
+                    tup = (b.get('asset_issuer', None), b.get('asset_code', None))
+                    asset = assets.get(tup, None)
+                    if not asset:
+                        # Copy the balance to the assets dict
+                        assets[tup] = copy.deepcopy(b)
+                    else:
+                        # Update the total balance of this asset type
+                        asset['balance'] = str(float(asset['balance']) + float(b['balance'])).decode()
+
+            # Build list to see if any issuers of assets are in our db
+            issuer_public_keys = [ k[0] for k in assets if k[0] ]
+            issuers = {
+                acc.public_key: acc
+                for acc in Account.objects.filter(public_key__in=issuer_public_keys)\
+                    .select_related('user')
+            }
+
+            # Build the model assets for pic of token in template
+            # NOTE: Getting all of the assets each issuer offers here versus just those
+            # the current user owns to make the Asset query easier
+            model_assets = {
+                (a.issuer_address, a.code): a
+                for a in Asset.objects\
+                    .filter(issuer_address__in=issuer_public_keys)\
+                    .select_related('issuer')
+            }
+
+            # Build any model assets that aren't in our db
+            # General try, except here because always want to return user obj no matter what
+            try:
+                new_model_assets = self._build_assets(
+                    asset_pairs=set(assets.keys()).difference(set(model_assets.keys())),
+                    issuers=issuers,
+                )
+                model_assets.update(new_model_assets)
+            except:
+                pass
+
+            # Update the kwargs
+            kwargs.update({
+                'addresses': addresses,
+                'num_addresses': len(addresses.keys()),
+                'assets': assets,
+                'issuers': issuers,
+                'model_assets': model_assets,
+            })
+
         return kwargs

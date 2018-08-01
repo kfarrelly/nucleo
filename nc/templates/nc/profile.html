@@ -12,37 +12,6 @@
 
 {% block title %}Nucleo | {{ object.get_full_name }} (@{{ object.username }}){% endblock %}
 
-{% block nav %}
-<div class="sidebar-sticky">
-  <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:feed-redirect' %}">
-        <span data-feather="activity"></span>
-        Feed
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link active" href="{% url 'nc:user-redirect' %}">
-        <span data-feather="user"></span>
-        Profile <span class="sr-only">(current)</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
-        <span data-feather="award"></span>
-        Leaderboard
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
-        <span data-feather="send"></span>
-        Send
-      </a>
-    </li>
-  </ul>
-</div>
-{% endblock %}
-
 {% block main %}
 <div class="card mb-4 box-shadow">
   <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.profile and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
@@ -91,7 +60,7 @@
         </div>
         {% if object.profile.portfolio.rank %}
         <div class="btn-group py-1">
-          <a href="{% url 'nc:top-user-list' %}" title="Leaderboard Ranking" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:leaderboard-list' %}" title="Leaderboard Ranking" class="btn btn-sm btn-warning">
             <span data-feather="award"></span>
             {{ object.profile.portfolio.rank }}
           </a>
@@ -118,7 +87,7 @@
           </div>
           <div class="card-body">
             <div class="mb-2">
-              <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px;">
+              <a href="{% url 'nc:asset-detail' 'XLM-native' %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px;"></a>
             </div>
             <a href="{% url 'nc:asset-detail' 'XLM-native' %}" class="d-inline-block mb-2 text-info">
               <strong>XLM</strong>
@@ -144,7 +113,7 @@
           </div>
           <div class="card-body">
             <div class="mb-2">
-              <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 75px; width: 75px;">
+              <a href="{% url 'nc:asset-detail' asset_id %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 75px; width: 75px;"></a>
             </div>
             <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
               <strong>{{ model_asset.code }}</strong>

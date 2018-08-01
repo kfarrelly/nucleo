@@ -1,0 +1,113 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/leaderboard.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Leaderboard{% endblock %}
+
+{% block main %}
+{% if request.user.is_authenticated %}
+<div class="list-group my-4">
+  <div class="list-group-item flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <div class="d-flex flex-row align-items-center">
+        <img class="rounded img-object-fit-cover m-2" style="height: 40px; width: 40px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
+        <h5 class="m-2">{{ request.user.get_full_name }}</h5>
+      </div>
+      <span class="text-secondary" style="font-weight: 500">@{{ request.user.username }}</span>
+    </div>
+    <div class="d-flex flex-wrap w-100 justify-content-between mx-2">
+      <div class="btn-group pr-2 my-1">
+        {% if profile.portfolio.rank %}
+        <a href="{% url 'nc:leaderboard-redirect' %}" title="Leaderboard Ranking (1d)" class="btn btn-sm btn-warning">
+          <span data-feather="award"></span>
+          {{ profile.portfolio.rank }}
+        </a>
+        {% endif %}
+        <button type="button" title="Your Portfolio Value ({{ portfolio_latest_created|naturaltime }})" class="btn btn-sm btn-dark">
+          ${{ portfolio_latest_usd_value|floatformat:2|intcomma }}
+        </button>
+        {% with profile.portfolio|get_attribute:performance_attr as performance %}
+        {% if performance != None %}
+        <button type="button" title="Your Portfolio Performance ({{ date_span }})" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+          {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+        </button>
+        {% endif %}
+        {% endwith %}
+      </div>
+      <div class="my-1">
+        <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary">
+          <span data-feather="user"></span>
+          Head To Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
+    <h5>Top Performers</h5>
+    <div class="btn-group" role="group">
+      {% for d in allowed_date_orderings %}
+      <a href="{% url 'nc:leaderboard-list' %}?span={{ d }}" {% if date_span == d %}class="btn btn-sm btn-primary active"{% else %}class="btn btn-sm btn-primary"{% endif %}>{{ d }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-body card-leaderboard p-0">
+    <ol class="list-group">
+      {% for u in page_obj %}
+      <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div class="d-inline-flex justify-content-start align-items-center">
+          <span class="badge badge-white mr-2">{{ forloop.counter0|add:page_top_number }}</span>
+          <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 50px; width: 50px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% endif %} alt="">
+          <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+            <strong>{{ u.get_full_name }}</strong>
+            <small class="text-muted">@{{ u.username }}</small>
+          </div>
+        </div>
+        {% with u.profile.portfolio|get_attribute:performance_attr as performance %}
+        {% if performance != None %}
+        <div class="btn-group py-1">
+          <button type="button" title="Performance" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+          </button>
+        </div>
+        {% endif %}
+        {% endwith %}
+      </a>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+
+<div class="pagination mt-2">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}

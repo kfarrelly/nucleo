@@ -12,37 +12,6 @@
 
 {% block title %}Nucleo | Add Activity{% endblock %}
 
-{% block nav %}
-<div class="sidebar-sticky">
-  <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link active" href="{% url 'nc:feed-redirect' %}">
-        <span data-feather="activity"></span>
-        Feed <span class="sr-only">(current)</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:user-redirect' %}">
-        <span data-feather="user"></span>
-        Profile
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
-        <span data-feather="award"></span>
-        Leaderboard
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
-        <span data-feather="send"></span>
-        Send
-      </a>
-    </li>
-  </ul>
-</div>
-{% endblock %}
-
 {% block main %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
   <h1 class="h2">Add Activity</h1>

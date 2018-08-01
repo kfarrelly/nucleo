@@ -5,7 +5,7 @@ from . import views
 app_name = 'nc'
 urlpatterns = [
     # User profile
-    url(r'^profile/$', views.UserDetailRedirectView.as_view(), name='user-redirect'),
+    url(r'^profile/$', views.UserRedirectView.as_view(), name='user-redirect'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/$', views.UserDetailView.as_view(), name='user-detail'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/update/$', views.UserUpdateView.as_view(), name='user-update'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/follow/$', views.UserFollowUpdateView.as_view(), name='user-follow'),
@@ -19,14 +19,16 @@ urlpatterns = [
     url(r'^account/(?P<slug>[\w.@+-]+)/operation/$', views.AccountOperationListView.as_view(), name='account-operation-list'),
 
     # Assets
+    url(r'^asset/$', views.AssetRedirectView.as_view(), name='asset-redirect'),
+    url(r'^asset/top/$', views.AssetTopListView.as_view(), name='asset-top-list'),
+    # TODO: asset-list
     url(r'^asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
 
     # Leaderboard
     url(r'^leaderboard/$', views.LeaderboardRedirectView.as_view(), name='leaderboard-redirect'),
-    url(r'^leaderboard/profile/top/$', views.UserTopListView.as_view(), name='top-user-list'),
-    url(r'^leaderboard/asset/top/$', views.AssetTopListView.as_view(), name='top-asset-list'),
+    url(r'^leaderboard/top/$', views.LeaderboardListView.as_view(), name='leaderboard-list'),
 
     # Feed
     url(r'^feed/$', views.FeedRedirectView.as_view(), name='feed-redirect'),

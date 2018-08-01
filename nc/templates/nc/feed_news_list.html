@@ -12,40 +12,9 @@
 
 {% block title %}Nucleo | News{% endblock %}
 
-{% block nav %}
-<div class="sidebar-sticky">
-  <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link active" href="{% url 'nc:feed-redirect' %}">
-        <span data-feather="activity"></span>
-        Feed <span class="sr-only">(current)</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:user-redirect' %}">
-        <span data-feather="user"></span>
-        Profile
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:leaderboard-redirect' %}">
-        <span data-feather="award"></span>
-        Leaderboard
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'nc:send-redirect' %}">
-        <span data-feather="send"></span>
-        Send
-      </a>
-    </li>
-  </ul>
-</div>
-{% endblock %}
-
 {% block main %}
 <div class="list-group my-4">
-  <a href="{% url 'nc:user-redirect' %}" class="list-group-item list-group-item-action flex-column align-items-start">
+  <div href="{% url 'nc:user-redirect' %}" class="list-group-item flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
       <div class="d-flex flex-row align-items-center">
         <img class="rounded img-object-fit-cover m-2" style="height: 40px; width: 40px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
@@ -53,21 +22,23 @@
       </div>
       <span class="text-secondary" style="font-weight: 500">@{{ request.user.username }}</span>
     </div>
-    <div class="mx-2">
-      <button type="button" class="btn btn-sm btn-light">
-        Followers: {{ profile.followers.count }}
-      </button>
-      <button type="button" class="btn btn-sm btn-light">
-        Following: {{ request.user.profiles_following.count }}
-      </button>
-      {% if profile.portfolio.rank %}
-      <button type="button" class="btn btn-sm btn-light">
-        <span data-feather="award"></span>
-        {{ profile.portfolio.rank }}
-      </button>
-      {% endif %}
+    <div class="d-flex flex-wrap w-100 justify-content-between mx-2">
+      <div class="btn-group pr-2 my-1">
+        <a href="{% url 'nc:user-follower-list' request.user.username %}" class="btn btn-sm btn-light">
+          Followers: {{ profile.followers.count }}
+        </a>
+        <a href="{% url 'nc:user-following-list' request.user.username %}" class="btn btn-sm btn-light">
+          Following: {{ request.user.profiles_following.count }}
+        </a>
+      </div>
+      <div class="my-1">
+        <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary">
+          <span data-feather="user"></span>
+          Head To Profile
+        </a>
+      </div>
     </div>
-  </a>
+  </div>
 </div>
 
 <div class="card card-feed">

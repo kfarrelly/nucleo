@@ -48,6 +48,18 @@
       </button>
       <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
         <h6 class="dropdown-header">@{{ request.user.username }}</h6>
+        <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
+          <span data-feather="award"></span>
+          Leaderboard
+        </a>
+        <a class="dropdown-item" href="{% url 'nc:asset-redirect' %}">
+          <span data-feather="trending-up"></span>
+          Assets
+        </a>
+        <a class="dropdown-item" href="{% url 'nc:send-redirect' %}">
+          <span data-feather="send"></span>
+          Send
+        </a>
         <a class="dropdown-item" href="{% url 'nc:feed-redirect' %}">
           <span data-feather="activity"></span>
           Feed
@@ -55,14 +67,6 @@
         <a class="dropdown-item" href="{% url 'nc:user-redirect' %}">
           <span data-feather="user"></span>
           Profile
-        </a>
-        <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
-          <span data-feather="award"></span>
-          Leaderboard
-        </a>
-        <a class="dropdown-item" href="{% url 'nc:send-redirect' %}">
-          <span data-feather="send"></span>
-          Send
         </a>
         <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="{% url 'account_logout' %}">Sign out</a>
@@ -81,8 +85,40 @@
   <div class="container-fluid">
     <div class="row">
       <nav class="col-md-2 d-none d-md-block sidebar">
-        {% block nav %}
-        {% endblock %}
+        <div class="sidebar-sticky">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a {% if view_type == 'leaderboard' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:leaderboard-redirect' %}">
+                <span data-feather="award"></span>
+                Leaderboard{% if view_type == 'leaderboard' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a {% if view_type == 'asset' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:asset-redirect' %}">
+                <span data-feather="trending-up"></span>
+                Assets{% if view_type == 'asset' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a {% if view_type == 'send' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:send-redirect' %}">
+                <span data-feather="send"></span>
+                Send{% if view_type == 'send' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a {% if view_type == 'feed' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:feed-redirect' %}">
+                <span data-feather="activity"></span>
+                Feed{% if view_type == 'feed' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a {% if view_type == 'profile' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:user-redirect' %}">
+                <span data-feather="user"></span>
+                Profile{% if view_type == 'profile' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+          </ul>
+        </div>
       </nav>
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 pb-4">
