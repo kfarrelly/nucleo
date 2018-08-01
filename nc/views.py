@@ -668,9 +668,9 @@ class LeaderboardListView(LoginRequiredMixin, mixins.IndexContextMixin,
         # Add last portfolio USD value and creation date of raw data
         portfolio_latest_rawdata = profile.portfolio.rawdata.first()
         context['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
-            if portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
+            if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
             else 0.0
-        context['portfolio_latest_created'] = portfolio_latest_rawdata.created
+        context['portfolio_latest_created'] = portfolio_latest_rawdata.created if portfolio_latest_rawdata else None
 
         # Add date span and associated performance attribute to use to the context
         context['date_span'] = self.date_span
