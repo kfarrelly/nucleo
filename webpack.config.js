@@ -8,7 +8,7 @@ module.exports = {
   entry: './assets/js/index',
   output: {
       path: path.resolve('./assets/webpack_bundles/'),
-      filename: "[name]-[hash].js",
+      filename: "[name].js",
       libraryTarget: 'var',
       // `library` determines the name of the global variable
       library: '[name]'
