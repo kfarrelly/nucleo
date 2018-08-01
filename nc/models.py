@@ -342,7 +342,7 @@ class Portfolio(models.Model):
 
 @python_2_unicode_compatible
 class RawPortfolioData(TimeSeriesModel):
-    TIMESERIES_INTERVAL = timedelta(days=0.5)  # update daily on cron job but put min interval at 1/2 day to be safe
+    TIMESERIES_INTERVAL = timedelta(hours=0.5)  # update daily on cron job but put min interval at 1/2 hour to be safe
     NOT_AVAILABLE = -1.0
 
     portfolio = models.ForeignKey(Portfolio, related_name='rawdata')
