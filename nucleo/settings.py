@@ -36,6 +36,9 @@ if ENV_TYPE == 'prod':
 else:
     DEBUG = True
 
+DEBUG = True
+
+
 if ENV_TYPE == 'dev':
     # Defaults: see https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
     ALLOWED_HOSTS = [ ]
