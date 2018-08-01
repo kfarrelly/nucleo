@@ -23,7 +23,7 @@
   {% for u in page_obj %}
   <div class="list-group-item d-flex justify-content-between align-items-center">
     <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item-action d-inline-flex justify-content-start align-items-center">
-      <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if u.profile and u.profile.pic %} src="{{ u.profile.pic.url }}"{% endif %} alt="">
+      <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if u.profile and u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
       <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
         <strong>{{ u.get_full_name }}</strong>
         <small class="text-muted">@{{ u.username }}</small>

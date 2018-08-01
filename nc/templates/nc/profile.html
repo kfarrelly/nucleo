@@ -15,7 +15,7 @@
 {% block main %}
 <div class="card mb-4 box-shadow">
   <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.profile and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
-  <img class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.profile and object.profile.pic %} src="{{ object.profile.pic.url }}"{% endif %} alt="">
+  <img class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.profile and object.profile.pic %} src="{{ object.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
     <div class="card-body">
       <h2>{{ object.get_full_name }}</h2>
       <h5 class="text-secondary">@{{ object.username }}</h5>
@@ -113,7 +113,7 @@
           </div>
           <div class="card-body">
             <div class="mb-2">
-              <a href="{% url 'nc:asset-detail' asset_id %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 75px; width: 75px;"></a>
+              <a href="{% url 'nc:asset-detail' asset_id %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} style="height: 75px; width: 75px;"></a>
             </div>
             <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
               <strong>{{ model_asset.code }}</strong>
@@ -294,7 +294,7 @@
       {# TODO: SHOW OUTSTANDING ORDERS! #}
 
       <div class="d-flex justify-content-start flex-wrap align-items-center mb-0 h5">
-        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% endif %} alt="">
+        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
         <button class="btn btn-link" data-toggle="collapse" data-target="#collapse-{{ forloop.counter0 }}" aria-expanded="false" aria-controls="collapse-{{ forloop.counter0 }}">
           <div class="d-flex flex-column align-items-start justify-content-center">
             <h3 class="mb-0">{% if account.name %}{{ account.name }}{% else %}&nbsp;{% endif %}</h3>
@@ -329,9 +329,9 @@
               {% with asset_issuer|create_tuple:asset_code as tu %}
               {% with model_assets|get_item:tu as model_asset %}
               {% if model_asset %}
-              <img class="card-img-top rounded-circle mr-2" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% endif %} style="height: 25px; width: 25px;">
+              <img class="card-img-top rounded-circle mr-2" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} style="height: 25px; width: 25px;">
               {% else %}
-              <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;">
+              <img class="card-img-top rounded-circle mr-2" style="height: 25px; width: 25px;" src="{% static 'nc/images/asset.png' %}">
               {% endif %}
               {% endwith %}
               {% endwith %}

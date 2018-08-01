@@ -6,6 +6,7 @@ import os, requests, toml, urlparse
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.db import models
 from django.urls import reverse
 from django.utils.crypto import get_random_string
@@ -46,6 +47,8 @@ class Profile(models.Model):
     """
     Profile associated with a user.
     """
+    DEFAULT_PIC_URL = static('nc/images/profile.png')
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE, related_name='profile', primary_key=True)
     bio = models.CharField(max_length=255, null=True, blank=True, default=None)
@@ -85,7 +88,10 @@ class Profile(models.Model):
         """
         Have this method as a proxy for the search index.
         """
-        return self.pic.url if self.pic else None
+        pic_url = self.DEFAULT_PIC_URL
+        if self.pic:
+            pic_url = self.pic.url
+        return pic_url
 
     def href(self):
         """
@@ -103,6 +109,8 @@ class Account(models.Model):
     """
     Store of Stellar public key addresses associated with user.
     """
+    DEFAULT_PIC_URL = static('nc/images/account.png')
+
     public_key = models.CharField(max_length=56, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
         related_name='accounts', on_delete=models.CASCADE)
@@ -133,7 +141,10 @@ class Account(models.Model):
         """
         Have this method as a proxy for the search index.
         """
-        return self.pic.url if self.pic else None
+        pic_url = self.DEFAULT_PIC_URL
+        if self.pic:
+            pic_url = self.pic.url
+        return pic_url
 
     def href(self):
         """
@@ -155,6 +166,8 @@ class Asset(models.Model):
     If issuer is registered in Nucleo, allow them to change the color, pic
     of asset.
     """
+    DEFAULT_PIC_URL = static('nc/images/asset.png')
+
     # NOTE: If None, then either doesn't have an account with us OR must be Lumens
     issuer = models.ForeignKey(Account, related_name='assets_issued',
         on_delete=models.CASCADE, null=True, blank=True, default=None)
@@ -214,7 +227,7 @@ class Asset(models.Model):
         """
         Have this method as a proxy for the search index.
         """
-        pic_url = None
+        pic_url = self.DEFAULT_PIC_URL
         if self.pic:
             pic_url = self.pic.url
         elif self.toml_pic:

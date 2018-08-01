@@ -54,7 +54,7 @@
     </div>
   {% else %}
   <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.cover %} src="{{ object.cover.url }}"{% endif %} alt="">
-  <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.pic %} src="{{ object.pic.url }}"{% elif object.toml_pic %} src="{{ object.toml_pic }}"{% endif %} alt="">
+  <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.pic %} src="{{ object.pic.url }}"{% elif object.toml_pic %} src="{{ object.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
     <div class="card-body">
       <h2>
         {{ object.code }}
