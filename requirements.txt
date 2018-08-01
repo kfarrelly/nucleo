@@ -1,14 +1,14 @@
 algoliasearch==1.15.0
 algoliasearch-django==1.5.1
-asn1crypto==0.23.0
+asn1crypto==0.24.0
 bintrees==2.0.7
 boto==2.48.0
 boto3==1.4.4
 chardet==3.0.4
 certifi==2017.7.27.1
-cffi==1.11.0
+cffi==1.11.5
 crc16==0.1.1
-cryptography==2.0.3
+cryptography==2.3
 dateparser==0.7.0
 Django==1.11.13
 django-allauth==0.36.0
@@ -26,7 +26,7 @@ ed25519==1.4
 enum34==1.1.6
 gdax==1.0.6
 idna==2.7
-ipaddress==1.0.18
+ipaddress==1.0.22
 mnemonic==0.18
 oauthlib==2.0.7
 olefile==0.44
