@@ -40,7 +40,7 @@
       {% if request.user.is_authenticated %}
       <a href="{% url 'nc:user-redirect' %}" class="btn btn-dark navbar-btn">
         {% with request.user.profile as profile %}
-        <img class="rounded img-object-fit-cover" style="height: 30px; width: 30px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% endif %} alt="">
+        <img class="rounded img-object-fit-cover bg-white" style="height: 30px; width: 30px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
         {% endwith %}
       </a>
       <button type="button" class="btn btn-dark navbar-btn dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

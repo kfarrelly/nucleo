@@ -72,8 +72,8 @@
     }
   }
 
-  // Set event listeners for loading account on Send From blur
-  var sourceKeys, sourceAccount, sendFromHeader = $('label[for="sendFromInput"]')[0];
+  // Set event listeners for loading account on Send From blur and associated ledger button
+  var sourceKeys, sourceAccount, sendFromHeader = $('label[for="sendFromInput"]')[0], ledgerEnabled = false;
   $('#sendFromInput').on('blur', function(e) {
     if (this.value) {
       try {
@@ -121,6 +121,64 @@
         displayError(sendFromHeader, error.message, true);
         return false;
       });
+    }
+  });
+
+  $('#sendFromLedger').on('ledger:toggle', function(e) {
+    let ledgerButton = this;
+    if (ledgerButton.dataset.public_key != "") {
+      // Ledger enabled, so get source keys from public key stored in dataset
+      ledgerEnabled = true;
+      try {
+        sourceKeys = StellarSdk.Keypair.fromPublicKey(ledgerButton.dataset.public_key);
+      }
+      catch (err) {
+        // Nullify the source variables
+        sourceKeys = null;
+        sourceAccount = null;
+        ledgerEnabled = false;
+
+        // Display errors
+        console.error('Keypair generation failed', err);
+        displayError(sendFromHeader, 'Keypair generation failed. Please enter a valid secret key.', true);
+        ledgerButton.click(); // NOTE: click to reset ledger button on failure
+        return false;
+      }
+
+      // Load account from Horizon server
+      server.loadAccount(sourceKeys.publicKey())
+      .catch(StellarSdk.NotFoundError, function (error) {
+        throw new Error('No Stellar account with that secret key exists yet.');
+      })
+      // If there was no error, load up-to-date information on your account.
+      .then(function(acc) {
+        sourceAccount = acc;
+
+        // Clear any existing options in select box first
+        resetAssetSelect();
+
+        // Then add all options from given source account
+        let assetSelect = $('#assetSelect')[0];
+        sourceAccount.balances.forEach(function(balance) {
+          // Populate options in asset select dropdown with asset codes
+          var assetOption = document.createElement("option");
+          assetOption.setAttribute("data-balance", balance.balance);
+
+          let issuer = (balance.asset_type == "native" ? "" : balance.asset_issuer);
+          assetOption.setAttribute("data-issuer", issuer);
+
+          assetOption.text = (balance.asset_type == "native" ? "XLM" : balance.asset_code);
+          assetSelect.add(assetOption);
+        });
+      })
+      .catch(function(error) {
+        console.error('Something went wrong with Stellar call', error);
+        displayError(sendFromHeader, error.message, true);
+        return false;
+      });
+    } else {
+      ledgerEnabled = false;
+      resetAssetSelect();
     }
   });
 
@@ -199,7 +257,6 @@
       }
     }
 
-
     // Store the total amount to be sent
     var amount = this.elements["amount"].value;
 
@@ -226,6 +283,7 @@
     // Load receiver account to verify it exists and has trust of asset
     server.loadAccount(receiverKeys.publicKey())
     .catch(StellarSdk.NotFoundError, function (error) {
+      // TODO: Create account operation instead if this account does not exist?
       throw new Error('No Stellar account with recipient public key exists yet.');
     })
     // If there was no error, load up-to-date information on your account.
@@ -276,10 +334,17 @@
         }))
         .addMemo(memo)
         .build();
-      // Sign the transaction to prove you are actually the person sending it.
-      transaction.sign(sourceKeys);
-      // And finally, send it off to Stellar!
-      return server.submitTransaction(transaction);
+
+      if (ledgerEnabled) {
+        // Sign the transaction with Ledger to prove you are actually the person sending
+        // then submit to Stellar server
+        return signAndSubmitTransactionWithStellarLedger(server, transaction);
+      } else {
+        // Sign the transaction to prove you are actually the person sending it.
+        transaction.sign(sourceKeys);
+        // And finally, send it off to Stellar!
+        return server.submitTransaction(transaction);
+      }
     })
     .then(function(result) {
       // Submit the tx hash to Nucleo servers to create sent payment

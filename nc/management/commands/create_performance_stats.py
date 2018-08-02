@@ -33,4 +33,4 @@ class Command(BaseCommand):
             # to get percentages.
             if p.performance_1y:
                 print '{0}. {1} ({2}%)'.format(p.rank, p.profile.user.get_full_name(),
-                    p.performance_1y * 100)
+                    p.performance_1d * 100)

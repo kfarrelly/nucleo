@@ -349,6 +349,99 @@
       }
     });
 
+    // Set event listeners for loading account on buyLedger/sellLedger toggle
+    // to notify user of balance of relevant asset currently have.
+    $('#buyLedger').on('ledger:toggle', function(event) {
+      if (this.dataset.public_key != "") {
+        var sourceKeys;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromPublicKey(this.dataset.public_key);
+        }
+        catch (err) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('buy');
+          return false;
+        }
+
+        // Load account from Horizon server
+        server.loadAccount(sourceKeys.publicKey())
+        .catch(StellarSdk.NotFoundError, function (error) {
+          throw new Error('No Stellar account with that secret key exists yet.');
+        })
+        // If there was no error, load up-to-date information on your account.
+        .then(function(sourceAccount) {
+          // Retrieve the XLM balance
+          var xlmBalance;
+          sourceAccount.balances.forEach(function(balance) {
+            if (balance.asset_type == "native") {
+              xlmBalance = balance.balance;
+            }
+          });
+
+          // Add balance for XLM to available balance and set the max attribute
+          // of amount input
+          if (xlmBalance) {
+            $('#buyAmount')[0].setAttribute("max", xlmBalance);
+            $('#buyAmountInputAvailable')[0].textContent = xlmBalance + ' XLM';
+          }
+        })
+        .catch(function(error) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('buy');
+          return false;
+        });
+      } else {
+        resetAvailableBalance('buy');
+      }
+    });
+
+    $('#sellLedger').on('ledger:toggle', function(event) {
+      if (this.dataset.public_key != "") {
+        var sourceKeys;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromPublicKey(this.dataset.public_key);
+        }
+        catch (err) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('sell');
+          return false;
+        }
+
+        // Load account from Horizon server
+        server.loadAccount(sourceKeys.publicKey())
+        .catch(StellarSdk.NotFoundError, function (error) {
+          throw new Error('No Stellar account with that secret key exists yet.');
+        })
+        // If there was no error, load up-to-date information on your account.
+        .then(function(sourceAccount) {
+          // Retrieve the asset balance
+          var assetBalance;
+          sourceAccount.balances.forEach(function(balance) {
+            if (balance.asset_code == asset.code && balance.asset_issuer == asset.issuer) {
+              assetBalance = balance.balance;
+            }
+          });
+
+          // Add balance for asset to available balance and set the max attribute
+          // of amount input
+          if (assetBalance) {
+            $('#sellAmount')[0].setAttribute("max", assetBalance);
+            $('#sellAmountInputAvailable')[0].textContent = assetBalance + ' ' + asset.code;
+          }
+        })
+        .catch(function(error) {
+          // Clear out existing values for data attribute and available balance span
+          sourceKeys = null;
+          resetAvailableBalance('sell');
+          return false;
+        });
+      } else {
+        resetAvailableBalance('sell');
+      }
+    });
 
     // TODO: think about giving cushion to offer price above market price so that guaranteed to execute
     /* Submit Buy Order */
@@ -357,17 +450,33 @@
 
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
-      let formHeader = $(this).find('.form-header')[0];
+      let formHeader = $(this).find('.form-header')[0],
+          ledgerButton = this.elements["ledger"];
 
       // Attempt to generate Keypair
-      var sourceKeys;
-      try {
-        sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
-      }
-      catch (err) {
-        console.error('Keypair generation failed', err);
-        displayError(formHeader, 'Keypair generation failed. Please enter a valid secret key.');
-        return false;
+      var sourceKeys, ledgerEnabled=false;
+      if (this.elements["secret_key"].disabled && ledgerButton.classList.contains("active")) {
+        // Ledger enabled, so get source keys from public key stored in dataset
+        ledgerEnabled = true;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromPublicKey(ledgerButton.dataset.public_key);
+        }
+        catch (err) {
+          console.error('Keypair generation from Ledger failed', err);
+          displayError(formHeader, 'Keypair generation from Ledger failed. Please plug in and open the Stellar app on your Ledger device. Make sure Browser support in Settings is set to Yes.');
+          ledgerButton.click(); // NOTE: click to reset ledger button on failure
+          return false;
+        }
+      } else {
+        // Secret key text input
+        try {
+          sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
+        }
+        catch (err) {
+          console.error('Keypair generation failed', err);
+          displayError(formHeader, 'Keypair generation failed. Please enter a valid secret key.');
+          return false;
+        }
       }
 
       // Store the user inputted asset amount to buy and throw error if
@@ -458,11 +567,17 @@
                 'offerId': 0, // 0 for new offer
               }))
               .build();
-            // Sign the transaction to prove you are actually the person sending it.
-            transaction.sign(sourceKeys);
 
-            // And finally, send it off to Stellar!
-            return server.submitTransaction(transaction);
+            if (ledgerEnabled) {
+              // Sign the transaction with Ledger to prove you are actually the person sending
+              // then submit to Stellar server
+              return signAndSubmitTransactionWithStellarLedger(server, transaction);
+            } else {
+              // Sign the transaction to prove you are actually the person sending it.
+              transaction.sign(sourceKeys);
+              // And finally, send it off to Stellar!
+              return server.submitTransaction(transaction);
+            }
           })
           .then(function(result) {
             // Submit the tx hash to Nucleo servers to create sent payment
@@ -496,17 +611,33 @@
 
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
-      let formHeader = $(this).find('.form-header')[0];
+      let formHeader = $(this).find('.form-header')[0],
+          ledgerButton = this.elements["ledger"];
 
       // Attempt to generate Keypair
-      var sourceKeys;
-      try {
-        sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
-      }
-      catch (err) {
-        console.error('Keypair generation failed', err);
-        displayError(formHeader, 'Keypair generation failed. Please enter a valid secret key.');
-        return false;
+      var sourceKeys, ledgerEnabled=false;
+      if (this.elements["secret_key"].disabled && ledgerButton.classList.contains("active")) {
+        // Ledger enabled, so get source keys from public key stored in dataset
+        ledgerEnabled = true;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromPublicKey(ledgerButton.dataset.public_key);
+        }
+        catch (err) {
+          console.error('Keypair generation from Ledger failed', err);
+          displayError(formHeader, 'Keypair generation from Ledger failed. Please plug in and open the Stellar app on your Ledger device. Make sure Browser support in Settings is set to Yes.');
+          ledgerButton.click(); // NOTE: click to reset ledger button on failure
+          return false;
+        }
+      } else {
+        // Secret key text input
+        try {
+          sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
+        }
+        catch (err) {
+          console.error('Keypair generation failed', err);
+          displayError(formHeader, 'Keypair generation failed. Please enter a valid secret key.');
+          return false;
+        }
       }
 
       // Store the user inputted asset amount to buy and throw error if
@@ -600,11 +731,17 @@
                 'offerId': 0, // 0 for new offer
               }))
               .build();
-            // Sign the transaction to prove you are actually the person sending it.
-            transaction.sign(sourceKeys);
 
-            // And finally, send it off to Stellar!
-            return server.submitTransaction(transaction);
+            if (ledgerEnabled) {
+              // Sign the transaction with Ledger to prove you are actually the person sending
+              // then submit to Stellar server
+              return signAndSubmitTransactionWithStellarLedger(server, transaction);
+            } else {
+              // Sign the transaction to prove you are actually the person sending it.
+              transaction.sign(sourceKeys);
+              // And finally, send it off to Stellar!
+              return server.submitTransaction(transaction);
+            }
           })
           .then(function(result) {
             // Submit the tx hash to Nucleo servers to create sent payment

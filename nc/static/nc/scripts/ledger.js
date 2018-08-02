@@ -8,10 +8,10 @@
     });
   });
 
-  // TODO: When submitting forms for transactions that have secret key,
-  // implement in profile.js, send.js, etc. a check of whether secretKeyInput is disabled
-  // and if so whether secretKeyInput.dataset.ledger_public_key is there.
-  // Then user the ledger_public_key to fetch sourceAccount.
+  // NOTE: When submitting forms for transactions that have secret key,
+  // there is a check in profile.js, send.js, etc. of whether secretKeyInput is disabled.
+  // and if disabled, whether associated ledgerButton.dataset.public_key is there.
+  // Then use the ledgerButton.dataset.public_key to fetch sourceAccount for tx.
 
   /*
   Fetch the public key from connected Ledger device and store
@@ -29,12 +29,13 @@
       if (!button.classList.contains("active")) {
         getStellarLedgerPublicKey().then(function(pk) {
           // Clear out and disable secretKeyInput. Store Ledger public key as data attribute
-          secretKeyInput.dataset.ledger_public_key = pk;
+          button.dataset.public_key = pk;
           secretKeyInput.value = "";
           secretKeyInput.disabled = true;
 
           // Change state of Ledger button to active
           $(button).button('toggle');
+          $(button).trigger('ledger:toggle');
 
           // Notify user to sign transaction after submit is pressed
           let alertMessage = 'Please confirm this transaction on your Ledger device after pressing the ' + submitButtonName + ' button.';
@@ -47,11 +48,12 @@
         });
       } else {
         // Reset all Ledger data and allow user to input text secret key again.
-        secretKeyInput.dataset.ledger_public_key = "";
+        button.dataset.public_key = "";
         secretKeyInput.disabled = false;
 
         // Change state of Ledger button to not active
         $(button).button('toggle');
+        $(button).trigger('ledger:toggle');
       }
     }
   });

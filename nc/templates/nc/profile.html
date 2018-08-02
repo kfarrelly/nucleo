@@ -393,9 +393,9 @@
         <div class="modal-body">
           <h5 id="addStellarModalBodyHeader" class="pt-1 mb-3 modal-body-header">Please enter your secret key to verify account ownership</h5>
           <div class="input-group">
-            <input id="addStellarModalSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" data-ledger_public_key="">
+            <input id="addStellarModalSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
             <div class="input-group-append">
-              <button id="addStellarModalLedger" class="btn btn-outline-secondary ledger-button" type="button" data-parent="#addStellarModalSecretKey" data-alert_ref="#addStellarModalBodyHeader" data-alert_before="false" data-submit_name="Add Account">
+              <button id="addStellarModalLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#addStellarModalSecretKey" data-alert_ref="#addStellarModalBodyHeader" data-alert_before="false" data-submit_name="Add Account">
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>

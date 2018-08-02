@@ -46,6 +46,11 @@
             <span class="input-group-text" id="basic-addon-from">From:</span>
           </div>
           <input id="sendFromInput" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
+          <div class="input-group-append">
+            <button id="sendFromLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sendFromInput" data-alert_ref="label[for='sendFromInput']" data-alert_before="true" data-submit_name="Submit">
+              <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+            </button>
+          </div>
         </div>
       </div>
       <div class="form-group">

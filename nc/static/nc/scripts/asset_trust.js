@@ -45,17 +45,33 @@
         asset = new StellarSdk.Asset(this.dataset.asset_code, this.dataset.asset_issuer),
         publicKey = this.elements["public_key"].value,
         willTrust = this.elements["will_trust"].checked,
+        ledgerButton = this.elements["ledger"],
         successUrl = this.dataset.success;
 
     // Attempt to generate Keypair
-    var sourceKeys;
-    try {
-      sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
-    }
-    catch (err) {
-      console.error('Keypair generation failed', err);
-      displayError(modalHeader, 'Keypair generation failed. Please enter a valid secret key.');
-      return false;
+    var sourceKeys, ledgerEnabled=false;
+    if (this.elements["secret_key"].disabled && ledgerButton.classList.contains("active")) {
+      // Ledger enabled, so get source keys from public key stored in dataset
+      ledgerEnabled = true;
+      try {
+        sourceKeys = StellarSdk.Keypair.fromPublicKey(ledgerButton.dataset.public_key);
+      }
+      catch (err) {
+        console.error('Keypair generation from Ledger failed', err);
+        displayError(modalHeader, 'Keypair generation from Ledger failed. Please plug in and open the Stellar app on your Ledger device. Make sure Browser support in Settings is set to Yes.');
+        ledgerButton.click(); // NOTE: click to reset ledger button on failure
+        return false;
+      }
+    } else {
+      // Secret key text input
+      try {
+        sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
+      }
+      catch (err) {
+        console.error('Keypair generation failed', err);
+        displayError(modalHeader, 'Keypair generation failed. Please enter a valid secret key.');
+        return false;
+      }
     }
 
     // Make sure public address clicked for trust corresponds to sourceKeys.publicKey()
@@ -88,10 +104,17 @@
       transaction = new StellarSdk.TransactionBuilder(sourceAccount)
         .addOperation(StellarSdk.Operation.changeTrust(ops))
         .build();
-      // Sign the transaction to prove you are actually the person sending it.
-      transaction.sign(sourceKeys);
-      // And finally, send it off to Stellar!
-      return server.submitTransaction(transaction);
+
+      if (ledgerEnabled) {
+        // Sign the transaction with Ledger to prove you are actually the person sending
+        // then submit to Stellar server
+        return signAndSubmitTransactionWithStellarLedger(server, transaction);
+      } else {
+        // Sign the transaction to prove you are actually the person sending it.
+        transaction.sign(sourceKeys);
+        // And finally, send it off to Stellar!
+        return server.submitTransaction(transaction);
+      }
     })
     .then(function(result) {
       // Redirect to success url of form

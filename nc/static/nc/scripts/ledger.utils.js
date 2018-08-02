@@ -33,3 +33,8 @@ const signTransactionWithStellarLedger = async (transaction) => {
 
   return transaction;
 }
+
+const signAndSubmitTransactionWithStellarLedger = async (server, transaction) => {
+  const signedTransaction = await signTransactionWithStellarLedger(transaction);
+  return server.submitTransaction(signedTransaction);
+}

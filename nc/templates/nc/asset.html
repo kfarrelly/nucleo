@@ -126,7 +126,7 @@
     <div class="dropdown-menu">
       <form id="buyForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
-        <h6 class="form-header">Buy {{ object.code }}</h6>
+        <h6 id="buyFormHeader" class="form-header">Buy {{ object.code }}</h6>
         <h5 class="text-center py-1">
           <span id="buyEstimate">0.0000000</span> {{ object.code }}
         </h5>
@@ -142,14 +142,12 @@
         </div>
         <div class="form-group">
           <div class="input-group">
-            <input id="buySecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
-            <!-- TODO:
+            <input id="buySecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key">
             <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="button" disabled>
+              <button id="buyLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#buySecretKey" data-alert_ref="#buyFormHeader" data-alert_before="false" data-submit_name="Submit Buy">
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
-          -->
           </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated {{ object.code }} amount from current market price of 1 {{ object.code }} = <span id="buyPrice"></span> XLM (lowest ask price)</small>
@@ -166,7 +164,7 @@
     <div class="dropdown-menu dropdown-menu-right">
       <form id="sellForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
-        <h6 class="form-header">Sell {{ object.code }}</h6>
+        <h6 id="sellFormHeader" class="form-header">Sell {{ object.code }}</h6>
         <h5 class="text-center py-1">
           <span id="sellEstimate">0.0000000</span> XLM
         </h5>
@@ -182,14 +180,12 @@
         </div>
         <div class="form-group">
           <div class="input-group">
-            <input id="sellSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key" required>
-            <!-- TODO:
+            <input id="sellSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key">
             <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="button" disabled>
+              <button id="sellLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sellSecretKey" data-alert_ref="#sellFormHeader" data-alert_before="false" data-submit_name="Submit Sell">
                 <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
               </button>
             </div>
-          -->
           </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated XLM amount from current market price of 1 {{ object.code }} = <span id="sellPrice"></span> XLM (highest bid price)</small>

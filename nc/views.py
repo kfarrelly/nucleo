@@ -948,7 +948,7 @@ class PerformanceCreateView(generic.View):
 
     def _update_rank_values(self):
         """
-        Update rank values of top 100 users by performance over last year.
+        Update rank values of top 100 users by performance over last day.
         Reset all existing rank values first in update to None.
         """
         # Reset all existing first so can easily just start from scratch in
