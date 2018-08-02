@@ -26,7 +26,7 @@ const signTransactionWithStellarLedger = async (transaction) => {
   const result = await str.signTransaction("44'/148'/0'", transaction.signatureBase());
 
   // add signature to transaction
-  const keyPair = StellarSdk.Keypair.fromPublicKey(transaction.source.accountId());
+  const keyPair = StellarSdk.Keypair.fromPublicKey(transaction.source);
   const hint = keyPair.signatureHint();
   const decorated = new StellarSdk.xdr.DecoratedSignature({hint: hint, signature: result.signature});
   transaction.signatures.push(decorated);
