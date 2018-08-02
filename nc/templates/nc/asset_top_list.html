@@ -15,11 +15,11 @@
 {% block main %}
 <div class="card my-4">
   <div class="card-header">
-    Assets In Your Portfolio
+    <h6>Assets In Your Portfolio</h6>
   </div>
   <div class="card-body bg-dark text-center">
     <div id="carouselIndicators" class="carousel slide px-3" data-ride="carousel">
-      <div class="carousel-inner" style="height: 21rem;">
+      <div class="carousel-inner" style="height: 22rem;">
         {% for tup, asset in assets.items %}
         <div {% if forloop.first %}class="carousel-item active"{% else %}class="carousel-item"{% endif %}>
           <div class="card box-shadow text-center m-auto" style="max-width: 15rem;">
@@ -35,7 +35,10 @@
               <a href="{% url 'nc:asset-detail' 'XLM-native' %}" class="d-inline-block mb-2 text-info">
                 <strong>XLM</strong>
               </a>
-              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div class="mb-0">
+                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+                <div data-asset_id='XLM-native' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
+              </div>
             </div>
             <div class="card-footer text-muted w-100">
               <div style="font-weight: 500;">
@@ -58,7 +61,10 @@
               <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
                 <strong>{{ model_asset.code }}</strong>
               </a>
-              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div class="mb-0">
+                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+                <div data-asset_id='{{ asset_id }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
+              </div>
             </div>
             <div class="card-footer text-muted w-100">
               {% if asset.asset_issuer in issuers %}
@@ -87,7 +93,10 @@
               <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
                 <strong>{{ asset.asset_code }}</strong>
               </a>
-              <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+              <div class="mb-0">
+                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
+                <div data-asset_id='{{ asset_id }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
+              </div>
             </div>
             <div class="card-footer text-muted w-100">
               {% if asset.asset_issuer in issuers %}
@@ -132,7 +141,7 @@
 
 <div class="card">
   <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
-    <h5>Top Assets</h5>
+    <h5>Top Assets On Stellar</h5>
   </div>
   <div class="card-body card-leaderboard p-0">
     <ol class="list-group">
@@ -179,4 +188,6 @@
 
 
 {% block nc_script %}
+<script src="{% static 'nc/scripts/ticker.js' %}"></script>
+<script src="{% static 'nc/scripts/asset_top.js' %}"></script>
 {% endblock %}
