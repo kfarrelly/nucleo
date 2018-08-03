@@ -214,8 +214,8 @@
         // Sending payment to user
         // e.x.: <span><a href="" class="text-dark font-weight-bold">@mikey.rf</a> sent 0.75 <a href="" class="text-dark font-weight-bold">XLM</a> to <a href="" class="text-dark font-weight-bold">@feld27</a></span>
         featherIcon = "send";
-
-        objectA.append(document.createTextNode("@" + record.object_username));
+        let objectText = (record.object_username ? "@" + record.object_username : record.object.substring(0, 7) + '...' + record.object.substring(record.object.length-7)); // NOTE: object is public_key if object_username is null (out of Nucleo db account)
+        objectA.append(document.createTextNode(objectText));
 
         // Asset code a
         assetA = document.createElement("a");

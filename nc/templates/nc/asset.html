@@ -32,7 +32,7 @@
             <span class="asset-price-xlm-change"></span>
           </div>
           <div>
-            <small class="asset-price-usd text-muted"></small>
+            <span class="asset-price-usd text-muted"></span>
             <small class="asset-price-usd-change"></small>
           </div>
         </div>
@@ -79,7 +79,7 @@
             <span class="asset-price-xlm-change"></span>
           </div>
           <div>
-            <small class="asset-price-usd text-muted"></small>
+            <span class="asset-price-usd text-muted"></span>
           </div>
         </div>
       </p>
@@ -127,9 +127,10 @@
       <form id="buyForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
         <h6 id="buyFormHeader" class="form-header">Buy {{ object.code }}</h6>
-        <h5 class="text-center py-1">
-          <span id="buyEstimate">0.0000000</span> {{ object.code }}
-        </h5>
+        <div class="text-center py-1">
+          <h5 class="mb-0"><span id="buyEstimate">0.0000000</span> {{ object.code }}</h5>
+          <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="buyEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
+        </div>
         <div class="form-group">
           <label for="buyAmount">Amount</label>
           <div class="input-group">
@@ -165,9 +166,10 @@
       <form id="sellForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
         <h6 id="sellFormHeader" class="form-header">Sell {{ object.code }}</h6>
-        <h5 class="text-center py-1">
-          <span id="sellEstimate">0.0000000</span> XLM
-        </h5>
+        <div class="text-center py-1">
+          <h5 class="mb-0"><span id="sellEstimate">0.0000000</span> XLM</h5>
+          <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="sellEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
+        </div>
         <div class="form-group">
           <label for="sellAmount">Amount</label>
           <div class="input-group">

@@ -69,6 +69,14 @@
           assetScore.textContent = score;
         });
 
+        // Store asset price data in all reference currency containers
+        $(assetTickerDiv).find('.asset-price-data-usd').each(function(i, assetPriceUsd) {
+          assetPriceUsd.dataset.asset_price_usd = usdValue;
+        });
+        $(assetTickerDiv).find('.asset-price-data-xlm').each(function(i, assetPriceXlm) {
+          assetPriceUsd.dataset.asset_price_xlm = xlmValue;
+        });
+
         // Make the full ticker div visible
         $(assetTickerDiv).fadeIn();
       }
@@ -229,7 +237,16 @@
         amount = 0.0;
       }
 
+      // Set the estimates in asset code
       $('#buyEstimate').text(numeral(amount).format('0,0.0000000'));
+
+      // Set the USD reference amount
+      let usdAmountContainer = $('#buyEstimateUsd')[0];
+      var xlmPriceUsd = parseFloat(usdAmountContainer.dataset.asset_price_usd);
+      if (xlmPriceUsd) {
+        let usdVal = amount * buyPrice * xlmPriceUsd;
+        $(usdAmountContainer).text(numeral(usdVal).format('$0,0.0000000'));
+      }
     });
 
     $('#sellAmount').on('input', function(event) {
@@ -243,7 +260,16 @@
         amount = 0.0;
       }
 
+      // Set the estimates in XLM
       $('#sellEstimate').text(numeral(amount).format('0,0.0000000'));
+
+      // Set the USD reference amount
+      let usdAmountContainer = $('#sellEstimateUsd')[0];
+      var xlmPriceUsd = parseFloat(usdAmountContainer.dataset.asset_price_usd);
+      if (xlmPriceUsd) {
+        let usdVal = amount * xlmPriceUsd;
+        $(usdAmountContainer).text(numeral(usdVal).format('$0,0.0000000'));
+      }
     });
 
     /* Reset asset available balance to clear out max amount on respective offer type input */

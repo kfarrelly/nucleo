@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -295,7 +295,7 @@ class FeedActivityCreateForm(forms.Form):
                 object = get_user_model().objects.get(accounts__public_key=record['to'])
             except ObjectDoesNotExist:
                 object = None
-            object_id = object.id if object else None
+            object_id = object.id if object else record['to'] # NOTE: if no Nucleo user has that account, use public_key for object_id in r
             object_username = object.username if object else None
             object_email = object.email if object else None
 
