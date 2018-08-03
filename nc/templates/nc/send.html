@@ -74,7 +74,7 @@
           </div>
           <input id="sendFromInput" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
           <div class="input-group-append">
-            <button id="sendFromLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sendFromInput" data-alert_ref="label[for='sendFromInput']" data-alert_before="true" data-submit_name="Submit">
+            <button id="sendFromLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sendFromInput" data-alert_ref="label[for='sendFromInput']" data-alert_before="true" data-submit_name="Send">
               <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
             </button>
           </div>
@@ -124,7 +124,7 @@
       </div>
       <div class="form-group mt-4 mb-0">
         <button id="sendPaymentFormReset" type="reset" class="btn btn-secondary">Reset</button>
-        <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Submit</span></button>
+        <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Send</span></button>
       </div>
     </form>
   </div>

@@ -30,6 +30,7 @@
       }
 
       if (baseAssetCode && baseAssetIssuer) {
+        // Base asset is not native so use Stellar Horizon server
         baseAsset = new StellarSdk.Asset(baseAssetCode, baseAssetIssuer);
         server.tradeAggregation(baseAsset, counterAsset, start, end, resolution).limit(200).call()
         .then(function(data){
@@ -45,6 +46,36 @@
         .catch(function(error) {
           // If something went wrong, notify user data not available
           console.error('Something went wrong with Stellar call', error);
+          assetChartDiv.textContent = "Historical price data not available";
+          return false;
+        });
+      } else {
+        // Base asset is native so use Kraken
+        // TODO: Kraken client?
+        baseAsset = StellarSdk.Asset.native();
+
+        // Query for XLM/USD at 1d intervals (in mins) since start (in secs)
+        let url = KRAKEN_TICKER_URL + '?pair=' + KRAKEN_XLMUSD_PAIR_NAME + '&interval=1440&since=' + String(start/1000);
+        $.get(url)
+        .done(function(data) {
+          // Parse the record data to get an appropriate format for chart plotting
+          // i.e. [ [timestamp, avg] ]
+          console.log(data);
+          let records = data.result[KRAKEN_XLMUSD_PAIR_NAME];
+          if (records) {
+            var plotData = [];
+            $.each(records, function(j, record) {
+              // NOTE: https://www.kraken.com/help/api#get-ohlc-data
+              // Each record is an array entries(<time>, <open>, <high>, <low>, <close>, <vwap>, <volume>, <count>)
+              plotData.push([ record[0], parseFloat(record[4]) ]);
+            });
+          } else {
+            throw new Error('No records from external exchange found');
+          }
+        })
+        .fail(function(xhr, textStatus, error) {
+          // If something went wrong, notify user data not available
+          console.error('Something went wrong with the external exchange call', error);
           assetChartDiv.textContent = "Historical price data not available";
           return false;
         });
