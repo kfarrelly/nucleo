@@ -52,13 +52,13 @@
           <span data-feather="award"></span>
           Leaderboard
         </a>
-        <a class="dropdown-item" href="{% url 'nc:asset-redirect' %}">
+        <a class="dropdown-item" href="{% url 'nc:trade-redirect' %}">
           <span data-feather="trending-up"></span>
-          Assets
+          Trade
         </a>
         <a class="dropdown-item" href="{% url 'nc:send-redirect' %}">
           <span data-feather="send"></span>
-          Send
+          Send / Receive
         </a>
         <a class="dropdown-item" href="{% url 'nc:feed-redirect' %}">
           <span data-feather="activity"></span>
@@ -94,15 +94,15 @@
               </a>
             </li>
             <li class="nav-item">
-              <a {% if view_type == 'asset' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:asset-redirect' %}">
+              <a {% if view_type == 'asset' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:trade-redirect' %}">
                 <span data-feather="trending-up"></span>
-                Assets{% if view_type == 'asset' %} <span class="sr-only">(current)</span>{% endif %}
+                Trade{% if view_type == 'asset' %} <span class="sr-only">(current)</span>{% endif %}
               </a>
             </li>
             <li class="nav-item">
               <a {% if view_type == 'send' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:send-redirect' %}">
                 <span data-feather="send"></span>
-                Send{% if view_type == 'send' %} <span class="sr-only">(current)</span>{% endif %}
+                Send / Receive{% if view_type == 'send' %} <span class="sr-only">(current)</span>{% endif %}
               </a>
             </li>
             <li class="nav-item">

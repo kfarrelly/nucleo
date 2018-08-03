@@ -13,7 +13,34 @@
 {% block title %}Nucleo | Send{% endblock %}
 
 {% block main %}
-<div class="card my-4 bg-white rounded box-shadow">
+<div class="card card-receive my-4">
+  <div class="card-header border-0 d-flex justify-content-between align-items-center">
+    <h6>Your Accounts To Receive Payment</h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="list-group">
+      {% for acc in user.accounts.all %}
+      <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-inline-flex justify-content-start align-items-center">
+          <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 50px; width: 50px;"{% if acc.pic %} src="{{ acc.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
+          <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+            <strong>{% if acc.name %}{{ acc.name }}{% else %}&nbsp;{% endif %}</strong>
+            <abbr title="Stellar Account Public Key" class="text-secondary">{{ acc.public_key }}</abbr>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-footer border-0 d-flex justify-content-start align-items-center">
+    <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary">
+      <span data-feather="user"></span>
+      Head To Profile
+    </a>
+  </div>
+</div>
+
+<div class="card bg-white rounded box-shadow">
   <h5 class="card-header">Send Payment</h5>
   <div class="card-body">
     <form id="sendPaymentForm" method="POST">
