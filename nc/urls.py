@@ -21,11 +21,11 @@ urlpatterns = [
     # Assets
     url(r'^asset/$', views.AssetRedirectView.as_view(), name='asset-redirect'),
     url(r'^trade/$', views.AssetRedirectView.as_view(), name='trade-redirect'),
-    url(r'^trade/asset/top/$', views.AssetTopListView.as_view(), name='asset-top-list'),
+    url(r'^asset/top/$', views.AssetTopListView.as_view(), name='asset-top-list'),
     # TODO: asset-list
-    url(r'^trade/asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
-    url(r'^trade/asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
-    url(r'^trade/asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
+    url(r'^asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
+    url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
+    url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
 
     # Leaderboard
     url(r'^leaderboard/$', views.LeaderboardRedirectView.as_view(), name='leaderboard-redirect'),
