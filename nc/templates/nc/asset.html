@@ -109,7 +109,7 @@
 
 <div class="card mt-4 box-shadow">
   <div class="card-body">
-    <div id="assetChart" class="asset-chart" {% if not is_native %}data-base_asset_code="{{ object.code }}" data-base_asset_issuer="{{ object.issuer_address }}"{% endif %}>
+    <div id="assetChart" class="asset-chart" {% if not is_native %}data-base_asset_code="{{ object.code }}" data-base_asset_issuer="{{ object.issuer_address }}"{% else %}data-url="{% url 'nc:asset-exchange-ticker' %}" data-exchange_pair_name="{{ exchange_pair_name }}"{% endif %}>
       <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
         Loading historical price data ...
       </div>

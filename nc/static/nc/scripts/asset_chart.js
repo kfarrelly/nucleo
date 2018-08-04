@@ -1,7 +1,7 @@
 (function() {
   /* Initialization of Stellar server */
   // NOTE: won't get asset price data if use testnet URL so default to live for price data
-  var baseAsset, counterAsset,
+  var baseAsset, counterAsset, exchangeUrl, exchangePairName,
       server = new StellarSdk.Server(STELLAR_MAINNET_SERVER_URL);
 
   // Plot the current asset's trade aggregation data
@@ -51,31 +51,40 @@
         });
       } else {
         // Base asset is native so use Kraken
-        // TODO: Kraken client?
         baseAsset = StellarSdk.Asset.native();
 
-        // Query for XLM/USD at 1d intervals (in mins) since start (in secs)
-        let url = KRAKEN_TICKER_URL + '?pair=' + KRAKEN_XLMUSD_PAIR_NAME + '&interval=1440&since=' + String(start/1000);
+        // Query for XLM/USD
+        var params = { 'interval': resolution, 'start': start, 'end': end };
+        exchangePairName = assetChartDiv.dataset.exchange_pair_name;
+        exchangeUrl = assetChartDiv.dataset.url;
+        let url = exchangeUrl + '?' + $.param(params);
+
         $.get(url)
-        .done(function(data) {
+        .then(function(resp) {
           // Parse the record data to get an appropriate format for chart plotting
           // i.e. [ [timestamp, avg] ]
-          console.log(data);
-          let records = data.result[KRAKEN_XLMUSD_PAIR_NAME];
+
+          // Resp Json has key, vals:
+          // 'last': timestamp of most recent record (use for future since value
+          //    when fetching more recent data),
+          // 'error': []
+          // pairName: [ record ]
+          //  where record is list of format [ <time>, <open>, <high>, <low>, <close>,
+          //    <vwap>, <volume>, <count> ]
+          let records = resp.result[exchangePairName];
           if (records) {
             var plotData = [];
             $.each(records, function(j, record) {
-              // NOTE: https://www.kraken.com/help/api#get-ohlc-data
-              // Each record is an array entries(<time>, <open>, <high>, <low>, <close>, <vwap>, <volume>, <count>)
               plotData.push([ record[0], parseFloat(record[4]) ]);
             });
+            createChart(assetChartDiv.id, baseAsset.getCode(), plotData, ' USD');
           } else {
             throw new Error('No records from external exchange found');
           }
         })
-        .fail(function(xhr, textStatus, error) {
+        .catch(function (err) {
           // If something went wrong, notify user data not available
-          console.error('Something went wrong with the external exchange call', error);
+          console.error('Something went wrong with the external exchange call', err);
           assetChartDiv.textContent = "Historical price data not available";
           return false;
         });
@@ -123,48 +132,91 @@
     Fetch new data from Horizon server once range limits on plot have changed.
     */
     var chart = Highcharts.charts[0];
-    chart.showLoading('Loading data from Horizon ...');
     let start = Math.round(e.min),
         end = Math.round(e.max),
         resolution = getResolution(start, end);
 
     var plotData = [];
-    server.tradeAggregation(baseAsset, counterAsset, start, end, resolution).limit(200).call()
-    .then(function(data){
-      // Parse the record data to get an appropriate format for chart plotting
-      // i.e. [ [timestamp, avg] ]
-      var firstVal, lastVal;
-      $.each(data.records, function(j, record) {
-        plotData.push([ record.timestamp, parseFloat(record.avg) ]);
+    if (baseAsset.isNative()) {
+      chart.showLoading('Loading data from external exchange ...');
 
-        // To determine color of graph (green/red), keep track of first and last val
-        if (j == 0) {
-          firstVal = parseFloat(record.avg);
-        } else if (j == data.records.length - 1) {
-          lastVal = parseFloat(record.avg);
+      // Query for XLM/USD
+      var params = { 'interval': resolution, 'start': start, 'end': end };
+      let url = exchangeUrl + '?' + $.param(params);
+      $.get(url)
+      .then(function(resp) {
+        var firstVal, lastVal;
+        let records = resp.result[exchangePairName];
+        $.each(records, function(j, record) {
+          plotData.push([ record[0], parseFloat(record[4]) ]);
+
+          // To determine color of graph (green/red), keep track of first and last val
+          if (j == 0) {
+            firstVal = parseFloat(record[4]);
+          } else if (j == records.length - 1) {
+            lastVal = parseFloat(record[4]);
+          }
+        });
+        if (firstVal && lastVal) {
+          // Update the color
+          let plotColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
+          chart.series[0].options.color = plotColor;
+          chart.series[0].options.fillColor = {
+              linearGradient: {
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0.6
+              },
+              stops: [
+                  [0, plotColor],
+                  [1, Highcharts.Color(plotColor).setOpacity(0).get('rgba')]
+              ]
+          };
+          chart.series[0].update(chart.series[0].options);
         }
+        chart.series[0].setData(plotData);
+        chart.hideLoading();
       });
-      if (firstVal && lastVal) {
-        // Update the color
-        let plotColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
-        chart.series[0].options.color = plotColor;
-        chart.series[0].options.fillColor = {
-            linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 0.6
-            },
-            stops: [
-                [0, plotColor],
-                [1, Highcharts.Color(plotColor).setOpacity(0).get('rgba')]
-            ]
-        };
-        chart.series[0].update(chart.series[0].options);
-      }
-      chart.series[0].setData(plotData);
-      chart.hideLoading();
-    });
+    } else {
+      chart.showLoading('Loading data from Horizon ...');
+      server.tradeAggregation(baseAsset, counterAsset, start, end, resolution).limit(200).call()
+      .then(function(data){
+        // Parse the record data to get an appropriate format for chart plotting
+        // i.e. [ [timestamp, avg] ]
+        var firstVal, lastVal;
+        $.each(data.records, function(j, record) {
+          plotData.push([ record.timestamp, parseFloat(record.avg) ]);
+
+          // To determine color of graph (green/red), keep track of first and last val
+          if (j == 0) {
+            firstVal = parseFloat(record.avg);
+          } else if (j == data.records.length - 1) {
+            lastVal = parseFloat(record.avg);
+          }
+        });
+        if (firstVal && lastVal) {
+          // Update the color
+          let plotColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
+          chart.series[0].options.color = plotColor;
+          chart.series[0].options.fillColor = {
+              linearGradient: {
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0.6
+              },
+              stops: [
+                  [0, plotColor],
+                  [1, Highcharts.Color(plotColor).setOpacity(0).get('rgba')]
+              ]
+          };
+          chart.series[0].update(chart.series[0].options);
+        }
+        chart.series[0].setData(plotData);
+        chart.hideLoading();
+      });
+    }
   }
 
 

@@ -478,6 +478,10 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
                 context.update({'object': self.object})
             except:
                 pass
+        else:
+            # Include the external exchange pair name for client side
+            # JSON parsing
+            context['exchange_pair_name'] = settings.KRAKEN_XLMUSD_PAIR_NAME
 
         context['asset'] = record
 
@@ -502,6 +506,65 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
                 model_asset.update_from_toml(toml_url)
 
         return model_asset
+
+
+class AssetExchangeTickerListView(mixins.JSONResponseMixin, generic.TemplateView):
+    template_name = "nc/asset_exchange_ticker_list.html"
+
+    def render_to_response(self, context):
+        """
+        Returns only JSON. Not meant for actual HTML page viewing.
+        In future, transition this to DRF API endpoint.
+        """
+        return self.render_to_json_response(context)
+
+    def get_context_data(self, **kwargs):
+        """
+        Context is paginated ticker history for given asset pair
+        response from Kraken.
+
+        Requires URL to have query param 'interval' and optional 'since'.
+
+        Response from Kraken has JSON format
+        { 'result': { 'XXLMZUSD': [record], 'last': int, 'error': [] } }
+
+        with record = [ <time>, <open>, <high>, <low>, <close>, <vwap>,
+            <volume>, <count> ]
+        """
+        # NOTE: https://www.kraken.com/help/api#get-ohlc-data
+        context = {}
+        params = self.request.GET.copy()
+        params.update({ 'pair': settings.KRAKEN_XLMUSD_PAIR_NAME })
+
+        # Pop the start, end query param if there (to use later when filtering of resp data)
+        start = float(params.pop('start')[0]) if 'start' in params else None
+        end = float(params.pop('end')[0]) if 'end' in params else None
+
+        # NOTE: Kraken requires query for interval to be in mins and since
+        # to be in secs.
+        # From getResolution() in asset_chart.js, we pass in (interval, since)
+        # in milliseconds, so need to convert
+        if 'interval' in params:
+            params['interval'] = str(int(params['interval']) / (60 * 1000))
+
+        if 'since' in params:
+            params['since'] = str(float(params['since']) / 1000.0)
+
+        full_url = '{0}?{1}'.format(settings.KRAKEN_TICKER_URL, params.urlencode())
+        r = requests.get(full_url)
+        if r.status_code == requests.codes.ok:
+            # NOTE: Each <time> in record is returned by Kraken in seconds
+            # so need to convert back to milliseconds for client
+            ret = r.json()
+            if 'result' in ret and settings.KRAKEN_XLMUSD_PAIR_NAME in ret['result']:
+                ret['result'][settings.KRAKEN_XLMUSD_PAIR_NAME] = [
+                    [record[0] * 1000] + record[1:]
+                    for record in ret['result'][settings.KRAKEN_XLMUSD_PAIR_NAME]
+                    if (not start or record[0] * 1000 > start) and (not end or record[0] * 1000 < end)
+                ]
+            context.update(ret)
+
+        return context
 
 
 class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
