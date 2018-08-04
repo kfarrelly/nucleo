@@ -141,7 +141,39 @@
 
 <div class="card">
   <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
-    <h5>Top Assets On Stellar</h5>
+    <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
+      <h5>Top Assets On Stellar</h5>
+      <span class="text-secondary">Click on an asset to trade</span>
+    </div>
+    <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
+      {% if display != 'activityScore' %}
+      {% with display|slice:"-3:" as currency %}
+      <div class="btn-group my-1" role="group">
+        <a href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}USD&order_by={{ order_by }}" {% if currency == 'USD' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>USD</a>
+        <a href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}XLM&order_by={{ order_by }}" {% if currency == 'XLM' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>XLM</a>
+      </div>
+      {% endwith %}
+      {% endif %}
+      <div class="btn-group my-1" role="group">
+        <a {% if display == 'activityScore' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+          {% if display == 'activityScore' %}
+          <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>
+          {% endif %}
+          Activity
+        </a>
+        <a {% if display == 'price_USD' or display == 'price_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_USD&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+          {% if display == 'price_USD' or display == 'price_XLM' %}
+          <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>
+          {% endif %}
+          Price
+        </a>
+        <a {% if display == 'change24h_USD' or display == 'change24h_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_USD&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+          {% if display == 'change24h_USD' or display == 'change24h_XLM' %}
+          <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>{% endif %}
+          Change 24h
+        </a>
+      </div>
+    </div>
   </div>
   <div class="card-body card-leaderboard p-0">
     <ol class="list-group">
@@ -156,10 +188,40 @@
           </div>
         </div>
         <div class="btn-group asset-ticker py-1">
+          {% if display == 'activityScore' %}
           <button type="button" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
             <span data-feather="star"></span>
-            <span class="asset-score">{{ a.score }}</span>
+            {{ a.activityScore }}
           </button>
+          {% elif display == 'price_USD' %}
+          {% with a|get_attribute:'price_USD' as display_val %}
+          {% with a|get_attribute:'change24h_USD' as performance %}
+          <button type="button" {% if performance and display_val != None %}{% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% endif %}{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if display_val != None %}${{ display_val|intcomma }}{% else %}-{% endif %}
+          </button>
+          {% endwith %}
+          {% endwith %}
+          {% elif display == 'price_XLM' %}
+          {% with a|get_attribute:'price_XLM' as display_val %}
+          {% with a|get_attribute:'change24h_XLM' as performance %}
+          <button type="button" {% if performance and display_val != None %}{% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% endif %}{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if display_val != None %}{{ display_val|intcomma }} XLM{% else %}-{% endif %}
+          </button>
+          {% endwith %}
+          {% endwith %}
+          {% elif display == 'change24h_USD' %}
+          {% with a|get_attribute:'change24h_USD' as performance %}
+          <button type="button" {% if performance %}{% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% endif %}{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if performance != None %}{% if performance > 0 %}+{% endif %}{{ performance|floatformat:2|intcomma }}%{% else %}-{% endif %}
+          </button>
+          {% endwith %}
+          {% elif display == 'change24h_XLM' %}
+          {% with a|get_attribute:'change24h_XLM' as performance %}
+          <button type="button" {% if performance %}{% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% endif %}{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if performance != None %}{% if performance > 0 %}+{% endif %}{{ performance|floatformat:2|intcomma }}%{% else %}-{% endif %}
+          </button>
+          {% endwith %}
+          {% endif %}
         </div>
       </a>
       {% endfor %}
@@ -170,8 +232,8 @@
 <div class="pagination mt-2">
     <span class="step-links">
         {% if page_obj.has_previous %}
-            <a href="?page=1">&laquo; First</a>
-            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&page=1">&laquo; First</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.previous_page_number }}">Previous</a>
         {% endif %}
 
         <span class="current">
@@ -179,8 +241,8 @@
         </span>
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">Next</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
         {% endif %}
     </span>
 </div>

@@ -389,7 +389,7 @@ class FeedActivityCreateForm(forms.Form):
                 recipient_list, ctx_email)
 
         # Buy/sell of asset
-        if len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
+        elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
             record = self.ops[0]
 
             # Given we only allow buying/selling of token with respect to XLM,
@@ -435,5 +435,10 @@ class FeedActivityCreateForm(forms.Form):
             }
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_offer',
                 recipient_list, ctx_email)
+
+        else:
+            # Not a supported activity type
+            print 'here'
+            return None
 
         return self.feed.add_activity(kwargs)

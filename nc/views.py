@@ -667,8 +667,13 @@ class AssetTopListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         context = super(AssetTopListView, self).get_context_data(**kwargs)
 
-        # Set ticker assets and rank of asset on top of current page
+        # Set ticker assets
         context['ticker_assets'] = self.ticker_assets
+        context['allowed_displays'] = self.allowed_displays
+        context['display'] = self.display
+        context['order_by'] = self.order_by
+
+        # Set list order rank of asset on top of current page
         page_obj = context['page_obj']
         context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
 
@@ -676,32 +681,63 @@ class AssetTopListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
     def get_queryset(self):
         """
-        Queryset is assets with asset_id in StellarTerm ticker list.
+        Queryset is assets with asset_id in StellarTerm ticker list, sorted
+        by either StellarTerm activityScore, price in USD/XLM, change 24h in USD/XLM.
+
+        Query params have key, val options
+            { display: 'activityScore', 'price_USD', 'price_XLM', 'change24h_USD',
+                    or 'change24h_XLM'
+              order_by: 'asc' or 'desc' }
         """
+        # Display types in query param to give flexibility
+        self.allowed_displays = [ 'activityScore', 'price_USD', 'price_XLM',
+            'change24h_USD', 'change24h_XLM' ]
+        self.display = self.request.GET.get('display')
+        if self.display not in self.allowed_displays:
+            self.display = self.allowed_displays[0] # default to activityScore
+
+        # Ordering type in query param to give flexibility of ascending v. descending
+        self.allowed_orderings = [ 'desc', 'asc' ]
+        self.order_by = self.request.GET.get('order_by')
+        if self.order_by not in self.allowed_orderings:
+            self.order_by = self.allowed_orderings[0] # default to descending
+
         # Fetch the StellarTerm ticker json and store
         r = requests.get(settings.STELLARTERM_TICKER_URL)
         json = r.json()
         ticker_assets = json.get('assets', [])
 
-        # Clean the asset list
-        cleaned_ticker_assets = [ a for a in ticker_assets
-            if 'activityScore' in a and a['activityScore'] > 0 ]
+        # TODO: ADD IN XLM META IN LOOP. STORE VARS HERE FROM JSON!
+        # NOTE: Need to get USD/XLM 24 hour change from _meta key (not in XLM-native asset)
+        xlm_change24h_USD = None
+        if '_meta' in json and 'externalPrices' in json['_meta']\
+        and 'USD_XLM_change' in json['_meta']['externalPrices']:
+            xlm_change24h_USD = json['_meta']['externalPrices']['USD_XLM_change']
+
+        # Clean the ticker assets to only include those that have
+        # the display attribute
+        cleaned_ticker_assets = [
+            a for a in ticker_assets
+            if a['id'] == 'XLM-native' or (self.display in a and a[self.display] != None)
+        ]
 
         # Parse to get asset_ids for queryset filter
         top_asset_ids = [ a['id'] for a in cleaned_ticker_assets ]
 
         # Store the dict version of ticker assets
-        self.ticker_assets = {
-            a['id']: a
-            for a in cleaned_ticker_assets
-        }
+        self.ticker_assets = { a['id']: a for a in cleaned_ticker_assets }
 
         # Order the qset by activityScore
         # TODO: Figure out how to annotate qset properly
         assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))
         for a in assets:
-            a.score = self.ticker_assets[a.asset_id]['activityScore']
-        assets.sort(key=lambda a: a.score, reverse=True)
+            for display in self.allowed_displays:
+                if a.asset_id == 'XLM-native' and display == 'change24h_USD':
+                    # Handling the XLM-native USD % change edge case
+                    setattr(a, display, xlm_change24h_USD)
+                else:
+                    setattr(a, display, self.ticker_assets[a.asset_id].get(display))
+        assets.sort(key=lambda a: getattr(a, self.display), reverse=(self.order_by == "desc"))
 
         return assets
 
