@@ -216,22 +216,15 @@
             <label class="control-label sr-only">Issuing Account</label>
             <div class="input-group">
               <input type="password" name="issuer_secret_key" class="form-control" placeholder="Issuing Account (e.x. SBUVRVHRRGNBFYY...)" aria-label="Issuing Account Secret Key" required>
-              <!-- TODO:
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" disabled>
-                  <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
-                </button>
-              </div>
-            -->
             </div>
           </div>
           <div class="form-group">
             <label class="control-label sr-only">Distribution Account</label>
             <div class="input-group">
-              <input type="password" name="distributer_secret_key" class="form-control" placeholder="Distribution Account (e.x. SB4YQ6LEODDJRZY...)" aria-label="Distributing Account Secret Key" required>
+              <input id="issueStellarModalDistributerSecretKey" type="password" name="distributer_secret_key" class="form-control" placeholder="Distribution Account (e.x. SB4YQ6LEODDJRZY...)" aria-label="Distributing Account Secret Key" required>
               <!-- TODO:
               <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" disabled>
+                <button id="issueStellarModalLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#issueStellarModalDistributerSecretKey" data-alert_ref="#issueStellarModalBodyHeader" data-alert_before="false" data-submit_name="Issue Token">
                   <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
                 </button>
               </div>
@@ -251,6 +244,7 @@
                 <li>Your issuing account will create your tokens and send them to the distribution account.</li>
                 <li>The home domain for your issuing account will be changed to the web domain specified, for future asset verification with your <a href="https://www.stellar.org/developers/guides/concepts/stellar-toml.html" class="text-danger font-weight-bold" target="_blank">stellar.toml</a> file.</li>
               </ol>
+              <li>Ledger and StellarGuard are not yet supported for Token Issuance.</li>
             </ul>
           </div>
         </div>

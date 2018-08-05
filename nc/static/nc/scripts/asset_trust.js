@@ -112,13 +112,40 @@
       } else {
         // Sign the transaction to prove you are actually the person sending it.
         transaction.sign(sourceKeys);
-        // And finally, send it off to Stellar!
-        return server.submitTransaction(transaction);
+
+        // And finally, send it off to Stellar! Check for StellarGuard protection.
+        if (StellarGuardSdk.hasStellarGuard(sourceAccount)) {
+          // Instantiate client side event listener to verify StellarGuard
+          // transaction has been authorized
+          var es = server.operations().cursor('now').forAccount(sourceAccount.id)
+            .stream({
+            onmessage: function (op) {
+              if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_CHANGE_TRUST) {
+                // Close the event stream connection
+                es();
+
+                // Redirect to success url of form
+                window.location.href = successUrl;
+              }
+            }
+          });
+          // Then tx submit to StellarGuard
+          return StellarGuardSdk.submitTransaction(transaction);
+        } else {
+          return server.submitTransaction(transaction);
+        }
       }
     })
     .then(function(result) {
-      // Redirect to success url of form
-      window.location.href = successUrl;
+      if (result.stellarGuard) {
+        // From StellarGuard: alert user to go to url to authorize
+        let message = 'Please authorize this transaction with StellarGuard.';
+        displayAlert(modalHeader, message, 'alert-warning');
+      } else {
+        // From Horizon
+        // Redirect to success url of form
+        window.location.href = successUrl;
+      }
     })
     .catch(function(error) {
       // Stop the button loading animation then display the error

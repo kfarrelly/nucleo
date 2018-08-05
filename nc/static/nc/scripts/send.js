@@ -354,11 +354,11 @@
           var es = server.operations().cursor('now').forAccount(sourceAccount.id)
             .stream({
             onmessage: function (op) {
-              if (op.source_account == sourceAccount.id && op.type == "payment") {
+              if (op.source_account == sourceAccount.id && (op.type_i == STELLAR_OPERATION_PAYMENT || op.type_i == STELLAR_OPERATION_PATH_PAYMENT)) {
                 // Close the event stream connection
                 es();
 
-                // Submit the tx hash to Nucleo servers to create sent payment
+                // Submit the tx hash to Nucleo servers to create
                 // activity in user feeds
                 let activityForm = $('#activityForm')[0];
                 activityForm.elements["tx_hash"].value = op.transaction_hash;
@@ -380,7 +380,7 @@
         displayAlert(submitButtonContainer, message, 'alert-warning', true);
       } else {
         // From Horizon
-        // Submit the tx hash to Nucleo servers to create sent payment
+        // Submit the tx hash to Nucleo servers to create
         // activity in user feeds
         let activityForm = $('#activityForm')[0];
         activityForm.elements["tx_hash"].value = result.hash;

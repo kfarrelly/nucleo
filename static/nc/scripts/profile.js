@@ -203,16 +203,46 @@
         } else {
           // Sign the transaction to prove you are actually the person sending it.
           transaction.sign(sourceKeys);
-          // And finally, send it off to Stellar!
-          return server.submitTransaction(transaction);
+
+          // And finally, send it off to Stellar! Check for StellarGuard protection.
+          if (StellarGuardSdk.hasStellarGuard(sourceAccount)) {
+            // Instantiate client side event listener to verify StellarGuard
+            // transaction has been authorized
+            var es = server.operations().cursor('now').forAccount(sourceAccount.id)
+              .stream({
+              onmessage: function (op) {
+                if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_MANAGE_DATA) {
+                  // Close the event stream connection
+                  es();
+
+                  // Submit the public key to Nucleo servers to verify account
+                  let publicKeyForm = $('#addStellarPublicKeyForm')[0];
+                  publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
+                  publicKeyForm.elements["creating_stellar"].checked = false;
+                  publicKeyForm.submit();
+                }
+              }
+            });
+            // Then tx submit to StellarGuard
+            return StellarGuardSdk.submitTransaction(transaction);
+          } else {
+            return server.submitTransaction(transaction);
+          }
         }
       })
       .then(function(result) {
-        // Submit the public key to Nucleo servers to verify account
-        let publicKeyForm = $('#addStellarPublicKeyForm')[0];
-        publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
-        publicKeyForm.elements["creating_stellar"].checked = false;
-        publicKeyForm.submit();
+        if (result.stellarGuard) {
+          // From StellarGuard: alert user to go to url to authorize
+          let message = 'Please authorize this transaction with StellarGuard.';
+          displayAlert(modalHeader, message, 'alert-warning');
+        } else {
+          // From Horizon
+          // Submit the public key to Nucleo servers to verify account
+          let publicKeyForm = $('#addStellarPublicKeyForm')[0];
+          publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
+          publicKeyForm.elements["creating_stellar"].checked = false;
+          publicKeyForm.submit();
+        }
       })
       .catch(function(error) {
         // Stop the button loading animation then display the error
@@ -330,11 +360,12 @@
           .build();
         // Sign the transaction to prove you are actually the person sending it.
         transaction.sign(issuingKeys, distributionKeys);
-        // And finally, send it off to Stellar!
+
+        // And finally, send it off to Stellar! Check for StellarGuard protection.
         return server.submitTransaction(transaction);
       })
       .then(function(result) {
-        // Submit the tx hash to Nucleo servers to create sent payment
+        // Submit the tx hash to Nucleo servers to create
         // activity in user feeds
         let activityForm = $('#activityForm')[0];
         activityForm.elements["tx_hash"].value = result.hash;
