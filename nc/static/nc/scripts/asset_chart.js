@@ -1,7 +1,7 @@
 (function() {
   /* Initialization of Stellar server */
   // NOTE: won't get asset price data if use testnet URL so default to live for price data
-  var baseAsset, counterAsset, exchangeUrl, exchangePairName,
+  var baseAsset, counterAsset, exchangeUrl, exchangePairName, exchangeCounterCode,
       server = new StellarSdk.Server(STELLAR_MAINNET_SERVER_URL);
 
   // Plot the current asset's trade aggregation data
@@ -13,9 +13,6 @@
     parse JSON appropriately for highcharts, then plot.
     */
     let resolution = getResolution(start, end);
-
-    // TODO: If asset is native, use an exchange instead of Stellar to
-    // display USD/XLM price over time!
 
     $('.asset-chart').each(function(i, assetChartDiv) {
       let baseAssetCode = assetChartDiv.dataset.base_asset_code,
@@ -53,11 +50,19 @@
         // Base asset is native so use Kraken
         baseAsset = StellarSdk.Asset.native();
 
-        // Query for XLM/USD
-        var params = { 'interval': resolution, 'start': start, 'end': end };
+        // Query for XLM/counter_code
+        exchangeCounterCode = assetChartDiv.dataset.counter_code;
+        var params = {
+          'counter_code': exchangeCounterCode,
+          'interval': resolution,
+          'start': start,
+          'end': end
+        };
         exchangePairName = assetChartDiv.dataset.exchange_pair_name;
         exchangeUrl = assetChartDiv.dataset.url;
-        let url = exchangeUrl + '?' + $.param(params);
+
+        let url = exchangeUrl + '?' + $.param(params),
+            valueSuffix = ' ' + exchangeCounterCode;
 
         $.get(url)
         .then(function(resp) {
@@ -77,7 +82,7 @@
             $.each(records, function(j, record) {
               plotData.push([ record[0], parseFloat(record[4]) ]);
             });
-            createChart(assetChartDiv.id, baseAsset.getCode(), plotData, ' USD');
+            createChart(assetChartDiv.id, baseAsset.getCode(), plotData, valueSuffix);
           } else {
             throw new Error('No records from external exchange found');
           }
@@ -140,8 +145,13 @@
     if (baseAsset.isNative()) {
       chart.showLoading('Loading data from external exchange ...');
 
-      // Query for XLM/USD
-      var params = { 'interval': resolution, 'start': start, 'end': end };
+      // Query for XLM/counter_code
+      var params = {
+        'counter_code': exchangeCounterCode,
+        'interval': resolution,
+        'start': start,
+        'end': end
+      };
       let url = exchangeUrl + '?' + $.param(params);
       $.get(url)
       .then(function(resp) {

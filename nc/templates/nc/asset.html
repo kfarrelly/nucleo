@@ -109,12 +109,21 @@
 
 <div class="card mt-4 box-shadow">
   <div class="card-body">
-    <div id="assetChart" class="asset-chart" {% if not is_native %}data-base_asset_code="{{ object.code }}" data-base_asset_issuer="{{ object.issuer_address }}"{% else %}data-url="{% url 'nc:asset-exchange-ticker' %}" data-exchange_pair_name="{{ exchange_pair_name }}"{% endif %}>
+    <div id="assetChart" class="asset-chart" {% if not is_native %}data-base_asset_code="{{ object.code }}" data-base_asset_issuer="{{ object.issuer_address }}"{% else %}data-url="{% url 'nc:asset-exchange-ticker' %}" data-exchange_pair_name="{{ exchange_pair_name }}" data-counter_code="{{ counter_code }}"{% endif %}>
       <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
         Loading historical price data ...
       </div>
     </div>
   </div>
+  {% if is_native %}
+  <div class="card-footer">
+    <div class="btn-group" role="group">
+      {% for code in allowed_pairs %}
+      <a href="{% url 'nc:asset-detail' 'XLM-native' %}?counter_code={{ code }}" {% if counter_code == code %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>{{ code }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 {% if request.user.is_authenticated and not is_native %}

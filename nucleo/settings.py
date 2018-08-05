@@ -321,6 +321,7 @@ STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 # Kraken
 KRAKEN_TICKER_URL = 'https://api.kraken.com/0/public/OHLC'
 KRAKEN_XLMUSD_PAIR_NAME = 'XXLMZUSD'
+KRAKEN_XLMBTC_PAIR_NAME = 'XXLMXXBT'
 
 # CryptoPanic
 CRYPTOPANIC_API_KEY = os.environ.get('CRYPTOPANIC_API_KEY')

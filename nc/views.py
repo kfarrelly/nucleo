@@ -481,7 +481,15 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
         else:
             # Include the external exchange pair name for client side
             # JSON parsing
-            context['exchange_pair_name'] = settings.KRAKEN_XLMUSD_PAIR_NAME
+            allowed_pairs = {
+                'USD': settings.KRAKEN_XLMUSD_PAIR_NAME,
+                'BTC': settings.KRAKEN_XLMBTC_PAIR_NAME
+            }
+            counter_code = self.request.GET.get('counter_code', 'USD') # Default to USD
+            exchange_pair_name = allowed_pairs[counter_code]
+            context['allowed_pairs'] = allowed_pairs
+            context['counter_code'] = counter_code
+            context['exchange_pair_name'] = exchange_pair_name
 
         context['asset'] = record
 
@@ -534,7 +542,15 @@ class AssetExchangeTickerListView(mixins.JSONResponseMixin, generic.TemplateView
         # NOTE: https://www.kraken.com/help/api#get-ohlc-data
         context = {}
         params = self.request.GET.copy()
-        params.update({ 'pair': settings.KRAKEN_XLMUSD_PAIR_NAME })
+
+        # Determine the counter asset to use (to base of XLM)
+        allowed_pairs = {
+            'USD': settings.KRAKEN_XLMUSD_PAIR_NAME,
+            'BTC': settings.KRAKEN_XLMBTC_PAIR_NAME
+        }
+        counter_code = self.request.GET.get('counter_code', 'USD') # Default to USD
+        exchange_pair_name = allowed_pairs[counter_code]
+        params.update({ 'pair': exchange_pair_name })
 
         # Pop the start, end query param if there (to use later when filtering of resp data)
         start = float(params.pop('start')[0]) if 'start' in params else None
@@ -556,10 +572,10 @@ class AssetExchangeTickerListView(mixins.JSONResponseMixin, generic.TemplateView
             # NOTE: Each <time> in record is returned by Kraken in seconds
             # so need to convert back to milliseconds for client
             ret = r.json()
-            if 'result' in ret and settings.KRAKEN_XLMUSD_PAIR_NAME in ret['result']:
-                ret['result'][settings.KRAKEN_XLMUSD_PAIR_NAME] = [
+            if 'result' in ret and exchange_pair_name in ret['result']:
+                ret['result'][exchange_pair_name] = [
                     [record[0] * 1000] + record[1:]
-                    for record in ret['result'][settings.KRAKEN_XLMUSD_PAIR_NAME]
+                    for record in ret['result'][exchange_pair_name]
                     if (not start or record[0] * 1000 > start) and (not end or record[0] * 1000 < end)
                 ]
             context.update(ret)
