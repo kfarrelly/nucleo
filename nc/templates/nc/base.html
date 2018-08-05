@@ -68,6 +68,10 @@
           <span data-feather="user"></span>
           Profile
         </a>
+        <a class="dropdown-item" href="{% url 'nc:user-settings-redirect' %}">
+          <span data-feather="settings"></span>
+          Settings
+        </a>
         <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="{% url 'account_logout' %}">Sign out</a>
       </div>

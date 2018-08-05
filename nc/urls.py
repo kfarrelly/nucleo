@@ -6,8 +6,10 @@ app_name = 'nc'
 urlpatterns = [
     # User profile
     url(r'^profile/$', views.UserRedirectView.as_view(), name='user-redirect'),
+    url(r'^profile/settings/$', views.UserSettingsRedirectView.as_view(), name='user-settings-redirect'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/$', views.UserDetailView.as_view(), name='user-detail'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/update/$', views.UserUpdateView.as_view(), name='user-update'),
+    url(r'^profile/(?P<slug>[\w.@+-]+)/settings/update/$', views.UserSettingsUpdateView.as_view(), name='user-settings-update'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/follow/$', views.UserFollowUpdateView.as_view(), name='user-follow'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/followers/$', views.UserFollowerListView.as_view(), name='user-follower-list'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/following/$', views.UserFollowingListView.as_view(), name='user-following-list'),

@@ -68,7 +68,17 @@ class Profile(models.Model):
         settings.AUTH_USER_MODEL,
         related_name='profiles_following'
     )
+    # NOTE: If private profile, must approve follower request for other user to
+    # see assets, accounts, etc.
+    is_private = models.BooleanField(default=False)
     accounts_created = models.PositiveSmallIntegerField(default=0)
+
+    # Settings
+    ## Email
+    allow_payment_email = models.BooleanField(default=True)
+    allow_token_issuance_email = models.BooleanField(default=True)
+    allow_trade_email = models.BooleanField(default=True)
+    allow_follower_email = models.BooleanField(default=True)
 
     # NOTE: user.get_full_name(), followers.count() are duplicated here
     # so Algolia search index updates work when user, follower updates occur (kept in sync through signals.py)
@@ -102,6 +112,21 @@ class Profile(models.Model):
     def __str__(self):
         bio =  ': ' + self.bio if self.bio else ''
         return self.user.username + bio
+
+
+@python_2_unicode_compatible
+class FollowRequest(models.Model):
+    """
+    Email settings associated with a user.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+        related_name='follower_requests', on_delete=models.CASCADE)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL,
+        related_name='requests_to_follow', on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return 'Follow request: ' + self.requester.username + ' -> ' + self.user.username
 
 
 @python_2_unicode_compatible

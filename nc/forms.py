@@ -54,6 +54,24 @@ class UserProfileUpdateMultiForm(multiform.MultiModelForm):
         ('profile', ProfileUpdateForm),
     ))
 
+class ProfileSettingsUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [ 'allow_payment_email', 'allow_token_issuance_email',
+            'allow_trade_email', 'allow_follower_email' ]
+        labels = {
+            'allow_payment_email': _('Payments'),
+            'allow_token_issuance_email': _('New tokens'),
+            'allow_trade_email': _('Trades'),
+            'allow_follower_email': _('Follow requests'),
+        }
+        help_texts = {
+            'allow_payment_email': _('Receive email notification when someone sends you a payment.'),
+            'allow_token_issuance_email': _('Receive email notification when someone you follow issues a new token.'),
+            'allow_trade_email': _('Receive email notification when someone you follow buys/sells an asset.'),
+            'allow_follower_email': _('Receive email notification when someone requests to follow you.'),
+        }
+
 
 class UserFollowUpdateForm(forms.ModelForm):
     following = forms.BooleanField()
@@ -328,7 +346,7 @@ class FeedActivityCreateForm(forms.Form):
             })
 
             # Send an email to user receiving funds
-            if object_email:
+            if object_email and object_profile and object_profile.allow_payment_email:
                 object_account = object.accounts.get(public_key=record['to'])
                 asset_display = record['asset_code'] if record['asset_type'] != 'native' else 'XLM'
                 profile_path = reverse('nc:user-detail', kwargs={'slug': object_username})
@@ -373,7 +391,8 @@ class FeedActivityCreateForm(forms.Form):
             })
 
             # Send a bulk email to all followers that a new token has been issued
-            recipient_list = [ u.email for u in request_user_profile.followers.all() ]
+            recipient_list = [ u.email for u in request_user_profile.followers\
+                .filter(profile__allow_token_issuance_email=True) ]
             asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
             asset_url = build_absolute_uri(self.request, asset_path)
             ctx_email = {
@@ -418,7 +437,8 @@ class FeedActivityCreateForm(forms.Form):
             })
 
             # Send a bulk email to all followers that user has made a trade
-            recipient_list = [ u.email for u in request_user_profile.followers.all() ]
+            recipient_list = [ u.email for u in request_user_profile.followers\
+                .filter(profile__allow_trade_email=True) ]
             offer_type_display = 'bought' if record['buying_asset_type'] != 'native' else 'sold'
             amount_display = str(float(record['price']) * float(record['amount'])) if offer_type == 'buying' else record['amount']
             price_display = str(round(1/float(record['price']), 7)) if offer_type == 'buying' else record['price']
@@ -438,7 +458,6 @@ class FeedActivityCreateForm(forms.Form):
 
         else:
             # Not a supported activity type
-            print 'here'
             return None
 
         return self.feed.add_activity(kwargs)

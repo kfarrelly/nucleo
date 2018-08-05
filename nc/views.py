@@ -88,8 +88,8 @@ class UserRedirectView(LoginRequiredMixin, generic.RedirectView):
         return super(UserRedirectView, self).get_redirect_url(*args, **kwargs)
 
 
-class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, generic.UpdateView):
+class UserUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
     form_class = forms.UserProfileUpdateMultiForm
@@ -109,6 +109,42 @@ class UserUpdateView(LoginRequiredMixin, mixins.IndexContextMixin,
             'user': self.object,
             'profile': self.object.profile,
         })
+        return kwargs
+
+    def get_queryset(self):
+        """
+        Authenticated user can only update themselves.
+        """
+        return self.model.objects.filter(id=self.request.user.id)
+
+
+class UserSettingsRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:user-settings-update'
+
+    def get_redirect_url(self, *args, **kwargs):
+        kwargs.update({ 'slug': self.request.user.username })
+        return super(UserSettingsRedirectView, self).get_redirect_url(*args, **kwargs)
+
+
+class UserSettingsUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
+    model = get_user_model()
+    slug_field = 'username'
+    form_class = forms.ProfileSettingsUpdateForm
+    template_name = 'nc/profile_settings_update_form.html'
+    success_url = reverse_lazy('nc:user-redirect')
+    prefetch_related_lookups = ['profile']
+    view_type = 'profile'
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in appropriate instance to form.
+
+        https://django-betterforms.readthedocs.io/en/latest/multiform.html#working-with-updateview
+        """
+        kwargs = super(UserSettingsUpdateView, self).get_form_kwargs()
+        kwargs.update(instance=self.object.profile)
         return kwargs
 
     def get_queryset(self):
@@ -180,15 +216,16 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                 })
 
                 # Send an email to user being followed
-                profile_path = reverse('nc:user-detail', kwargs={'slug': request.user.username})
-                profile_url = build_absolute_uri(request, profile_path)
-                ctx_email = {
-                    'current_site': get_current_site(request),
-                    'username': request.user.username,
-                    'profile_url': profile_url,
-                }
-                get_adapter(request).send_mail('nc/email/feed_activity_follow',
-                    self.object.email, ctx_email)
+                if self.object.profile.allow_follower_email:
+                    profile_path = reverse('nc:user-detail', kwargs={'slug': request.user.username})
+                    profile_url = build_absolute_uri(request, profile_path)
+                    ctx_email = {
+                        'current_site': get_current_site(request),
+                        'username': request.user.username,
+                        'profile_url': profile_url,
+                    }
+                    get_adapter(request).send_mail('nc/email/feed_activity_follow',
+                        self.object.email, ctx_email)
 
         return HttpResponseRedirect(self.get_success_url())
 

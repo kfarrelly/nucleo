@@ -1,0 +1,30 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_settings_update.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Settings{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Edit Settings</h1>
+</div>
+<form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:user-settings-update' object.username %}">
+  {% csrf_token %}
+  <h5 class="pb-2">Email settings</h5>
+  {{ form|bootstrap_horizontal }}
+  <div class="my-4 pt-3 border-top">
+    <a href="{% url 'nc:user-detail' object.username %}" class="btn btn-secondary m-1">Cancel</a>
+    <button class="btn btn-primary m-1" type="submit">Save Changes</button>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}
