@@ -477,7 +477,6 @@
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
       let formHeader = $(this).find('.form-header')[0],
-          submitButtonContainer = $(this).find(":submit").parent()[0],
           ledgerButton = this.elements["ledger"];
 
       // Attempt to generate Keypair
@@ -633,7 +632,7 @@
             if (result.stellarGuard) {
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
-              displayAlert(submitButtonContainer, message, 'alert-warning', true);
+              displayAlert(formHeader, message, 'alert-warning');
             } else {
               // From Horizon
               // Submit the tx hash to Nucleo servers to create
@@ -669,7 +668,6 @@
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
       let formHeader = $(this).find('.form-header')[0],
-          submitButtonContainer = $(this).find(":submit").parent()[0],
           ledgerButton = this.elements["ledger"];
 
       // Attempt to generate Keypair
@@ -828,7 +826,7 @@
             if (result.stellarGuard) {
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
-              displayAlert(submitButtonContainer, message, 'alert-warning', true);
+              displayAlert(formHeader, message, 'alert-warning');
             } else {
               // From Horizon
               // Submit the tx hash to Nucleo servers to create
