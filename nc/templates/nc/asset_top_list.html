@@ -132,9 +132,17 @@
     </div>
   </div>
   <div class="card-footer">
-    <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary">
+    <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
       <span data-feather="user"></span>
       Head To Profile
+    </a>
+    <a href="{% url 'nc:leaderboard-redirect' %}" class="btn btn-sm btn-outline-warning my-1">
+      <span data-feather="award"></span>
+      Check Leaderboard
+    </a>
+    <a href="{% url 'nc:feed-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
+      <span data-feather="activity"></span>
+      View Activity
     </a>
   </div>
 </div>

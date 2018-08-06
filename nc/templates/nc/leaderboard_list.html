@@ -42,10 +42,18 @@
         {% endif %}
         {% endwith %}
       </div>
-      <div class="my-1">
-        <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary">
+      <div>
+        <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
           <span data-feather="user"></span>
           Head To Profile
+        </a>
+        <a href="{% url 'nc:trade-redirect' %}" class="btn btn-sm btn-outline-success my-1">
+          <span data-feather="trending-up"></span>
+          Trade Assets
+        </a>
+        <a href="{% url 'nc:feed-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
+          <span data-feather="activity"></span>
+          View Activity
         </a>
       </div>
     </div>
