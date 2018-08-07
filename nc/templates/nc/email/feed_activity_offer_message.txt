@@ -5,4 +5,7 @@ You're receiving this e-mail because a user you follow @{{ username }} {{ offer_
 {{ asset_url }}
 
 {% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Thank you for using {{ site_name }}!
-{{ site_domain }}{% endblocktrans %}
+{{ site_domain }}
+
+
+To toggle your email settings, visit: {% endblocktrans %}{{ email_settings_url }}

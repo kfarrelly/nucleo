@@ -1,0 +1,29 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_update.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Remove Follower Request{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Remove Follower Request</h1>
+</div>
+<form class="form-update" method="POST" action="{% url 'nc:user-follow-request-delete' object.username %}">
+  {% csrf_token %}
+  <h6 class="p-2">Are you sure you want to remove the follower request from @{{ object.username }}?</h6>
+  <div class="my-4">
+    <a href="{% url 'nc:feed-activity' %}" class="btn btn-secondary m-1">Cancel</a>
+    <button class="btn btn-danger m-1" type="submit">Remove Request</button>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}

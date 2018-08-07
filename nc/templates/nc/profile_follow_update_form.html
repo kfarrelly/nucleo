@@ -17,8 +17,8 @@
 <form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:user-follow' object.username %}">
   {% csrf_token %}
   <div class="my-4">
-    <button class="btn btn-lg btn-primary m-2" type="submit">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
     <a href="{% url 'nc:user-detail' object.username %}" class="btn btn-lg btn-secondary m-2">Cancel</a>
+    <button class="btn btn-lg btn-primary m-2" type="submit">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
   </div>
 </form>
 {% endblock %}

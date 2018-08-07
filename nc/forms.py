@@ -102,6 +102,17 @@ class UserFollowUpdateForm(forms.ModelForm):
         fields = ['following']
 
 
+class UserFollowRequestUpdateForm(forms.ModelForm):
+    requested = forms.BooleanField()
+
+    def save(self):
+        pass
+
+    class Meta:
+        model = get_user_model()
+        fields = ['requested']
+
+
 class AccountCreateForm(forms.ModelForm):
     """
     Form to either associate an existing Stellar account in Nucleo db OR
@@ -369,6 +380,8 @@ class FeedActivityCreateForm(forms.Form):
                 asset_display = record['asset_code'] if record['asset_type'] != 'native' else 'XLM'
                 profile_path = reverse('nc:user-detail', kwargs={'slug': object_username})
                 profile_url = build_absolute_uri(self.request, profile_path)
+                email_settings_path = reverse('nc:user-settings-redirect')
+                email_settings_url = build_absolute_uri(self.request, email_settings_path)
                 ctx_email = {
                     'current_site': current_site,
                     'username': self.request_user.username,
@@ -377,6 +390,7 @@ class FeedActivityCreateForm(forms.Form):
                     'account_name': object_account.name,
                     'account_public_key': object_account.public_key,
                     'profile_url': profile_url,
+                    'email_settings_url': email_settings_url,
                 }
                 get_adapter(self.request).send_mail('nc/email/feed_activity_send',
                     object_email, ctx_email)
@@ -413,6 +427,8 @@ class FeedActivityCreateForm(forms.Form):
                 .filter(profile__allow_token_issuance_email=True) ]
             asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
             asset_url = build_absolute_uri(self.request, asset_path)
+            email_settings_path = reverse('nc:user-settings-redirect')
+            email_settings_url = build_absolute_uri(self.request, email_settings_path)
             ctx_email = {
                 'current_site': current_site,
                 'username': self.request_user.username,
@@ -421,6 +437,7 @@ class FeedActivityCreateForm(forms.Form):
                 'asset_url': asset_url,
                 'account_name': issuer.name,
                 'account_public_key': issuer.public_key,
+                'email_settings_url': email_settings_url,
             }
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_issue',
                 recipient_list, ctx_email)
@@ -462,6 +479,8 @@ class FeedActivityCreateForm(forms.Form):
             price_display = str(round(1/float(record['price']), 7)) if offer_type == 'buying' else record['price']
             asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})
             asset_url = build_absolute_uri(self.request, asset_path)
+            email_settings_path = reverse('nc:user-settings-redirect')
+            email_settings_url = build_absolute_uri(self.request, email_settings_path)
             ctx_email = {
                 'current_site': current_site,
                 'username': self.request_user.username,
@@ -470,6 +489,7 @@ class FeedActivityCreateForm(forms.Form):
                 'price': price_display,
                 'asset': asset.code,
                 'asset_url': asset_url,
+                'email_settings_url': email_settings_url,
             }
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_offer',
                 recipient_list, ctx_email)

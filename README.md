@@ -5,6 +5,10 @@ Social banking on the [Stellar network](https://www.stellar.org). [Django](https
 ![Image of Nucleo Leaderboard](https://media-nucleo.s3.amazonaws.com/preview/leaderboard.png)
 
 
+## Mantra
+Anything transactional, allow Stellar to do the work. Everything else, centralize in our own relational db for easy reference.
+
+
 ## Outstanding tasks
 - [x] Integrate Ledger and StellarGuard
 - [ ] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.

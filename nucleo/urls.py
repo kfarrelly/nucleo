@@ -26,6 +26,10 @@ urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name='index.html')),
     url(r'^', include('nc.urls')),
     url(r'^admin/', admin.site.urls),
+
+    ## Allauth
+    ### Override of account_change_password
+    url(r'^accounts/password/change/$', nc_views.PasswordChangeView.as_view(), name='account_change_password'),
     url(r'^accounts/', include('allauth.urls')),
 ]
 

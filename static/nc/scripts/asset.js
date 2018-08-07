@@ -613,6 +613,9 @@
                       // Close the event stream connection
                       es();
 
+                      // Notify user of successful submission
+                      displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
+
                       // Submit the tx hash to Nucleo servers to create
                       // activity in user feeds
                       let activityForm = $('#activityForm')[0];
@@ -632,8 +635,11 @@
             if (result.stellarGuard) {
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
-              displayAlert(formHeader, message, 'alert-warning');
+              displayWarning(formHeader, message);
             } else {
+              // Notify user of successful submission
+              displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
+
               // From Horizon
               // Submit the tx hash to Nucleo servers to create
               // activity in user feeds
@@ -807,6 +813,9 @@
                       // Close the event stream connection
                       es();
 
+                      // Notify user of successful submission
+                      displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
+
                       // Submit the tx hash to Nucleo servers to create
                       // activity in user feeds
                       let activityForm = $('#activityForm')[0];
@@ -826,8 +835,11 @@
             if (result.stellarGuard) {
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
-              displayAlert(formHeader, message, 'alert-warning');
+              displayWarning(formHeader, message);
             } else {
+              // Notify user of successful submission
+              displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
+
               // From Horizon
               // Submit the tx hash to Nucleo servers to create
               // activity in user feeds

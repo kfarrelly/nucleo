@@ -215,6 +215,9 @@
                   // Close the event stream connection
                   es();
 
+                  // Notify user of successful submission
+                  displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
                   // Submit the public key to Nucleo servers to verify account
                   let publicKeyForm = $('#addStellarPublicKeyForm')[0];
                   publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
@@ -234,8 +237,11 @@
         if (result.stellarGuard) {
           // From StellarGuard: alert user to go to url to authorize
           let message = 'Please authorize this transaction with StellarGuard.';
-          displayAlert(modalHeader, message, 'alert-warning');
+          displayWarning(modalHeader, message);
         } else {
+          // Notify user of successful submission
+          displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
           // From Horizon
           // Submit the public key to Nucleo servers to verify account
           let publicKeyForm = $('#addStellarPublicKeyForm')[0];
@@ -365,6 +371,9 @@
         return server.submitTransaction(transaction);
       })
       .then(function(result) {
+        // Notify user of successful submission
+        displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
         // Submit the tx hash to Nucleo servers to create
         // activity in user feeds
         let activityForm = $('#activityForm')[0];

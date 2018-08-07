@@ -11,6 +11,8 @@ urlpatterns = [
     url(r'^profile/(?P<slug>[\w.@+-]+)/update/$', views.UserUpdateView.as_view(), name='user-update'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/settings/update/$', views.UserSettingsUpdateView.as_view(), name='user-settings-update'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/follow/$', views.UserFollowUpdateView.as_view(), name='user-follow'),
+    url(r'^profile/(?P<slug>[\w.@+-]+)/follow/request/update/$', views.UserFollowRequestUpdateView.as_view(), name='user-follow-request-update'),
+    url(r'^profile/(?P<slug>[\w.@+-]+)/follow/request/delete/$', views.UserFollowRequestDeleteView.as_view(), name='user-follow-request-delete'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/followers/$', views.UserFollowerListView.as_view(), name='user-follower-list'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/following/$', views.UserFollowingListView.as_view(), name='user-following-list'),
 

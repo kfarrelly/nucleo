@@ -4,6 +4,18 @@ function displayError(obj, errorMessage, before=false) {
   displayAlert(obj, errorMessage, 'alert-danger', before);
 }
 
+function displayWarning(obj, errorMessage, before=false) {
+  // Inserts a warning alert panel before/after (before=true/false)
+  // the given DOM object.
+  displayAlert(obj, errorMessage, 'alert-warning', before);
+}
+
+function displaySuccess(obj, errorMessage, before=false) {
+  // Inserts a success alert panel before/after (before=true/false)
+  // the given DOM object.
+  displayAlert(obj, errorMessage, 'alert-success', before);
+}
+
 function displayAlert(obj, alertMessage, alertClass, before=false) {
   // Inserts an error alert panel before/after (before=true/false)
   // the given DOM object.

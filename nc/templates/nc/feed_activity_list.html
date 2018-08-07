@@ -49,6 +49,37 @@
   </div>
 </div>
 
+{% if request.user.follower_requests.count > 0 %}
+<div class="card card-feed mb-4">
+  <div class="card-header border-0">
+    Follower requests
+  </div>
+  <div class="card-body p-0">
+    {% for fr in follower_requests %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="{% url 'nc:user-detail' fr.requester.username %}" class="list-group-item-action d-inline-flex justify-content-start align-items-center">
+        <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if fr.requester.profile and fr.requester.profile.pic %} src="{{ fr.requester.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+        <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+          <strong>{{ fr.requester.get_full_name }}</strong>
+          <small class="text-muted">@{{ fr.requester.username }}</small>
+        </div>
+      </a>
+      <div class="btn-group">
+        <form method="POST" action="{% url 'nc:user-follow-request-update' fr.requester.username %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-primary">Confirm</button>
+        </form>
+        <form method="POST" class="ml-1" action="{% url 'nc:user-follow-request-delete' fr.requester.username %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="card card-feed">
   <div class="card-header border-0">
     <ul class="nav nav-pills card-header-pills">

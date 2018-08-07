@@ -75,7 +75,6 @@
   // Set event listeners for loading account on Send From blur and associated ledger button
   var sourceKeys, sourceAccount,
       sendFromHeader = $('label[for="sendFromInput"]')[0],
-      submitButtonContainer = $('#sendPaymentForm').find(":submit").parent()[0],
       ledgerEnabled = false;
 
   $('#sendFromInput').on('blur', function(e) {
@@ -358,6 +357,9 @@
                 // Close the event stream connection
                 es();
 
+                // Notify user of successful submission
+                displaySuccess(sendFromHeader, 'Successfully submitted transaction to the Stellar network.', true);
+
                 // Submit the tx hash to Nucleo servers to create
                 // activity in user feeds
                 let activityForm = $('#activityForm')[0];
@@ -377,8 +379,11 @@
       if (result.stellarGuard) {
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
-        displayAlert(submitButtonContainer, message, 'alert-warning', true);
+        displayWarning(sendFromHeader, message, true);
       } else {
+        // Notify user of successful submission
+        displaySuccess(sendFromHeader, 'Successfully submitted transaction to the Stellar network.', true);
+
         // From Horizon
         // Submit the tx hash to Nucleo servers to create
         // activity in user feeds

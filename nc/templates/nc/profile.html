@@ -45,6 +45,11 @@
             <span data-feather="activity"></span>
             Following
           </button>
+          {% elif requested_to_follow %}
+          <button type="submit" class="btn btn-sm btn-outline-primary active">
+            <span data-feather="activity"></span>
+            Requested
+          </button>
           {% else %}
           <button type="submit" class="btn btn-sm btn-outline-primary">
             <span data-feather="activity"></span>

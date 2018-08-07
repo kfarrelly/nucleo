@@ -125,7 +125,9 @@ class FollowRequest(models.Model):
     requester = models.ForeignKey(settings.AUTH_USER_MODEL,
         related_name='requests_to_follow', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
-    read = models.DateTimeField(null=True, blank=True, default=None)
+
+    class Meta:
+        unique_together = ('user', 'requester')
 
     def __str__(self):
         return 'Follow request: ' + self.requester.username + ' -> ' + self.user.username

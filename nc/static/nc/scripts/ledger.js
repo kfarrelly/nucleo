@@ -39,7 +39,7 @@
 
           // Notify user to sign transaction after submit is pressed
           let alertMessage = 'Please confirm this transaction on your Ledger device after pressing the ' + submitButtonName + ' button.';
-          displayAlert(alertInsertPoint, alertMessage, 'alert-success', alertInsertBefore);
+          displayWarning(alertInsertPoint, alertMessage, alertInsertBefore);
         })
         .catch(function(err) {
           console.error('Ledger communication failed', err);

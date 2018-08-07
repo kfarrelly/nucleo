@@ -1,0 +1,4 @@
+{% load i18n %}
+{% autoescape off %}
+{% blocktrans %}@{{ username }} Requested to Follow You{% endblocktrans %}
+{% endautoescape %}

@@ -1,0 +1,29 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_update.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Approve Follower Request{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Approve Follower Request</h1>
+</div>
+<form class="form-update" method="POST" action="{% url 'nc:user-follow-request-update' object.username %}">
+  {% csrf_token %}
+  <h6 class="p-2">Are you sure you want to approve @{{ object.username }} to follow you?</h6>
+  <div class="my-4">
+    <a href="{% url 'nc:feed-activity' %}" class="btn btn-lg btn-secondary m-2">Cancel</a>
+    <button class="btn btn-lg btn-primary m-2" type="submit">Approve Request</button>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}

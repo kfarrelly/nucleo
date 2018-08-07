@@ -124,6 +124,9 @@
                 // Close the event stream connection
                 es();
 
+                // Notify user of successful submission
+                displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
                 // Redirect to success url of form
                 window.location.href = successUrl;
               }
@@ -140,8 +143,11 @@
       if (result.stellarGuard) {
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
-        displayAlert(modalHeader, message, 'alert-warning');
+        displayWarning(modalHeader, message);
       } else {
+        // Notify user of successful submission
+        displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
         // From Horizon
         // Redirect to success url of form
         window.location.href = successUrl;

@@ -26,6 +26,10 @@
     {{ form.privacy|bootstrap_horizontal }}
   </div>
 
+  <div class="pt-3">
+    <a href="{% url 'account_change_password' %}">Change password</a>
+  </div>
+
   <div class="my-4 pt-3 border-top">
     <a href="{% url 'nc:user-detail' object.username %}" class="btn btn-secondary m-1">Cancel</a>
     <button class="btn btn-primary m-1" type="submit">Save Changes</button>

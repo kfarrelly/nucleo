@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import datetime, requests, stream, sys
 
 from allauth.account.adapter import get_adapter
+from allauth.account import views as allauth_account_views
 from allauth.utils import build_absolute_uri
 
 from django.conf import settings
@@ -42,11 +43,20 @@ from urlparse import urlparse
 
 from . import forms, mixins
 from .models import (
-    Account, Asset, Portfolio, portfolio_data_collector, Profile, RawPortfolioData,
+    Account, Asset, FollowRequest, Portfolio, portfolio_data_collector,
+    Profile, RawPortfolioData,
 )
 
 
 # Web app views
+## Allauth
+class PasswordChangeView(allauth_account_views.PasswordChangeView):
+    """
+    Override so success url redirects to user settings.
+    """
+    success_url = reverse_lazy('nc:user-settings-redirect')
+
+
 ## User
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
     mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
@@ -69,13 +79,15 @@ class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixi
             context['followers_count'] = self.object.profile.followers.count()
             context['following_count'] = self.object.profiles_following.count()
             context['is_following'] = self.object.profile.followers\
-                .filter(id=self.request.user.id).exists() if self.request.user else False
+                .filter(id=self.request.user.id).exists() if self.request.user.is_authenticated else False
+            context['requested_to_follow'] = self.object.follower_requests\
+                .filter(requester=self.request.user).exists() if self.request.user.is_authenticated else False
 
             # Update the context for cryptographically signed username
             # Include the account creation form as well for Nucleo to store
             # the verified public key
             context['verification_key'] = settings.STELLAR_DATA_VERIFICATION_KEY
-            if self.request.user and self.request.user == self.object:
+            if self.request.user.is_authenticated and self.request.user == self.object:
                 context['signed_user'] = signing.dumps(self.request.user.id)
                 context['account_form'] = forms.AccountCreateForm()
         return context
@@ -200,7 +212,32 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
             if is_following:
                 self.object.profile.followers.remove(request.user)
                 feed_manager.unfollow_user(request.user.id, self.object.id)
+            elif self.object.profile.is_private:
+                # If private account, send self.object user a follower request
+                # with notification.
+                follower_request, created = FollowRequest.objects\
+                    .get_or_create(user=self.object, requester=request.user)
+
+                # Send an email to user being followed
+                if created and self.object.profile.allow_follower_email:
+                    activity_path = reverse('nc:feed-activity')
+                    activity_url = build_absolute_uri(request, activity_path)
+                    email_settings_path = reverse('nc:user-settings-redirect')
+                    email_settings_url = build_absolute_uri(request, email_settings_path)
+                    ctx_email = {
+                        'current_site': get_current_site(request),
+                        'username': request.user.username,
+                        'activity_url': activity_url,
+                        'email_settings_url': email_settings_url,
+                    }
+                    get_adapter(request).send_mail('nc/email/feed_activity_follow_request',
+                        self.object.email, ctx_email)
+                else:
+                    # Delete the follow request since request.user has just
+                    # toggled follow request off.
+                    follower_request.delete()
             else:
+                # Otherwise, simply add to list of followers
                 self.object.profile.followers.add(request.user)
                 feed_manager.follow_user(request.user.id, self.object.id)
 
@@ -225,13 +262,131 @@ class UserFollowUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
                 if self.object.profile.allow_follower_email:
                     profile_path = reverse('nc:user-detail', kwargs={'slug': request.user.username})
                     profile_url = build_absolute_uri(request, profile_path)
+                    email_settings_path = reverse('nc:user-settings-redirect')
+                    email_settings_url = build_absolute_uri(request, email_settings_path)
                     ctx_email = {
                         'current_site': get_current_site(request),
                         'username': request.user.username,
                         'profile_url': profile_url,
+                        'email_settings_url': email_settings_url,
                     }
                     get_adapter(request).send_mail('nc/email/feed_activity_follow',
                         self.object.email, ctx_email)
+
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class UserFollowRequestUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
+    model = get_user_model()
+    slug_field = 'username'
+    form_class = forms.UserFollowRequestUpdateForm
+    template_name = 'nc/profile_follow_request_update_form.html'
+    prefetch_related_lookups = ['profile']
+    view_type = 'profile'
+
+    def get_success_url(self):
+        """
+        If success url passed into query param, then use for redirect.
+        Otherwise, simply redirect to followed user's profile page.
+        """
+        if self.success_url:
+            return self.success_url
+        return reverse('nc:feed-activity')
+
+    def get_object(self, queryset=None):
+        """
+        Also retrieve and store the follower request.
+        """
+        obj = super(UserFollowRequestUpdateView, self).get_object(queryset)
+        self.follow_request = get_object_or_404(FollowRequest,
+            requester=obj, user=self.request.user)
+        return obj
+
+    def post(self, request, *args, **kwargs):
+        """
+        Allow requester to follow current user.
+        """
+        self.object = self.get_object()
+        self.success_url = request.POST.get('success_url', None)
+
+        # Simply add to list of followers
+        request.user.profile.followers.add(self.object)
+        feed_manager.follow_user(self.object.id, request.user.id)
+
+        # Add new activity to feed of user following
+        # NOTE: Not using stream-django model mixin because don't want Follow model
+        # instances in the Nucleo db. Adapted from feed_manager.add_activity_to_feed()
+        feed = feed_manager.get_feed(settings.STREAM_USER_FEED, self.object.id)
+        request_user_profile = request.user.profile
+        feed.add_activity({
+            'actor': self.object.id,
+            'verb': 'follow',
+            'object': request.user.id,
+            'actor_username': self.object.username,
+            'actor_pic_url': self.object.profile.pic_url(),
+            'actor_href': self.object.profile.href(),
+            'object_username': request.user.username,
+            'object_pic_url': request_user_profile.pic_url(),
+            'object_href': request_user_profile.href(),
+        })
+
+        # Delete the follow request
+        self.follow_request.delete()
+
+        # Send an email to user following to notify of confirmation
+        if self.object.profile.allow_follower_email:
+            profile_path = reverse('nc:user-detail', kwargs={'slug': request.user.username})
+            profile_url = build_absolute_uri(request, profile_path)
+            email_settings_path = reverse('nc:user-settings-redirect')
+            email_settings_url = build_absolute_uri(request, email_settings_path)
+            ctx_email = {
+                'current_site': get_current_site(request),
+                'username': request.user.username,
+                'profile_url': profile_url,
+                'email_settings_url': email_settings_url,
+            }
+            get_adapter(request).send_mail('nc/email/feed_activity_follow_confirm',
+                self.object.email, ctx_email)
+
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class UserFollowRequestDeleteView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.DeleteView):
+    model = get_user_model()
+    slug_field = 'username'
+    template_name = 'nc/profile_follow_request_confirm_delete.html'
+    prefetch_related_lookups = ['profile']
+    view_type = 'profile'
+
+    def get_success_url(self):
+        """
+        If success url passed into query param, then use for redirect.
+        Otherwise, simply redirect to followed user's profile page.
+        """
+        if self.success_url:
+            return self.success_url
+        return reverse('nc:feed-activity')
+
+    def get_object(self, queryset=None):
+        """
+        Also retrieve and store the follower request.
+        """
+        obj = super(UserFollowRequestDeleteView, self).get_object(queryset)
+        self.follow_request = get_object_or_404(FollowRequest,
+            requester=obj, user=self.request.user)
+        return obj
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete the follow request associated with user obj.
+        """
+        self.object = self.get_object()
+        self.success_url = request.POST.get('success_url', None)
+
+        # Delete the follow request
+        self.follow_request.delete()
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -916,6 +1071,11 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
             prefetch_related_objects([profile], *['portfolio'])
             context['profile'] = profile
 
+            # Include follower requests with related requester.profile prefetched
+            follower_requests = self.request.user.follower_requests\
+                .prefetch_related('requester__profile')
+            context['follower_requests'] = follower_requests
+
         # Set the next link urls
         context['next'] = '{0}?page={1}&format=json'.format(self.request.path, self.next_page) if self.next_page else None
 
@@ -970,6 +1130,11 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         profile = self.request.user.profile
         prefetch_related_objects([profile], *['portfolio'])
         context['profile'] = profile
+
+        # Include follower requests with related requester.profile prefetched
+        follower_requests = self.request.user.follower_requests\
+            .prefetch_related('requester__profile')
+        context['follower_requests'] = follower_requests
 
         # Include non-sensitive stream api key and a current user timeline feed token
         feed = feed_manager.get_feed(settings.STREAM_TIMELINE_FEED, self.request.user.id)
