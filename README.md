@@ -11,7 +11,7 @@ Anything transactional, allow Stellar to do the work. Everything else, centraliz
 
 ## Outstanding tasks
 - [x] Integrate Ledger and StellarGuard
-- [ ] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.
+- [x] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.
 - [ ] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
 - [ ] Path payments in send.js. Have oninput event for account search box to load Send To account from horizon and determine allowed assets that can be sent (based off assets Send To trusts).
 - [ ] Retrieve feed activity through Nucleo servers where can enrich data properly with active images, urls, etc. Use built in stream_django enrichment procedures.
