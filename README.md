@@ -6,7 +6,7 @@ Social banking on the [Stellar network](https://www.stellar.org). [Django](https
 
 
 ## Mantra
-Anything transactional, allow Stellar to do the work. Everything else, centralize in our own relational db for easy reference.
+Anything financial or transactional, allow Stellar to do the work. Everything else, centralize in our own relational db for easy reference.
 
 
 ## Outstanding tasks
