@@ -1,5 +1,7 @@
 import algoliasearch_django, copy
 
+from algoliasearch_django import algolia_engine
+
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
@@ -88,9 +90,13 @@ class IndexContextMixin(object):
         kwargs = super(IndexContextMixin, self).get_context_data(**kwargs)
         kwargs.update({
             'index_app_id': settings.ALGOLIA.get('APPLICATION_ID', ''),
-            'index_search_api_key': settings.ALGOLIA.get('SEARCH_API_KEY', ''),
             'index_names': {
                 model.__name__: algoliasearch_django.get_adapter(model).index_name
+                for model in algoliasearch_django.get_registered_model()
+            },
+            'index_api_keys': {
+                model.__name__: algoliasearch_django.get_adapter(model)\
+                    .get_secured_api_key(self.request)
                 for model in algoliasearch_django.get_registered_model()
             },
         })

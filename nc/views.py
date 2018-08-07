@@ -17,7 +17,9 @@ from django.db.models import (
     prefetch_related_objects, Value, When,
 )
 from django.db.models.functions import Lower
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.http import (
+    Http404, HttpResponse, HttpResponseNotFound, HttpResponseRedirect,
+)
 from django.http.request import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
@@ -131,7 +133,7 @@ class UserSettingsUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMi
     mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.UpdateView):
     model = get_user_model()
     slug_field = 'username'
-    form_class = forms.ProfileSettingsUpdateForm
+    form_class = forms.ProfileSettingsUpdateMultiForm
     template_name = 'nc/profile_settings_update_form.html'
     success_url = reverse_lazy('nc:user-redirect')
     prefetch_related_lookups = ['profile']
@@ -144,7 +146,11 @@ class UserSettingsUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMi
         https://django-betterforms.readthedocs.io/en/latest/multiform.html#working-with-updateview
         """
         kwargs = super(UserSettingsUpdateView, self).get_form_kwargs()
-        kwargs.update(instance=self.object.profile)
+        #kwargs.update(instance=self.object.profile)
+        kwargs.update(instance={
+            'email': self.object.profile,
+            'privacy': self.object.profile,
+        })
         return kwargs
 
     def get_queryset(self):
@@ -244,10 +250,20 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
         context = super(UserFollowerListView, self).get_context_data(**kwargs)
         context['in_followers'] = True
         context['object'] = self.object
+        context['is_following'] = self.is_following
         return context
 
     def get_queryset(self):
         self.object = get_object_or_404(get_user_model(), username=self.kwargs['slug'])
+        self.profile = self.object.profile
+
+        # If curr user is not following and self.object has private profile,
+        # need to throw a 404
+        self.is_following = self.profile.followers\
+            .filter(id=self.request.user.id).exists()
+        if self.object.id != self.request.user.id and not self.is_following and self.profile.is_private:
+            raise Http404('No %s matches the given query.' % get_user_model()._meta.object_name)
+
         is_following_ids = [
             u.id for u in get_user_model().objects\
                 .filter(profile__in=self.request.user.profiles_following.all())
@@ -275,10 +291,20 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
         context = super(UserFollowingListView, self).get_context_data(**kwargs)
         context['in_followers'] = False
         context['object'] = self.object
+        context['is_following'] = self.is_following
         return context
 
     def get_queryset(self):
         self.object = get_object_or_404(get_user_model(), username=self.kwargs['slug'])
+        self.profile = self.object.profile
+
+        # If curr user is not following and self.object has private profile,
+        # need to throw a 404
+        self.is_following = self.profile.followers\
+            .filter(id=self.request.user.id).exists()
+        if self.object.id != self.request.user.id and not self.is_following and self.profile.is_private:
+            raise Http404('No %s matches the given query.' % get_user_model()._meta.object_name)
+
         is_following_ids = [
             u.id for u in get_user_model().objects\
                 .filter(profile__in=self.request.user.profiles_following.all())

@@ -16,8 +16,16 @@
 </div>
 <form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:user-settings-update' object.username %}">
   {% csrf_token %}
-  <h5 class="pb-2">Email settings</h5>
-  {{ form|bootstrap_horizontal }}
+  <div>
+    <h5 class="pb-2">Email settings</h5>
+    {{ form.email|bootstrap_horizontal }}
+  </div>
+
+  <div class="pt-3">
+    <h5 class="pb-2">Privacy settings</h5>
+    {{ form.privacy|bootstrap_horizontal }}
+  </div>
+
   <div class="my-4 pt-3 border-top">
     <a href="{% url 'nc:user-detail' object.username %}" class="btn btn-secondary m-1">Cancel</a>
     <button class="btn btn-primary m-1" type="submit">Save Changes</button>

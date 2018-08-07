@@ -8,7 +8,7 @@
   let modelName = 'Account',
       search = instantsearch({
         appId: ALGOLIA_APPLICATION_ID,
-        apiKey: ALGOLIA_SEARCH_API_KEY,
+        apiKey: ALGOLIA_INDEX_API_KEYS[modelName],
         indexName: ALGOLIA_INDEX_NAMES[modelName],
         routing: true,
         searchParameters: {

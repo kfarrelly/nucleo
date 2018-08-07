@@ -6,6 +6,7 @@ import os, requests, toml, urlparse
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.db import models
 from django.urls import reverse
@@ -149,7 +150,7 @@ class Account(models.Model):
         null=True, blank=True, default=None
     )
 
-    # NOTE: user.get_full_name() and user.pic duplicated here
+    # NOTE: user.get_full_name(), user.pic, profile_is_private duplicated here
     # so Algolia search index updates work when user updates occur (kept in sync through signals.py)
     user_full_name = models.CharField(max_length=200, null=True, blank=True, default=None)
     user_pic_url = models.URLField(null=True, blank=True, default=None)
@@ -162,6 +163,32 @@ class Account(models.Model):
         update issues with related fields don't exist here.
         """
         return self.user.username
+
+    def profile_is_private(self):
+        """
+        Have this method as a proxy for the search index.
+
+        Returns [0] if profile.is_private and [1] if not private.
+
+        Need this to be a list of ints in order to work with OR bool
+        in index.AccountIndex filters alongside viewable_by_if_private.
+        """
+        is_private_int = 0 if not self.user.profile.is_private else 1
+        return [ is_private_int ]
+
+    def viewable_by_if_private(self):
+        """
+        Have this method as a proxy for the search index to determine who
+        can view this account if associated profile is private.
+
+        If private, account can only be seen by those who follow this user's
+        profile and the user themselves.
+
+        Will have to call AccountIndex.save_record() if associated profile
+        follower status changes. TODO: Use user change signals.
+        """
+        return [ u.id for u in self.user.profile.followers.all()\
+            .union(get_user_model().objects.filter(id=self.user.id)) ]
 
     def pic_url(self):
         """

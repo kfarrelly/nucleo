@@ -54,7 +54,7 @@ class UserProfileUpdateMultiForm(multiform.MultiModelForm):
         ('profile', ProfileUpdateForm),
     ))
 
-class ProfileSettingsUpdateForm(forms.ModelForm):
+class ProfileEmailSettingsUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = [ 'allow_payment_email', 'allow_token_issuance_email',
@@ -71,6 +71,24 @@ class ProfileSettingsUpdateForm(forms.ModelForm):
             'allow_trade_email': _('Receive email notification when someone you follow buys/sells an asset.'),
             'allow_follower_email': _('Receive email notification when someone requests to follow you.'),
         }
+
+class ProfilePrivacySettingsUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [ 'is_private' ]
+        labels = {
+            'is_private': _('Private profile'),
+        }
+        help_texts = {
+            'is_private': _("When your profile is private, only people you approve to follow you can see your Stellar account info, public keys, assets and balances."),
+        }
+
+
+class ProfileSettingsUpdateMultiForm(multiform.MultiModelForm):
+    form_classes = {
+        'email': ProfileEmailSettingsUpdateForm,
+        'privacy': ProfilePrivacySettingsUpdateForm,
+    }
 
 
 class UserFollowUpdateForm(forms.ModelForm):

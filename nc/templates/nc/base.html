@@ -155,12 +155,17 @@ $(function () {
 <!-- Search -->
 <script>
   const ALGOLIA_APPLICATION_ID = "{{ index_app_id }}",
-        ALGOLIA_SEARCH_API_KEY = "{{ index_search_api_key }}";
         ALGOLIA_INDEX_NAMES = {
           {% for k, v in index_names.items %}
           "{{ k }}": "{{ v }}",
           {% endfor %}
+        },
+        ALGOLIA_INDEX_API_KEYS = {
+          {% for k, v in index_api_keys.items %}
+          "{{ k }}": "{{ v }}",
+          {% endfor %}
         };
+
 </script>
 {% verbatim %}
 <script type="text/html" id="searchProfileHitTemplate">

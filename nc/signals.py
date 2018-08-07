@@ -1,12 +1,15 @@
 import urlparse
 
+from algoliasearch_django import update_records
+
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db.models.signals import (
     m2m_changed, pre_save, post_save,
 )
 from django.dispatch import receiver
 
-from .models import Asset, Profile
+from .models import Account, Asset, Profile
 
 
 # Profile
@@ -16,8 +19,11 @@ def update_model_user_details(sender, instance, created, **kwargs):
     Keep profile.full_name, account.user_full_name, account.user_pic_url
     in sync with user instance.
 
-    Need to use .save() versus update since index.ProfileIndex, index.AccountIndex
-    are synced to the post_save signal of Profile, Account models.
+    Need to use .save() versus update since index.ProfileIndex,
+    are synced to the post_save signal of Profile model.
+
+    Use update_records to bulk update all accounts associated with user profile
+    for index.AccountIndex.
     """
     # Ignore created instance because it won't have a profile
     if instance.id and not created:
@@ -26,24 +32,61 @@ def update_model_user_details(sender, instance, created, **kwargs):
         profile.full_name = instance.get_full_name()
         profile.save()
 
-        # Iterate through all the accounts user has as well
-        # NOTE: this is expensive if have many many accounts so another incentive to cap account #
-        for account in instance.accounts.all():
-            account.user_full_name = instance.get_full_name()
-            account.user_pic_url = profile.pic.url if profile.pic else None
-            account.save()
+
+@receiver(pre_save, sender=Profile)
+def preset_model_user_details(sender, instance, **kwargs):
+    """
+    Keep profile.full_name, account.user_full_name, account.user_pic_url
+    in sync with user instance.
+
+    Need to use .save() versus update since index.ProfileIndex,
+    are synced to the post_save signal of Profile model.
+
+    Use update_records to bulk update all accounts associated with user profile
+    for index.AccountIndex.
+    """
+    # Change profile full name attr
+    instance.full_name = instance.user.get_full_name()
+
+
+@receiver(post_save, sender=Profile)
+def update_model_user_details(sender, instance, created, **kwargs):
+    """
+    Keep account.profile_is_private in sync with user.profile instance.
+
+    Use update_records to bulk update all accounts associated with profile.
+    """
+    # Ignore created instance because it won't have accounts
+    user = instance.user
+    if user.id and not created:
+        # Update all associated accounts
+        profile_is_private = [0] if not instance.is_private else [1] # NOTE: Need this to be a list of ints in order to work with OR bool alongside viewable_by_if_private
+        user_full_name = user.get_full_name()
+        user_pic_url = instance.pic.url if instance.pic else None
+        update_records(Account, user.accounts.all(),
+            user_full_name=user_full_name, user_pic_url=user_pic_url,
+            profile_is_private=profile_is_private)
 
 
 @receiver(m2m_changed, sender=Profile.followers.through)
 def update_profile_followers_count(sender, instance, **kwargs):
     """
-    Keep profile.followers_count in sync with profile.followers.count().
+    Keep profile.followers_count, profile.viewable_by_if_private in sync
+    with profile.followers.count() and profile.followers.all().
 
     Need to use profile.save() versus update since index.ProfileIndex
     is synced to the post_save signal of Profile model.
+
+    To update viewable_by_if_private (since proxy method), use
+    update_records()
     """
     instance.followers_count = instance.followers.count()
     instance.save()
+
+    follower_ids = [ u.id for u in instance.followers.all()\
+        .union(get_user_model().objects.filter(id=instance.user.id)) ]
+    update_records(Account, instance.user.accounts.all(),
+        viewable_by_if_private=follower_ids)
 
 
 # Asset
