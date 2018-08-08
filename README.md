@@ -25,4 +25,4 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 ## Roadmap
 1. Onboard, onboard, onboard.
 2. Become less reliant on StellarTerm for asset related information (i.e. top asset leaderboard list, profile view asset prices in XLM, 24h asset price change). This might require extending [StellarTerm ticker api](https://github.com/stellarterm/stellarterm/tree/master/api) to incorporate all tokens Nucleo has model instances of in db.
-3. Offer users ability to buy XLM with fiat. Likely best way to accomplish this is integrating [Coinbase buy widget](https://buy.coinbase.com/)
+3. Offer users ability to buy XLM with fiat. Likely best way to accomplish this is integrating [Coinbase buy widget](https://buy.coinbase.com/).

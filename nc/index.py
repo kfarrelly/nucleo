@@ -7,12 +7,21 @@ class SecuredAlgoliaIndex(AlgoliaIndex):
     Override AlgoliaIndex to include method that produces
     secured search API key based on index's privacy requirements.
     """
+    def get_secured_query_params(self, request):
+        """
+        Returns query params to use in generation of secured
+        search api key.
+        """
+        return { 'restrictIndices': self.index_name }
+
     def get_secured_api_key(self, request):
         """
         Returns secured search api key from given request according to
         privacy requirements of this index.
         """
-        return settings.ALGOLIA.get('SEARCH_API_KEY', '')
+        base_api_key = settings.ALGOLIA.get('SEARCH_API_KEY', '')
+        query_params = self.get_secured_query_params(request)
+        return algolia_engine.client.generate_secured_api_key(base_api_key, query_params)
 
 
 class ProfileIndex(SecuredAlgoliaIndex):
@@ -35,18 +44,17 @@ class AccountIndex(SecuredAlgoliaIndex):
         'highlightPostTag': '</mark>',
     }
 
-    def get_secured_api_key(self, request):
+    def get_secured_query_params(self, request):
         """
-        Include privacy filter on profile. If profile associated with account
-        is private, only associated profile and followers of associated profile
-        can see account.
+        Returns query params to use in generation of secured
+        search api key.
         """
-        base_api_key = settings.ALGOLIA.get('SEARCH_API_KEY', '')
+        query_params = super(AccountIndex, self).get_secured_query_params(request)
         viewable_by = request.user.id if request.user.is_authenticated else 0
-        query_params = {
+        query_params.update({
             'filters': 'profile_is_private:0 OR viewable_by_if_private:%s' % viewable_by,
-        }
-        return algolia_engine.client.generate_secured_api_key(base_api_key, query_params)
+        })
+        return query_params
 
 
 class AssetIndex(SecuredAlgoliaIndex):
