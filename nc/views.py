@@ -542,7 +542,7 @@ class UserPortfolioDataListView(LoginRequiredMixin, mixins.JSONResponseMixin,
         # Retrieve the raw data with values aggregated based on interval length specified
         q_portfolio_raw_data = portfolio.rawdata.filter(created__gte=start, created__lte=end)\
             .annotate(time=Trunc('created', resolution)).values('time')\
-            .annotate(value=Avg(value_attr)).order_by()
+            .annotate(value=Avg(value_attr)).order_by('time')
 
         # Parse for appropriate json format then update context
         json = {
