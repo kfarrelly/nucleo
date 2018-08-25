@@ -14,10 +14,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
 from django.db.models import (
-    BooleanField, Case, ExpressionWrapper, F, FloatField,
+    Avg, BooleanField, Case, ExpressionWrapper, F, FloatField,
     prefetch_related_objects, Value, When,
 )
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Trunc
 from django.http import (
     Http404, HttpResponse, HttpResponseNotFound, HttpResponseRedirect,
 )
@@ -473,6 +473,85 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
             ))\
             .order_by(Lower('first_name'))\
             .prefetch_related('profile')
+
+class UserPortfolioDataListView(LoginRequiredMixin, mixins.JSONResponseMixin,
+    generic.TemplateView):
+    template_name = "nc/profile_portfolio_data_list.html"
+
+    def render_to_response(self, context):
+        """
+        Returns only JSON. Not meant for actual HTML page viewing.
+        In future, transition this to DRF API endpoint.
+        """
+        return self.render_to_json_response(context)
+
+    def get_context_data(self, **kwargs):
+        """
+        Context is portfolio history data for given user.
+        """
+        context = {}
+        params = self.request.GET.copy()
+
+        # Get user's portfolio prefetched
+        self.object = get_object_or_404(get_user_model(), username=self.kwargs['slug'])
+        self.profile = self.object.profile
+        portfolio = self.profile.portfolio
+
+        # If curr user is not following and self.object has private profile,
+        # need to throw a 404
+        self.is_following = self.profile.followers\
+            .filter(id=self.request.user.id).exists()
+        if self.object.id != self.request.user.id and not self.is_following and self.profile.is_private:
+            raise Http404('No %s matches the given query.' % get_user_model()._meta.object_name)
+
+        # Determine the counter asset to use
+        allowed_counter_codes = ['USD', 'XLM']
+        counter_code = params.get('counter_code', 'USD')
+        if counter_code not in allowed_counter_codes:
+            counter_code = allowed_counter_codes[0] # default to USD
+            params['counter_code'] = counter_code
+        value_attr = '{0}_value'.format(counter_code.lower())
+
+        # Get the start, end query params
+        # From portfolio_chart.js, we pass in start, end as
+        # UTC timestamp in milliseconds, so need to convert
+        start = datetime.datetime.utcfromtimestamp(float(params.get('start')) / 1000.0)
+        end = datetime.datetime.utcfromtimestamp(float(params.get('end')) / 1000.0)
+
+        # Determine trunc time interval to use for aggregated portfolio value data
+        # Adapt for client side getResolution() in asset_chart.js, but for
+        # allowed Django trunc values.
+        # NOTE: https://docs.djangoproject.com/en/2.1/ref/models/database-functions/#trunc
+        range = end - start
+        if range < datetime.timedelta(days=14):
+            # Two week range loads hour data
+            resolution = 'hour'
+        elif range < datetime.timedelta(days=730):
+            # 2 year range loads daily data
+            resolution = 'day'
+        else:
+            # Otherwise, use months
+            resolution = 'month'
+
+        # Update the params with username and counter code. Then add to the context
+        params.update({
+            'username': self.object.username
+        })
+        context.update(params)
+
+        # Retrieve the raw data with values aggregated based on interval length specified
+        q_portfolio_raw_data = portfolio.rawdata.filter(created__gte=start, created__lte=end)\
+            .annotate(time=Trunc('created', resolution)).values('time')\
+            .annotate(value=Avg(value_attr)).order_by()
+
+        # Parse for appropriate json format then update context
+        json = {
+            'results': [ d for d in q_portfolio_raw_data ]
+        }
+        context.update(json)
+
+        return context
+
 
 ## Account
 class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,

@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^profile/(?P<slug>[\w.@+-]+)/follow/request/delete/$', views.UserFollowRequestDeleteView.as_view(), name='user-follow-request-delete'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/followers/$', views.UserFollowerListView.as_view(), name='user-follower-list'),
     url(r'^profile/(?P<slug>[\w.@+-]+)/following/$', views.UserFollowingListView.as_view(), name='user-following-list'),
+    url(r'^profile/(?P<slug>[\w.@+-]+)/portfolio/data/$', views.UserPortfolioDataListView.as_view(), name='user-portfolio-data-list'),
 
     # Associated Stellar account
     url(r'^account/create/$', views.AccountCreateView.as_view(), name='account-create'),

@@ -76,7 +76,17 @@
 </div>
 
 {% if not object.profile.is_private or object.id == request.user.id or is_following %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+<div class="card mt-4 box-shadow">
+  <div class="card-body">
+    <div id="portfolioChart" class="portfolio-chart" data-username="{{ object.username }}" data-url="{% url 'nc:user-portfolio-data-list' object.username %}" data-counter_code="USD">
+      <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+        Loading historical portfolio data ...
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
   <h1 id="assets" class="h2">Assets</h1>
 </div>
 
@@ -504,5 +514,6 @@
   const STELLAR_DATA_VERIFICATION_KEY = "{{ verification_key }}";
 </script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
+<script src="{% static 'nc/scripts/portfolio_chart.js' %}"></script>
 <script src="{% static 'nc/scripts/profile.js' %}"></script>
 {% endblock %}
