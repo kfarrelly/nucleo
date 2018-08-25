@@ -1,4 +1,6 @@
 (function() {
+  var portfolioLatestValue;
+
   // Plot the current user's portfolio values
   plotPortfolioValues(moment().subtract(1.25, 'year').valueOf(), moment().valueOf());
 
@@ -27,11 +29,10 @@
           // i.e. [ [timestamp, avg] ]
 
           // Resp Json has key, vals:
-          // 'last': timestamp of most recent record (use for future since value
-          //    when fetching more recent data),
-          // 'error': []
-          // results: [ record ]
+          // 'latest_value': most recent recorded portfolio value,
+          // 'results': [ record ]
           //  where record is { time: datetime, value: float }
+          portfolioLatestValue = resp.latest_value;
 
           let records = resp.results;
           if (records) {
@@ -139,16 +140,17 @@
      var seriesColor = '#343a40',
          titleText = subtitleText = '';
      if (seriesData.length != 0) {
-       let firstVal = seriesData[0][1], lastVal = seriesData[seriesData.length-1][1];
+       let firstVal = seriesData[0][1], lastVal = seriesData[seriesData.length-1][1],
+           portfolioVal = (portfolioLatestValue ? portfolioLatestValue : lastVal);
 
        // Data color
-       seriesColor = (lastVal >= firstVal ? '#28a745' : '#dc3545');
+       seriesColor = (portfolioVal >= firstVal ? '#28a745' : '#dc3545');
 
        // Title
-       titleText = (valueSuffix == ' USD' ? numeral(lastVal).format('$0,0.00'): lastVal + valueSuffix);
+       titleText = (valueSuffix == ' USD' ? numeral(portfolioVal).format('$0,0.00'): portfolioVal + valueSuffix);
 
        // Subtitle
-       subtitleText = getSubtitleText(firstVal, lastVal, valueSuffix);
+       subtitleText = getSubtitleText(firstVal, portfolioVal, valueSuffix);
      }
 
      // Set timezone options on chart

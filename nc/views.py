@@ -550,6 +550,14 @@ class UserPortfolioDataListView(LoginRequiredMixin, mixins.JSONResponseMixin,
         }
         context.update(json)
 
+        # Add last portfolio USD value and creation date of raw data
+        portfolio_latest_rawdata = portfolio.rawdata.first()
+        portfolio_latest_rawdata_value = getattr(portfolio_latest_rawdata, value_attr)\
+            if portfolio_latest_rawdata else RawPortfolioData.NOT_AVAILABLE
+        context['latest_value'] = portfolio_latest_rawdata_value\
+            if portfolio_latest_rawdata_value != RawPortfolioData.NOT_AVAILABLE\
+            else 0.0
+
         return context
 
 
