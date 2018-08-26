@@ -474,8 +474,7 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
             .order_by(Lower('first_name'))\
             .prefetch_related('profile')
 
-class UserPortfolioDataListView(LoginRequiredMixin, mixins.JSONResponseMixin,
-    generic.TemplateView):
+class UserPortfolioDataListView(mixins.JSONResponseMixin, generic.TemplateView):
     template_name = "nc/profile_portfolio_data_list.html"
 
     def render_to_response(self, context):
@@ -500,8 +499,8 @@ class UserPortfolioDataListView(LoginRequiredMixin, mixins.JSONResponseMixin,
         # If curr user is not following and self.object has private profile,
         # need to throw a 404
         self.is_following = self.profile.followers\
-            .filter(id=self.request.user.id).exists()
-        if self.object.id != self.request.user.id and not self.is_following and self.profile.is_private:
+            .filter(id=self.request.user.id).exists() if self.request.user.is_authenticated else False
+        if self.profile.is_private and not self.is_following and self.object != self.request.user:
             raise Http404('No %s matches the given query.' % get_user_model()._meta.object_name)
 
         # Determine the counter asset to use
