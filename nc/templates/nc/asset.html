@@ -126,19 +126,37 @@
   {% endif %}
 </div>
 
-{% if request.user.is_authenticated and not is_native %}
-<div class="mt-3 d-flex justify-content-between align-items-center">
-  <div class="w-50 mr-2 dropup dropup-buy-sell">
-    <button type="button" class="btn btn-sm btn-block btn-primary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+{% if request.user.is_authenticated %}
+{% if not is_native %}
+<div class="mt-2 d-flex flex-wrap flex-md-nowrap justify-content-center align-items-center">
+  <div class="w-50 p-2 dropup dropup-buy-sell" style="min-width: 300px;">
+    <button type="button" class="btn btn-md btn-block btn-primary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       Buy
     </button>
-    <div class="dropdown-menu">
+    <div class="dropdown-menu dropdown-menu-left">
       <form id="buyForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
-        <h6 id="buyFormHeader" class="form-header">Buy {{ object.code }}</h6>
+        <div id="buyFormHeader" class="form-header mb-4 d-flex flex-wrap justify-content-between align-items-center">
+          <h6>Buy {{ object.code }}</h6>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-light active">Market</button>
+            <button type="button" class="btn btn-sm btn-light" disabled>Limit</button>
+          </div>
+        </div>
         <div class="text-center py-1">
-          <h5 class="mb-0"><span id="buyEstimate">0.0000000</span> {{ object.code }}</h5>
+          <h4 class="mb-0"><span id="buyEstimate">0.0000000</span> {{ object.code }}</h4>
           <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="buyEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
+        </div>
+        <div class="form-group">
+          <label for="buySecretKey">Buy With</label>
+          <div class="input-group">
+            <input id="buySecretKey" type="password" name="secret_key" class="form-control" placeholder="Account Secret Key" aria-label="Secret Key">
+            <div class="input-group-append">
+              <button id="buyLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#buySecretKey" data-alert_ref="#buyFormHeader" data-alert_before="false" data-submit_name="Submit Buy">
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label for="buyAmount">Amount</label>
@@ -149,16 +167,6 @@
             </div>
           </div>
           <small class="text-muted">Available asset balance: <span id="buyAmountInputAvailable"></span></small>
-        </div>
-        <div class="form-group">
-          <div class="input-group">
-            <input id="buySecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key">
-            <div class="input-group-append">
-              <button id="buyLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#buySecretKey" data-alert_ref="#buyFormHeader" data-alert_before="false" data-submit_name="Submit Buy">
-                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
-              </button>
-            </div>
-          </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated {{ object.code }} amount from current market price of 1 {{ object.code }} = <span id="buyPrice"></span> XLM (lowest ask price)</small>
         <div class="mt-3">
@@ -174,17 +182,34 @@
       </form>
     </div>
   </div>
-  <div class="w-50 ml-2 dropup dropup-buy-sell">
-    <button type="button" class="btn btn-sm btn-block btn-secondary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  <div class="w-50 p-2 dropup dropup-buy-sell" style="min-width: 300px;">
+    <button type="button" class="btn btn-md btn-block btn-secondary dropup-buy-sell-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       Sell
     </button>
     <div class="dropdown-menu dropdown-menu-right">
       <form id="sellForm" method="POST" class="px-4 py-3">
         {% csrf_token %}
-        <h6 id="sellFormHeader" class="form-header">Sell {{ object.code }}</h6>
+        <div id="sellFormHeader" class="form-header mb-4 d-flex flex-wrap justify-content-between align-items-center">
+          <h6>Sell {{ object.code }}</h6>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-light active">Market</button>
+            <button type="button" class="btn btn-sm btn-light" disabled>Limit</button>
+          </div>
+        </div>
         <div class="text-center py-1">
-          <h5 class="mb-0"><span id="sellEstimate">0.0000000</span> XLM</h5>
+          <h4 class="mb-0"><span id="sellEstimate">0.0000000</span> XLM</h4>
           <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="sellEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
+        </div>
+        <div class="form-group">
+          <label for="sellSecretKey">Sell With</label>
+          <div class="input-group">
+            <input id="sellSecretKey" type="password" name="secret_key" class="form-control" placeholder="Account Secret Key" aria-label="Secret Key">
+            <div class="input-group-append">
+              <button id="sellLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sellSecretKey" data-alert_ref="#sellFormHeader" data-alert_before="false" data-submit_name="Submit Sell">
+                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+              </button>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label for="sellAmount">Amount</label>
@@ -195,16 +220,6 @@
             </div>
           </div>
           <small class="text-muted">Available asset balance: <span id="sellAmountInputAvailable"></span></small>
-        </div>
-        <div class="form-group">
-          <div class="input-group">
-            <input id="sellSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key" aria-label="Secret Key">
-            <div class="input-group-append">
-              <button id="sellLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sellSecretKey" data-alert_ref="#sellFormHeader" data-alert_before="false" data-submit_name="Submit Sell">
-                <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
-              </button>
-            </div>
-          </div>
         </div>
         <small class="asset-ticker" data-asset_id="{{ object.asset_id }}">Estimated XLM amount from current market price of 1 {{ object.code }} = <span id="sellPrice"></span> XLM (highest bid price)</small>
         <div class="mt-3">
@@ -221,6 +236,40 @@
     </div>
   </div>
 </div>
+{% endif %}
+
+<div id="positionsContainer" style="display: none;">
+  <div class="mt-4 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+    <h1 id="about" class="h2">Positions</h1>
+  </div>
+
+  <div class="card my-4">
+    <div class="card-header">
+      Your Current Holdings{% if object.name %} of {{ object.name }}{% endif %}
+    </div>
+    <div class="card-body">
+      <strong class="py-1">
+        <img class="card-img-top rounded-circle mr-2" {% if object.pic %}src="{{ object.pic.url }}"{% elif object.toml_pic %}src="{{ object.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} style="height: 25px; width: 25px;">
+        {{ object.code }}
+      </strong>
+
+      <ul id="accountPositions" class="list-group mt-3" data-parent="#orderbook">
+        <strong class="py-1">Holdings by Trusting Account</strong>
+        {% for account in accounts %}
+        <li class="list-group-item d-none justify-content-between align-items-center" data-public_key="{{ account.public_key }}" data-display_decimals="{{ object.display_decimals }}">
+          <div class="d-flex justify-content-start align-items-center">
+            <img class="card-img-top rounded mr-2" style="height: 25px; width: 25px;"{% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
+            <span>
+              {{ account.name }} ({{ account.public_key|truncatechars:8 }}{{ account.public_key|slice:"-5:" }})
+            </span>
+          </div>
+          <strong class="asset-balance"></strong>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
 
 <!-- Activity Tx Hash Form -->
 <form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
@@ -228,7 +277,6 @@
   {{ activity_form }}
 </form>
 {% endif %}
-
 
 <div class="mt-4 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
   <h1 id="about" class="h2">About</h1>
@@ -286,6 +334,17 @@
         {% else %}
         IS_NATIVE = false;
         {% endif %}
+
+  {% if request.user.is_authenticated %}
+  const ACCOUNTS = {
+    {% for account in accounts %}
+    "{{ account.public_key }}": {
+      "name": "{{ account.name }}",
+      "pic_url": {% if account.pic %}"{{ account.pic.url }}"{% else %}"{% static 'nc/images/account.png' %}"{% endif %}
+    },
+    {% endfor %}
+  };
+  {% endif %}
 </script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
 <script src="{% static 'nc/scripts/asset_chart.js' %}"></script>

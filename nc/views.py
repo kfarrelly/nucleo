@@ -797,6 +797,10 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
 
         context['asset'] = record
 
+        # Include accounts user has for account related info (positions, offers)
+        if self.request.user.is_authenticated:
+            context['accounts'] = self.request.user.accounts.all()
+
         return context
 
     def _update_asset(self, record):

@@ -1,6 +1,6 @@
 {
   "name": "getstream",
-  "version": "3.19.0",
+  "version": "3.20.0",
   "main": "dist/js/getstream.js",
   "ignore": [
     "src",
@@ -19,14 +19,14 @@
   "dependencies": {},
   "devDependencies": {},
   "homepage": "https://github.com/tschellenbach/stream-js",
-  "_release": "3.19.0",
+  "_release": "3.20.0",
   "_resolution": {
     "type": "version",
-    "tag": "v3.19.0",
-    "commit": "4dc0af8918c729b48c501ad6b007f86e606adfd1"
+    "tag": "v3.20.0",
+    "commit": "00c05533245175097258401adca46da894149799"
   },
   "_source": "https://github.com/tschellenbach/stream-js.git",
-  "_target": "^3.19.0",
+  "_target": "^3.20.0",
   "_originalSource": "getstream",
   "_direct": true
 }

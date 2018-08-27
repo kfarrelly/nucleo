@@ -197,7 +197,7 @@ class UserAssetsContextMixin(object):
         except AttributeError:
             user = None
 
-        if user:
+        if user and user.is_authenticated:
             # Build the accounts dict
             addresses = {
                 account.public_key: Address(address=account.public_key,

@@ -1,5 +1,17 @@
 (function() {
+  /* Initialization of Stellar server and asset props */
+  var asset, orderbook, accounts,
+      buyPrice = 0.0, sellPrice = 0.0,
+      server = new StellarSdk.Server(STELLAR_SERVER_URL);
+
   $(document).ready(function() {
+    // Setting the current asset
+    if (!IS_NATIVE) {
+      asset = new StellarSdk.Asset(ASSET_CODE, ASSET_ISSUER);
+    } else {
+      asset = StellarSdk.Asset.native();
+    }
+
     // Fetch compiled asset prices, vol, etc. from StellarTerm
     // when ready.
     $.when(getTickerAssets())
@@ -7,6 +19,9 @@
       populateAssetValues(assets);
       populateAssetDetails(assets);
     });
+
+    // Fetch authenticated user's holdings of current asset
+    getAndPopulateUserHoldings(asset);
   });
 
   function populateAssetValues(data) {
@@ -140,29 +155,108 @@
     }
   }
 
-  if (!IS_NATIVE) {
-    /* Initialization of Stellar server and asset props */
-    var asset, orderbook, buyPrice = 0.0, sellPrice = 0.0,
-        server = new StellarSdk.Server(STELLAR_SERVER_URL);
+  function getAndPopulateUserHoldings(a) {
+    /*
+    Fetches and populates user's positions in current asset.
+    */
+    let positionsContainerDiv = $('#positionsContainer')[0];
 
+    // Iterate through all accounts to get balances
+    Object.keys(ACCOUNTS).forEach(function(publicKey) {
+      $.when(getAccountHoldings(publicKey, a))
+      .done(function(balance) {
+        if (balance) {
+          populateAccountHoldings(publicKey, balance);
+
+          // If at least one account has a balance, make sure display
+          // the positions section
+          $(positionsContainerDiv).fadeIn();
+        }
+      });
+    });
+  }
+
+  function getAccountHoldings(publicKey, a) {
+    /*
+    Get balance of given asset for account associated with publicKey.
+
+    Returns null if asset not in account.
+    */
+    return server.loadAccount(publicKey)
+    .then(function(acc) {
+      // Retrieve the asset balance
+      var assetBalance = null;
+
+      // Loop through balances to get the balance for given assets
+      acc.balances.forEach(function(balance) {
+        if (a.isNative()) {
+          if (balance.asset_type == "native") {
+            assetBalance = balance.balance;
+          }
+        } else {
+          if (balance.asset_code == a.code && balance.asset_issuer == a.issuer) {
+            assetBalance = balance.balance;
+          }
+        }
+      });
+
+      // Return the asset balance
+      return assetBalance
+    })
+    .catch(function(error) {
+      console.error('Something went wrong with Stellar call', error);
+      return null;
+    });
+  }
+
+  function populateAccountHoldings(publicKey, balance) {
+    /*
+    Populate balance of given asset for account associated with publicKey.
+    */
+    let accountPositionLi = $('#accountPositions').find('li[data-public_key=' + publicKey + ']')[0],
+        accountBalanceContainer = $(accountPositionLi).find('.asset-balance')[0],
+        assetDisplayDecimals = parseInt(accountPositionLi.dataset.display_decimals);
+
+    // Fill in balance info. Use decimal places.
+    var decimalFormat = '';
+    for (var i=0; i < assetDisplayDecimals; i++) {
+      decimalFormat += '0';
+    }
+    accountBalanceContainer.textContent = numeral(balance).format('0,0.' + decimalFormat);
+
+    // Make the full li visible
+    accountPositionLi.classList.remove('d-none');
+    accountPositionLi.classList.add('d-flex');
+  }
+
+  if (!IS_NATIVE) {
     $(document).ready(function() {
       // Resetting the buy/sell forms
       resetBuySellForms();
 
-      // Setting the current asset and retrieve orderbook to store for market price calc
-      asset = new StellarSdk.Asset(ASSET_CODE, ASSET_ISSUER);
+      // Retrieve orderbook to store for market price calc
       getMarketPrices(asset);
     });
 
     /** Initialization of forms **/
     function resetBuySellForms() {
       // Clear out the user input from forms
-      $('#buyForm')[0].reset();
-      $('#sellForm')[0].reset();
+      let buyForm = $('#buyForm')[0],
+          sellForm = $('#sellForm')[0];
 
-      // Clear out existing asset available balances
-      resetAvailableBalance('buy');
-      resetAvailableBalance('sell');
+      if (buyForm) {
+        buyForm.reset();
+
+        // Clear out existing asset available balances
+        resetAvailableBalance('buy');
+      }
+
+      if (sellForm) {
+        sellForm.reset();
+
+        // Clear out existing asset available balances
+        resetAvailableBalance('sell');
+      }
     };
 
     function getMarketPrices(asset) {
