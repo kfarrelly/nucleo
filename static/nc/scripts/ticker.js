@@ -74,12 +74,13 @@ function buildTickerData(server, asset, xlmTickerData) {
       return server.orderbook(asset, StellarSdk.Asset.native()).call()
       .then(function(orderbook) {
         // NOTE: See https://github.com/stellarterm/stellarterm/blob/master/api/functions/ticker.js
-        let bidPrice = (orderbook.bids.length > 0 ? orderbook.bids[0].price: 0.0),
-            askPrice = (orderbook.asks.length > 0 ? orderbook.asks[0].price: 0.0),
+        let bidPrice = (orderbook.bids.length > 0 ? parseFloat(orderbook.bids[0].price): 0.0),
+            askPrice = (orderbook.asks.length > 0 ? parseFloat(orderbook.asks[0].price): 0.0),
             spread = (bidPrice > 0 && askPrice > 0 ? 1.0 - bidPrice / askPrice : 0.0),
             pairPrice = (spread > 0.4 ? bidPrice : (bidPrice + askPrice)/2.0),
             sum10PercentBidAmounts = _.sumBy(orderbook.bids, bid => {
               console.log('Bid: ' + bid.price);
+              console.log(pairPrice);
               if (parseFloat(bid.price)/pairPrice >= 0.9) {
                 return parseFloat(bid.amount);
               }
@@ -87,6 +88,7 @@ function buildTickerData(server, asset, xlmTickerData) {
             }),
             sum10PercentAskAmounts = _.sumBy(orderbook.asks, ask => {
               console.log('Ask: ' + ask.price);
+              console.log(pairPrice);
               if (parseFloat(ask.price)/pairPrice <= 1.1) {
                 return parseFloat(ask.amount);
               }
