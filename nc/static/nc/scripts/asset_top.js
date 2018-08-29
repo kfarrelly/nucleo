@@ -3,13 +3,31 @@
   var server = new StellarSdk.Server(STELLAR_SERVER_URL);
 
   $(document).ready(function() {
+    // Determine all the assets need info on for this profile
+    let requiredAssets = getRelevantAssets();
+
     // Fetch compiled asset prices, vol, etc. from StellarTerm
     // when ready.
-    $.when(getTickerAssets())
+    $.when(getTickerAssets(server, requiredAssets))
     .done(function(assets) {
       populateAssetValues(assets);
     });
   });
+
+  function getRelevantAssets() {
+    /*
+    Fetch all the assets that need price related info on current document.
+    */
+    var assetIdSet = new Set([]);
+    $('.asset-ticker').each(function(i, assetTickerDiv) {
+      if (assetTickerDiv.hasAttribute('data-asset_id') && assetTickerDiv.dataset.asset_id != 'XLM-native') {
+        assetIdSet.add(assetTickerDiv.dataset.asset_id);
+      }
+    });
+    return Array.from(assetIdSet).map(function(assetId) {
+      return new StellarSdk.Asset(assetId.split('-')[0], assetId.split('-')[1]);
+    });
+  }
 
   function populateAssetValues(data) {
     /*
