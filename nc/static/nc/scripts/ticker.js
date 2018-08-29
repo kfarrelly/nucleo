@@ -85,7 +85,7 @@ function buildTickerData(server, asset, xlmTickerData) {
               return 0;
             }),
             sum10PercentAskAmounts = _.sumBy(orderbook.asks, ask => {
-              if (parseFloat(ask.price)/pair.price <= 1.1) {
+              if (parseFloat(ask.price)/pairPrice <= 1.1) {
                 return parseFloat(ask.amount);
               }
               return 0;
