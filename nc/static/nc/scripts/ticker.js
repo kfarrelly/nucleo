@@ -52,7 +52,7 @@ function buildTickerData(server, asset, xlmTickerData) {
     if (data.records.length > 0) {
       let record = data.records[0],
           change24hXlm = 100 * (record.close - record.open) / record.open,
-          change24Usd = change24hXlm - xlmTickerData.change24h_USD; // NOTE: approx to first order is good enough
+          change24hUsd = change24hXlm - xlmTickerData.change24h_USD; // NOTE: approx to first order is good enough
 
       tickerData = Object.assign(tickerData, {
         'id': asset.code + '-' + asset.issuer,
