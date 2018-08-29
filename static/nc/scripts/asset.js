@@ -80,7 +80,8 @@
             assetPriceXlmChange.textContent = assetPriceXlmChangeTextContent;
           }
         });
-        if (score) {
+        console.log(score);
+        if (!$.isEmptyObject(score)) {
           $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
             assetScore.textContent = score;
           });
