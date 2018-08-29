@@ -80,7 +80,6 @@ function buildTickerData(server, asset, xlmTickerData) {
             pairPrice = (spread > 0.4 ? bidPrice : (bidPrice + askPrice)/2.0),
             sum10PercentBidAmounts = _.sumBy(orderbook.bids, bid => {
               console.log('Bid: ' + bid.price);
-              console.log(pairPrice);
               if (parseFloat(bid.price)/pairPrice >= 0.9) {
                 return parseFloat(bid.amount);
               }
@@ -88,7 +87,6 @@ function buildTickerData(server, asset, xlmTickerData) {
             }),
             sum10PercentAskAmounts = _.sumBy(orderbook.asks, ask => {
               console.log('Ask: ' + ask.price);
-              console.log(pairPrice);
               if (parseFloat(ask.price)/pairPrice <= 1.1) {
                 return parseFloat(ask.amount);
               }
@@ -97,7 +95,12 @@ function buildTickerData(server, asset, xlmTickerData) {
             depth10Xlm = _.round(Math.min(sum10PercentBidAmounts, sum10PercentAskAmounts)),
             depth10Usd = depth10Xlm * xlmTickerData.price_USD;
             console.log(sum10PercentBidAmounts);
-            console.log(sum10PercentAskAmounts)
+            console.log(sum10PercentAskAmounts);
+            console.log(pairPrice);
+            console.log(bidPrice);
+            console.log(askPrice);
+            console.log((bidPrice + askPrice)/2.0);
+
 
         tickerData = Object.assign(tickerData, {
           'spread': spread,
