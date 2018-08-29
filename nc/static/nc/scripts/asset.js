@@ -80,10 +80,12 @@
             assetPriceXlmChange.textContent = assetPriceXlmChangeTextContent;
           }
         });
-        console.log(score);
-        if (!$.isEmptyObject(score)) {
-          $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
-            assetScore.textContent = score;
+        if (score) {
+          $(assetTickerDiv).find('.btn-asset-score').each(function(i, buttonAssetScore) {
+            $(buttonAssetScore).find('.asset-score').each(function(j, assetScore) {
+              assetScore.textContent = score;
+            })
+            $(buttonAssetScore).fadeIn();
           });
         }
         // Store asset price data in all reference currency containers

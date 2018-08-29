@@ -45,7 +45,7 @@
           </button>
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning btn-asset-score" style="display: none;">
             <span data-feather="star"></span>
             <span class="asset-score">100</span>
           </a>
@@ -97,7 +97,7 @@
           {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
-          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning">
+          <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning btn-asset-score" style="display: none;">
             <span data-feather="star"></span>
             <span class="asset-score"></span>
           </a>
