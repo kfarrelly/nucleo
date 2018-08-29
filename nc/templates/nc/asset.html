@@ -239,10 +239,6 @@
 {% endif %}
 
 <div id="positionsContainer" style="display: none;">
-  <div class="mt-4 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-    <h1 id="about" class="h2">Positions</h1>
-  </div>
-
   <div class="card my-4">
     <div class="card-header">
       Your Current Holdings{% if object.name %} of {{ object.name }}{% endif %}
@@ -254,7 +250,7 @@
       </strong>
 
       <ul id="accountPositions" class="list-group mt-3" data-parent="#orderbook">
-        <strong class="py-1">Holdings by Trusting Account</strong>
+        <strong class="py-1">Holdings By Trusting Account</strong>
         {% for account in accounts %}
         <li class="list-group-item d-none justify-content-between align-items-center" data-public_key="{{ account.public_key }}" data-display_decimals="{{ object.display_decimals }}">
           <div class="d-flex justify-content-start align-items-center">
@@ -335,16 +331,16 @@
         IS_NATIVE = false;
         {% endif %}
 
-  {% if request.user.is_authenticated %}
   const ACCOUNTS = {
+    {% if request.user.is_authenticated %}
     {% for account in accounts %}
     "{{ account.public_key }}": {
       "name": "{{ account.name }}",
       "pic_url": {% if account.pic %}"{{ account.pic.url }}"{% else %}"{% static 'nc/images/account.png' %}"{% endif %}
     },
     {% endfor %}
+    {% endif %}
   };
-  {% endif %}
 </script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
 <script src="{% static 'nc/scripts/asset_chart.js' %}"></script>

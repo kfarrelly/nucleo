@@ -14,7 +14,7 @@
 
     // Fetch compiled asset prices, vol, etc. from StellarTerm
     // when ready.
-    $.when(getTickerAssets())
+    $.when(getTickerAssets(server, [asset]))
     .done(function(assets) {
       populateAssetValues(assets);
       populateAssetDetails(assets);
@@ -80,10 +80,11 @@
             assetPriceXlmChange.textContent = assetPriceXlmChangeTextContent;
           }
         });
-        $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
-          assetScore.textContent = score;
-        });
-
+        if (score) {
+          $(assetTickerDiv).find('.asset-score').each(function(i, assetScore) {
+            assetScore.textContent = score;
+          });
+        }
         // Store asset price data in all reference currency containers
         $(assetTickerDiv).find('.asset-price-data-usd').each(function(i, assetPriceUsd) {
           assetPriceUsd.dataset.asset_price_usd = usdValue;
@@ -267,6 +268,7 @@
       Returns { 'buy': float, 'sell': float } with float vals corresponding
       to var buyPrice, sellPrice
       */
+      // TODO: Set up a listener on the orderbook for updates!
       // Get the orderbook for the asset
       return server.orderbook(asset, StellarSdk.Asset.native()).call()
       .then(function(data) {

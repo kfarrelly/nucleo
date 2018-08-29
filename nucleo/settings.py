@@ -259,6 +259,7 @@ BOWER_INSTALLED_APPS = (
     'highcharts',
     'bignumber.js',
     'getstream',
+    'lodash',
 )
 
 # Webpack

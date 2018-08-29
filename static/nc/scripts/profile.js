@@ -3,9 +3,20 @@
   var server = new StellarSdk.Server(STELLAR_SERVER_URL);
 
   $(document).ready(function() {
-    // Fetch compiled asset prices, vol, etc. from StellarTerm
+    // Determine all the assets need info on for this profile
+    var assetIdSet = new Set([]);
+    $('.asset-ticker').each(function(i, assetTickerDiv) {
+      if (assetTickerDiv.dataset.asset_id != 'XLM-native') {
+        assetIdSet.add(assetTickerDiv.dataset.asset_id);
+      }
+    });
+    let requiredAssets = Array.from(assetIdSet).map(function(assetId) {
+      return new StellarSdk.Asset(assetId.split('-')[0], assetId.split('-')[1]);
+    });
+
+    // Fetch compiled asset prices, vol, etc. from StellarTerm/Horizon
     // when ready.
-    $.when(getTickerAssets())
+    $.when(getTickerAssets(server, requiredAssets))
     .done(function(assets) {
       populateAssetValues(assets);
     });
