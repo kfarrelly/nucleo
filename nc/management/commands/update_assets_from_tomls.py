@@ -17,7 +17,13 @@ class Command(BaseCommand):
         for a in asset_qs:
             # NOTE: this is expensive!
             try:
-                a.update_from_toml(a.toml)
+                toml = None
+                if a.toml:
+                    toml = a.toml
+                elif a.domain:
+                    toml = "https://{0}{1}".format(a.domain, settings.STELLAR_TOML_PATH)
+
+                a.update_from_toml(toml)
                 count += 1
             except:
                 print 'Error occurred fetching {0}'.format(a.toml)
