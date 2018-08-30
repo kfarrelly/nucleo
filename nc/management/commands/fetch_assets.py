@@ -61,6 +61,7 @@ class Command(BaseCommand):
         update_count = 0
         for model_asset in Asset.objects.filter(asset_id__in=[ k for k in fetched_assets_to_update ]):
             a = fetched_assets_to_update[model_asset.asset_id]
+            model_asset.domain = a['domain']
             model_asset.toml = "https://{0}{1}".format(a['domain'], settings.STELLAR_TOML_PATH)
             model_asset.save()
             update_count += 1
