@@ -1,5 +1,5 @@
 :root {
-  --jumbotron-padding-y: 6rem;
+  --jumbotron-padding-y: 4.5rem;
 }
 
 body {
@@ -13,8 +13,8 @@ body {
 }
 
 .jumbotron {
-  padding-top: calc(var(--jumbotron-padding-y) * 1.75);
-  padding-bottom: calc(var(--jumbotron-padding-y) * 1.75);
+  padding-top: calc(var(--jumbotron-padding-y) * 1.5);
+  padding-bottom: calc(var(--jumbotron-padding-y) * 1.5);
   border-radius: 0;
   margin-bottom: 0;
   background-color: #222222;
