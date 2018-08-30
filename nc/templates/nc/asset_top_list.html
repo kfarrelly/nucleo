@@ -194,7 +194,7 @@
           <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
           <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
             <strong>{{ a.code }}</strong>
-            <small class="text-muted">{{ a.domain }}</small>
+            <small class="text-muted">{% if a.domain %}{{ a.domain }}{% endif %}</small>
           </div>
         </div>
         <div class="btn-group asset-ticker py-1">
