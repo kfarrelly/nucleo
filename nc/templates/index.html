@@ -14,27 +14,27 @@
 <header>
   <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4">
     <nav class="navbar navbar-dark fixed-top border-bottom border-dark box-shadow">
-      <a class="navbar-brand"><img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="50"></a>
+      <a class="navbar-brand"><img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="45"></a>
       <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="navbar-collapse collapse" id="navbarCollapse" style="">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item m-2">
-            <a class="btn btn-outline-success" href="{% url 'nc:trade-redirect' %}">
+            <a class="btn btn-sm btn-outline-success" href="{% url 'nc:trade-redirect' %}">
               <span data-feather="trending-up"></span>
               Trade Assets
             </a>
           </li>
           <li class="nav-item m-2">
-            <a class="btn btn-outline-warning" href="{% url 'nc:leaderboard-redirect' %}">
+            <a class="btn btn-sm btn-outline-warning" href="{% url 'nc:leaderboard-redirect' %}">
               <span data-feather="award"></span>
               Check Leaderboard
             </a>
           </li>
           <li class="nav-item m-2">
-            <a class="btn btn-outline-secondary" href="{% url 'account_login' %}">Log in</a>
-            <a class="btn btn-outline-primary" href="{% url 'account_signup' %}">Sign up</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'account_login' %}">Log in</a>
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'account_signup' %}">Sign up</a>
           </li>
         </ul>
       </div>
