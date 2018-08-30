@@ -48,3 +48,20 @@ class Command(BaseCommand):
         ]
         created = Asset.objects.bulk_create(new_assets)
         print 'Created {0} new assets in the db'.format(len(created))
+
+        # Sort through fetched assets and only keep those in our db
+        # and ignore those without an issuer
+        fetched_assets_to_update = {
+            a['id']: a
+            for a in fetched_assets
+            if a['id'] in existing_asset_ids and a['issuer'] != None
+        }
+
+        # Update assets already in our db
+        update_count = 0
+        for model_asset in Asset.objects.filter(asset_id__in=[ k for k in fetched_assets_to_update ]):
+            a = fetched_assets_to_update[model_asset.asset_id]
+            model_asset.toml = "https://{0}{1}".format(a['domain'], settings.STELLAR_TOML_PATH)
+            model_asset.save()
+            update_count += 1
+        print 'Updated {0} assets in the db'.format(update_count)
