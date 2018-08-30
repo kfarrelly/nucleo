@@ -14,7 +14,9 @@
 {% block content %}
 <form class="form-signin text-center" method="POST" action="{% url 'account_logout' %}">
   {% csrf_token %}
-  <img class="mb-4" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  <a href="{% url 'home' %}">
+    <img class="mb-4" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  </a>
   <p>Are you sure you want to sign out?</p>
   {% if redirect_field_value %}
   <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>

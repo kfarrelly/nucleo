@@ -1,5 +1,5 @@
 :root {
-  --jumbotron-padding-y: 5rem;
+  --jumbotron-padding-y: 6rem;
 }
 
 body {
@@ -13,8 +13,8 @@ body {
 }
 
 .jumbotron {
-  padding-top: var(--jumbotron-padding-y);
-  padding-bottom: var(--jumbotron-padding-y);
+  padding-top: calc(var(--jumbotron-padding-y) * 1.75);
+  padding-bottom: calc(var(--jumbotron-padding-y) * 1.75);
   border-radius: 0;
   margin-bottom: 0;
   background-color: #222222;
@@ -50,6 +50,13 @@ footer {
 
 footer p {
   margin-bottom: .25rem;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+  margin-right: 4px;
 }
 
 .box-shadow { box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05); }

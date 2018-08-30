@@ -731,7 +731,7 @@ class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
 
 
 ## Asset
-class AssetRedirectView(LoginRequiredMixin, generic.RedirectView):
+class AssetRedirectView(generic.RedirectView):
     query_string = True
     pattern_name = 'nc:asset-top-list'
 
@@ -978,8 +978,8 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
         return self.request.user.accounts.all()
 
 
-class AssetTopListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, mixins.UserAssetsContextMixin, generic.ListView):
+class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
+    mixins.LoginRedirectContextMixin, mixins.UserAssetsContextMixin, generic.ListView):
     template_name = "nc/asset_top_list.html"
     paginate_by = 50
     user_field = 'request.user'
@@ -1071,8 +1071,8 @@ class LeaderboardRedirectView(generic.RedirectView):
     query_string = True
     pattern_name = 'nc:leaderboard-list'
 
-class LeaderboardListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, generic.ListView):
+class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
+    mixins.LoginRedirectContextMixin, generic.ListView):
     template_name = "nc/leaderboard_list.html"
     paginate_by = 50
     view_type = 'leaderboard'
@@ -1083,18 +1083,6 @@ class LeaderboardListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         context = super(LeaderboardListView, self).get_context_data(**kwargs)
 
-        # Include user profile with related portfolio prefetched
-        profile = self.request.user.profile
-        prefetch_related_objects([profile], *['portfolio'])
-        context['profile'] = profile
-
-        # Add last portfolio USD value and creation date of raw data
-        portfolio_latest_rawdata = profile.portfolio.rawdata.first()
-        context['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
-            if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
-            else 0.0
-        context['portfolio_latest_created'] = portfolio_latest_rawdata.created if portfolio_latest_rawdata else None
-
         # Add date span and associated performance attribute to use to the context
         context['date_span'] = self.date_span
         context['allowed_date_orderings'] = self.allowed_date_orderings
@@ -1103,6 +1091,19 @@ class LeaderboardListView(LoginRequiredMixin, mixins.IndexContextMixin,
         # Set rank of asset on top of current page
         page_obj = context['page_obj']
         context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
+
+        # Include user profile with related portfolio prefetched
+        if self.request.user.is_authenticated:
+            profile = self.request.user.profile
+            prefetch_related_objects([profile], *['portfolio'])
+            context['profile'] = profile
+
+            # Add last portfolio USD value and creation date of raw data
+            portfolio_latest_rawdata = profile.portfolio.rawdata.first()
+            context['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
+                if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
+                else 0.0
+            context['portfolio_latest_created'] = portfolio_latest_rawdata.created if portfolio_latest_rawdata else None
 
         return context
 

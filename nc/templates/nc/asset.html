@@ -272,6 +272,15 @@
   {% csrf_token %}
   {{ activity_form }}
 </form>
+{% elif not is_native %}
+<div class="mt-2 d-flex flex-wrap flex-md-nowrap justify-content-center align-items-center">
+  <div class="w-50 p-2" style="min-width: 300px;">
+    <a href="{{ login_redirect }}" class="btn btn-md btn-block btn-primary">Buy</a>
+  </div>
+  <div class="w-50 p-2" style="min-width: 300px;">
+    <a href="{{ login_redirect }}" class="btn btn-md btn-block btn-secondary">Sell</a>
+  </div>
+</div>
 {% endif %}
 
 <div class="mt-4 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">

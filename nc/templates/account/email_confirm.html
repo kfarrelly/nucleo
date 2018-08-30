@@ -29,7 +29,9 @@
 
 {% url 'account_email' as email_url %}
 <div class="text-center">
-  <img class="mb-4" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  <a href="{% url 'home' %}">
+    <img class="mb-4" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  </a>
   <h1 class="h3 mb-3 font-weight-normal">Email Confirmation</h1>
   <p>This e-mail confirmation link expired or is invalid. Please <a href="{{ email_url }}">issue a new e-mail confirmation request</a>.</p>
 </div>
