@@ -816,10 +816,12 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
         model_asset = self.object
 
         # Use toml attribute of record to update instance from toml file (to fetch)
-        if record and '_links' in record and 'toml' in record['_links'] and 'href' in record['_links']['toml']:
-            toml_url = record['_links']['toml']['href']
-            if toml_url:
-                model_asset.update_from_toml(toml_url)
+        toml_url = record['_links']['toml']['href']\
+            if record and '_links' in record and 'toml' in record['_links']\
+            and 'href' in record['_links']['toml']\
+            else None
+
+        model_asset.update_from_toml(toml_url)
 
         return model_asset
 
