@@ -307,15 +307,11 @@ class Asset(models.Model):
         """
         Fetch toml file and update attributes of this instance with its details.
         """
-        changed = False
-
-        # Set the new toml value if given one
-        if toml_url != self.toml:
-            self.toml = toml_url
-            self.domain = urlparse.urlparse(toml_url).netloc if toml_url else None
-            if not toml_url:
-                self.verified = False
-            changed = True
+        # Set the new toml value
+        self.toml = toml_url
+        self.domain = urlparse.urlparse(toml_url).netloc if toml_url else None
+        if not toml_url:
+            self.verified = False
 
         # Fetch the toml file and check for this asset in [[CURRENCIES]]
         # Use try except in case no toml file exists at given toml_url
@@ -326,41 +322,32 @@ class Asset(models.Model):
                 matched_currencies = [ c for c in parsed_toml.get('CURRENCIES', [])
                     if c.get('code', None) == self.code and c.get('issuer') == self.issuer_address ]
 
-                changed = (changed or self.verified != (len(matched_currencies) == 1))
                 self.verified = (len(matched_currencies) == 1)
-                
                 if self.verified:
                     # If matched, then asset has been verified and start updating instance fields
                     currency = matched_currencies[0]
                     if 'image' in currency:
-                        changed = (changed or currency['image'] != self.toml_pic)
                         self.toml_pic = currency['image']
 
                     if 'name' in currency:
                         # NOTE: problems here if desc is longer than 255 so concat for db
-                        changed = (changed or currency['name'][:255] != self.name)
                         self.name = currency['name'][:255]
 
                     if 'desc' in currency:
                         # NOTE: problems here if desc is longer than 255 so concat for db
-                        changed = (changed or currency['desc'][:255] != self.description)
                         self.description = currency['desc'][:255]
 
                     if 'conditions' in currency:
                         # NOTE: problems here if conditions is longer than 255 so concat for db
-                        changed = (changed or currency['conditions'][:255] != self.conditions)
                         self.conditions = currency['conditions'][:255]
 
                     if 'display_decimals' in currency:
-                        changed = (changed or currency['display_decimals'] != self.display_decimals)
                         self.display_decimals = currency['display_decimals']
             except requests.exceptions.ConnectionError:
-                changed = (changed or self.verified != False)
                 self.verified = False
 
         # Save the instance
-        if changed:
-            self.save()
+        self.save()
 
     class Meta:
         unique_together = ('issuer_address', 'code')
