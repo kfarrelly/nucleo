@@ -16,8 +16,8 @@ class Command(BaseCommand):
         count = 0
         for a in asset_qs:
             # NOTE: this is expensive!
+            toml = None
             try:
-                toml = None
                 if a.toml:
                     toml = a.toml
                 elif a.domain:
@@ -26,6 +26,6 @@ class Command(BaseCommand):
                 a.update_from_toml(toml)
                 count += 1
             except:
-                print 'Error occurred fetching {0}'.format(a.toml)
+                print 'Error occurred fetching {0}'.format(toml)
 
         print 'Updated {0} assets from .toml files'.format(count)
