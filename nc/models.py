@@ -325,7 +325,10 @@ class Asset(models.Model):
                 parsed_toml = toml.loads(r.text)
                 matched_currencies = [ c for c in parsed_toml.get('CURRENCIES', [])
                     if c.get('code', None) == self.code and c.get('issuer') == self.issuer_address ]
+
+                changed = (changed or self.verified != (len(matched_currencies) == 1))
                 self.verified = (len(matched_currencies) == 1)
+                
                 if self.verified:
                     # If matched, then asset has been verified and start updating instance fields
                     currency = matched_currencies[0]
