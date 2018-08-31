@@ -31,6 +31,6 @@ class Command(BaseCommand):
             .prefetch_related('profile__user').order_by('rank'):
             # NOTE: performance_{} attrs in fractional vals so need to mult by 100
             # to get percentages.
-            if p.performance_1y:
+            if p.performance_1d:
                 print '{0}. {1} ({2}%)'.format(p.rank, p.profile.user.get_full_name(),
                     p.performance_1d * 100)
