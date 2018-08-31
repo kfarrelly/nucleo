@@ -233,6 +233,11 @@ class Asset(models.Model):
     code = models.CharField(max_length=12)
     asset_id = models.CharField(max_length=70, null=True, blank=True, default=None)
 
+    trusters = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='assets_trusting'
+    )
+
     # NOTE: Since these meta fields are defined in the TOML (which Nucleo can't change
     # directly for logged in user clientside), should store them here to be safe
     name = models.CharField(max_length=255, null=True, blank=True, default=None)
@@ -433,6 +438,8 @@ def portfolio_data_collector(queryset, asset_prices):
     for obj in portfolio_addresses:
         pt = obj['portfolio']
         pt_addrs = obj['addresses']
+        pt_user = pt.profile.user
+        pt_asset_ids = [ ] # NOTE: keep track of asset_ids in pt to update list of assets user trusts
         # Only record portfolio value if user has registered at least one account
         if pt_addrs:
             # Get xlm_val added for each asset held in each account
@@ -441,13 +448,19 @@ def portfolio_data_collector(queryset, asset_prices):
                 a.get()
                 for b in a.balances:
                     if b['asset_type'] == 'native':
+                        pt_asset_ids.append('XLM-native')
                         xlm_val += float(b['balance'])
                     else:
                         asset_id = '{0}-{1}'.format(b['asset_code'], b['asset_issuer'])
+                        pt_asset_ids.append(asset_id)
                         price = asset_prices.get(asset_id, 0.0)
                         xlm_val += float(b['balance']) * price
 
             # Append to return iterable a dict of the data
             ret.append({ 'portfolio': pt, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })
+
+        # Update the list of assets the user associated with the profile trusts in db
+        pt_user.assets_trusting.clear()
+        pt_user.assets_trusting.add(*Asset.objects.filter(asset_id__in=pt_asset_ids))
 
     return ret

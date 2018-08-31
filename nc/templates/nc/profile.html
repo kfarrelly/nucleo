@@ -30,37 +30,52 @@
           </a>
         </div>
       </div>
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="btn-group">
-          {% if object.id == request.user.id %}
-          <a href="{% url 'nc:user-update' user.username %}" class="btn btn-sm btn-outline-secondary">
-            <span data-feather="edit"></span>
-            Edit Profile
-          </a>
-          {% else %}
-          <form method="POST" action="{% url 'nc:user-follow' object.username %}">
-          {% csrf_token %}
-          {% if is_following %}
-          <button type="submit" class="btn btn-sm btn-outline-primary active">
-            <span data-feather="activity"></span>
-            Following
-          </button>
-          {% elif requested_to_follow %}
-          <button type="submit" class="btn btn-sm btn-outline-primary active">
-            <span data-feather="activity"></span>
-            Requested
-          </button>
-          {% else %}
-          <button type="submit" class="btn btn-sm btn-outline-primary">
-            <span data-feather="activity"></span>
-            Follow
-          </button>
-          {% endif %}
-          <a {% if not object.profile.is_private or object.id == request.user.id or is_following %}href="{% url 'nc:send-detail' %}?query={{ object.username }}" class="btn btn-sm btn-outline-secondary"{% else %}class="btn btn-sm btn-outline-secondary disabled"{% endif %}>
-            <span data-feather="send"></span>
-            Send
-          </a>
-          </form>
+      <div class="d-flex flex-wrap justify-content-between align-items-end">
+        <div class="py-1 d-flex flex-column align-items-start justify-content-center">
+          <div class="btn-group">
+            {% if object.id == request.user.id %}
+            <a href="{% url 'nc:user-update' user.username %}" class="btn btn-sm btn-outline-secondary">
+              <span data-feather="edit"></span>
+              Edit Profile
+            </a>
+            {% else %}
+            <form method="POST" action="{% url 'nc:user-follow' object.username %}">
+            {% csrf_token %}
+            {% if is_following %}
+            <button type="submit" class="btn btn-sm btn-outline-primary active">
+              <span data-feather="activity"></span>
+              Following
+            </button>
+            {% elif requested_to_follow %}
+            <button type="submit" class="btn btn-sm btn-outline-primary active">
+              <span data-feather="activity"></span>
+              Requested
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+              <span data-feather="activity"></span>
+              Follow
+            </button>
+            {% endif %}
+            <a {% if not object.profile.is_private or object.id == request.user.id or is_following %}href="{% url 'nc:send-detail' %}?query={{ object.username }}" class="btn btn-sm btn-outline-secondary"{% else %}class="btn btn-sm btn-outline-secondary disabled"{% endif %}>
+              <span data-feather="send"></span>
+              Send
+            </a>
+            </form>
+            {% endif %}
+          </div>
+          {% if object.id != request.user.id and followers_user_follows_teaser_count > 0 %}
+          <div class="mt-2">
+            <small class="text-muted">
+              Followed by
+              {% for u in followers_user_follows_teaser %}
+              <a href="{% url 'nc:user-detail' u.username %}" class="text-dark font-weight-bold">@{{ u.username }}</a>{% if forloop.counter < followers_user_follows_teaser_count %}, {% endif %}
+              {% endfor %}
+              {% if followers_user_follows_teaser_more_count %}
+              and <a href="{% url 'nc:user-follower-list' object.username %}?followed_by=true" class="text-dark font-weight-bold">{{ followers_user_follows_teaser_more_count }} other{% if followers_user_follows_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
+            </small>
+          </div>
           {% endif %}
         </div>
         {% if object.profile.portfolio.rank %}

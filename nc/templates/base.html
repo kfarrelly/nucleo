@@ -75,7 +75,16 @@
             STELLAR_OPERATION_INFLATION = 9,
             STELLAR_OPERATION_MANAGE_DATA = 10;
 
-      /** Stellarterm constants **/
+      /** StellarExpert constants **/
+      {% if debug %}
+      const STELLAR_EXPERT_URL = 'https://stellar.expert/explorer/testnet';
+      {% else %}
+      const STELLAR_EXPERT_URL = 'https://stellar.expert/explorer/public';
+      {% endif %}
+      const STELLAR_EXPERT_ACCOUNT_URL = STELLAR_EXPERT_URL + '/account/',
+            STELLAR_EXPERT_TRANSACTION_URL = STELLAR_EXPERT_URL + '/tx/';
+
+      /** StellarTerm constants **/
       const STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json',
             STELLARTERM_TICKER_MAX_ATTEMPTS = 60;
     </script>

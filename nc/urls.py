@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^asset/(?P<slug>[\w.@+-]+)/$', views.AssetDetailView.as_view(), name='asset-detail'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/update/$', views.AssetUpdateView.as_view(), name='asset-update'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
+    url(r'^asset/(?P<slug>[\w.@+-]+)/trusting/$', views.AssetTrustedByListView.as_view(), name='asset-trusted-by-list'),
     url(r'^asset/exchange/ticker/$', views.AssetExchangeTickerListView.as_view(), name='asset-exchange-ticker'),
 
     # Leaderboard

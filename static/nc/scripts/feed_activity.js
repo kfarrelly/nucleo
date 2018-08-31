@@ -166,6 +166,7 @@
       let recordTxHash = (record.foreign_id ? record.foreign_id : record.tx_hash);
       var txHashDiv = document.createElement("div"),
           txHash = recordTxHash.substring(0, 7) + '...' + recordTxHash.substring(recordTxHash.length-7),
+          txHashHref = STELLAR_EXPERT_TRANSACTION_URL + recordTxHash,
           txHashSmall = document.createElement("small"),
           txHashText = document.createTextNode("Tx #: "),
           txHashA = document.createElement("a"),
@@ -174,9 +175,7 @@
       txHashA.setAttribute("class", "text-info");
       txHashA.setAttribute("title", "Stellar Transaction Hash");
       txHashA.setAttribute("target", "_blank");
-      if (record.tx_href) {
-        txHashA.setAttribute("href", record.tx_href);
-      }
+      txHashA.setAttribute("href", txHashHref);
       txHashA.appendChild(txHashAText);
 
       txHashDiv.appendChild(txHashSmall);
@@ -247,7 +246,7 @@
 
         // Account issuer a
         var accountA = document.createElement("a"),
-            accountHref = STELLAR_SERVER_URL + '/accounts/' + record.object_issuer,
+            accountHref = STELLAR_EXPERT_ACCOUNT_URL + record.object_issuer,
             accountPublicKey = record.object_issuer.substring(0, 7) + '...' + record.object_issuer.substring(record.object_issuer.length-7);
         accountA.setAttribute("class", "text-info");
         accountA.setAttribute("target", "_blank");

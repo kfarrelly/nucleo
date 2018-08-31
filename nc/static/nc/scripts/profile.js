@@ -509,7 +509,7 @@
     // featherIcon, timeSince, txHref, txHash
     var timeSince = moment(op.created_at).fromNow(),
         txHash = op.transaction_hash.substring(0, 7) + '...' + op.transaction_hash.substring(op.transaction_hash.length-7),
-        txHref = op._links.transaction.href,
+        txHref = STELLAR_EXPERT_TRANSACTION_URL + op.transaction_hash,
         descriptionSpan = document.createElement("span");
 
     var featherIcon, description, otherPublicKey;
@@ -635,7 +635,7 @@
         href = accounts[otherPublicKey].href;
       } else {
         username = otherPublicKey.substring(0, 10) + '...' + otherPublicKey.substring(otherPublicKey.length-10);
-        href = STELLAR_SERVER_URL + '/accounts/' + otherPublicKey;
+        href = STELLAR_EXPERT_ACCOUNT_URL + otherPublicKey;
         descriptionA.setAttribute("class", "text-info");
         descriptionA.setAttribute("target", "_blank");
       }

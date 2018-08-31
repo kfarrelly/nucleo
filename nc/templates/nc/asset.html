@@ -37,12 +37,31 @@
           </div>
         </div>
       </p>
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="btn-group py-1">
-          <button type="button" class="btn btn-sm btn-outline-primary active">
-            <span data-feather="shield"></span>
-            Trusted
-          </button>
+      <div class="d-flex flex-wrap justify-content-between align-items-end">
+        <div class="py-1 d-flex flex-column align-items-start justify-content-center">
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-primary active">
+              <span data-feather="shield"></span>
+              Trusted
+            </button>
+          </div>
+          {% if trusters_count > 0 %}
+          <div class="mt-2">
+            <small class="text-muted">
+              Trusted by
+              {% if trusters_user_follows_teaser_count > 0 %}
+              {% for u in trusters_user_follows_teaser %}
+              <a href="{% url 'nc:user-detail' u.username %}" class="text-dark font-weight-bold">@{{ u.username }}</a>{% if forloop.counter < trusters_user_follows_teaser_count %}, {% endif %}
+              {% endfor %}
+              {% if trusters_teaser_more_count %}
+              and <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} other{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
+              {% else %}
+              <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} user{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
+            </small>
+          </div>
+          {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
           <a href="{% url 'nc:asset-top-list' %}" title="StellarTerm Activity Score" class="btn btn-sm btn-warning btn-asset-score" style="display: none;">
@@ -83,17 +102,36 @@
           </div>
         </div>
       </p>
-      <div class="d-flex flex-wrap justify-content-between align-items-center">
-        <div class="py-1">
-          <a href="{% url 'nc:asset-trust-list' object.asset_id %}" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
-            <span data-feather="shield"></span>
-            Change Trust
-          </a>
-          {% if object.issuer and object.issuer.user.id == request.user.id %}
-          <a href="{% url 'nc:asset-update' object.asset_id %}" class="btn btn-sm btn-outline-secondary">
-            <span data-feather="edit"></span>
-            Edit Asset
-          </a>
+      <div class="d-flex flex-wrap justify-content-between align-items-end">
+        <div class="py-1 d-flex flex-column align-items-start justify-content-center">
+          <div>
+            <a href="{% url 'nc:asset-trust-list' object.asset_id %}" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
+              <span data-feather="shield"></span>
+              Change Trust
+            </a>
+            {% if object.issuer and object.issuer.user.id == request.user.id %}
+            <a href="{% url 'nc:asset-update' object.asset_id %}" class="btn btn-sm btn-outline-secondary">
+              <span data-feather="edit"></span>
+              Edit Asset
+            </a>
+            {% endif %}
+          </div>
+          {% if trusters_count > 0 %}
+          <div class="mt-2">
+            <small class="text-muted">
+              Trusted by
+              {% if trusters_user_follows_teaser_count > 0 %}
+              {% for u in trusters_user_follows_teaser %}
+              <a href="{% url 'nc:user-detail' u.username %}" class="text-dark font-weight-bold">@{{ u.username }}</a>{% if forloop.counter < trusters_user_follows_teaser_count %}, {% endif %}
+              {% endfor %}
+              {% if trusters_teaser_more_count %}
+              and <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} other{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
+              {% else %}
+              <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} user{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
+            </small>
+          </div>
           {% endif %}
         </div>
         <div class="btn-group asset-ticker py-1" data-asset_id="{{ object.asset_id }}" style="display: none;">
@@ -318,7 +356,7 @@
         <strong>{{ asset.amount|intcomma }}</strong>
       </li>
       <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>Trusted By</span>
+        <span>Number Of Accounts Trusted By</span>
         <strong>{{ asset.num_accounts|intcomma }}</strong>
       </li>
     </ul>

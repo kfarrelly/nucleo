@@ -83,6 +83,17 @@ class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixi
             context['requested_to_follow'] = self.object.follower_requests\
                 .filter(requester=self.request.user).exists() if self.request.user.is_authenticated else False
 
+            # Update the context for short teaser line of users
+            # who follow self.object that self.request.user also follows
+            q_followers_user_follows = self.object.profile.followers\
+                .filter(profile__in=self.request.user.profiles_following.all())\
+                .order_by(Lower('username'))\
+                if self.request.user.is_authenticated\
+                else get_user_model().objects.none()
+            context['followers_user_follows_teaser'] = q_followers_user_follows[0:2]
+            context['followers_user_follows_teaser_count'] = len(context['followers_user_follows_teaser'])
+            context['followers_user_follows_teaser_more_count'] = q_followers_user_follows.count() - context['followers_user_follows_teaser_count']
+
             # Update the context for cryptographically signed username
             # Include the account creation form as well for Nucleo to store
             # the verified public key
@@ -404,6 +415,7 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         context = super(UserFollowerListView, self).get_context_data(**kwargs)
         context['in_followers'] = True
+        context['in_followers_user_follows'] = self.in_followers_user_follows
         context['object'] = self.object
         context['is_following'] = self.is_following
         return context
@@ -423,8 +435,15 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
             u.id for u in get_user_model().objects\
                 .filter(profile__in=self.request.user.profiles_following.all())
         ]
-        return self.object.profile.followers\
-            .annotate(is_following=Case(
+
+        # Check whether we're in Followed By list view page
+        # If so, then filter queryset by users current user also follows
+        self.in_followers_user_follows = ('true' == self.request.GET.get('followed_by', 'false')) # Default to False
+        qset = self.object.profile.followers
+        if self.in_followers_user_follows:
+            qset = qset.filter(profile__in=self.request.user.profiles_following.all())
+
+        return qset.annotate(is_following=Case(
                 When(id__in=is_following_ids, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
@@ -445,6 +464,7 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         context = super(UserFollowingListView, self).get_context_data(**kwargs)
         context['in_followers'] = False
+        context['in_followers_user_follows'] = False
         context['object'] = self.object
         context['is_following'] = self.is_following
         return context
@@ -758,7 +778,7 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
         record = None
         if not is_native:
             # Include the issuer URL on Horizon
-            context['asset_issuer_stellar_href'] = settings.STELLAR_HORIZON + '/accounts/' + self.object.issuer_address
+            context['asset_issuer_stellar_href'] = settings.STELLAR_EXPERT_ACCOUNT_URL + self.object.issuer_address
 
             # Retrieve asset record from Horizon
             horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
@@ -796,6 +816,18 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
             context['exchange_pair_name'] = exchange_pair_name
 
         context['asset'] = record
+
+        # Update the context for short teaser line of users
+        # who trust self.object that self.request.user also follows
+        context['trusters_count'] = self.object.trusters.count()
+        q_trusters_user_follows = self.object.trusters\
+            .filter(profile__in=self.request.user.profiles_following.all())\
+            .order_by(Lower('username'))\
+            if self.request.user.is_authenticated\
+            else get_user_model().objects.none()
+        context['trusters_user_follows_teaser'] = q_trusters_user_follows[0:2]
+        context['trusters_user_follows_teaser_count'] = len(context['trusters_user_follows_teaser'])
+        context['trusters_teaser_more_count'] = context['trusters_count'] - context['trusters_user_follows_teaser_count']
 
         # Include accounts user has for account related info (positions, offers)
         if self.request.user.is_authenticated:
@@ -978,6 +1010,43 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
         """
         self.object = get_object_or_404(Asset, asset_id=self.kwargs['slug'])
         return self.request.user.accounts.all()
+
+
+class AssetTrustedByListView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, generic.ListView):
+    template_name = 'nc/asset_trusted_by_list.html'
+    paginate_by = 50
+    view_type = 'asset'
+
+    def get_context_data(self, **kwargs):
+        """
+        Add a boolean for template to determine if listing followers
+        or following.
+        """
+        context = super(AssetTrustedByListView, self).get_context_data(**kwargs)
+
+        # Add the asset to the context
+        context['object'] = self.object
+        context['is_native'] = (self.object.issuer_address == None)
+
+        return context
+
+    def get_queryset(self):
+        """
+        Queryset is this user's accounts but store the Asset instance as well.
+        """
+        self.object = get_object_or_404(Asset, asset_id=self.kwargs['slug'])
+        is_following_ids = [
+            u.id for u in get_user_model().objects\
+                .filter(profile__in=self.request.user.profiles_following.all())
+        ]
+        return self.object.trusters.annotate(is_following=Case(
+                When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .order_by(Lower('first_name'))\
+            .prefetch_related('profile')
 
 
 class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,

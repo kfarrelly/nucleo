@@ -8,15 +8,24 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile_follow_list.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | {{ object.get_full_name }} (@{{ object.username }}): {% if in_followers_user_follows %}Followed By{% elif in_followers %}Followers{% else %}Following{% endif %}{% endblock %}
+{% block title %}Nucleo | Users Who Trust {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}{% endblock %}
 
 {% block main %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 class="h2">{% if in_followers_user_follows %}Followed By{% elif in_followers %}Followers{% else %}Following{% endif %}</h1>
+  <h1 class="h2">Trusted By</h1>
+</div>
+
+<div class="mb-3 d-inline-flex justify-content-start align-items-center">
+  <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if object.pic %} src="{{ object.pic.url }}"{% elif object.toml_pic %} src="{{ object.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+  <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+    <strong>{{ object.code }}</strong>
+    <span class="text-secondary">{% if object.domain %}{{ object.domain }}{% endif %}</span>
+    <small class="text-muted" style="font-size: 0.6em">Issuer: {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}</small>
+  </div>
 </div>
 
 <div class="my-2">
-  <a href="{% url 'nc:user-detail' object.username %}">Back To Profile</a>
+  <a href="{% url 'nc:asset-detail' object.asset_id %}">Back To Asset</a>
 </div>
 
 <ul class="list-group">
@@ -32,7 +41,7 @@
     {% if u != request.user %}
     <form method="POST" action="{% url 'nc:user-follow' u.username %}">
     {% csrf_token %}
-    <input name="success_url" type="hidden" {% if in_followers %}value="{% url 'nc:user-follower-list' object.username %}?page={{ page_obj.number }}"{% else %}value="{% url 'nc:user-following-list' object.username %}?page={{ page_obj.number }}"{% endif %}>
+    <input name="success_url" type="hidden" value="{% url 'nc:asset-trusted-by-list' object.asset_id %}?page={{ page_obj.number }}">
     {% if not u.is_following %}
     <button type="submit" class="btn btn-sm btn-outline-primary">
       <span data-feather="activity"></span>
@@ -50,7 +59,7 @@
   {% endfor %}
 </ul>
 
-<div class="pagination mt-2 d-flex flex-column">
+<div class="pagination mt-2">
     <span class="step-links">
         {% if page_obj.has_previous %}
             <a href="?page=1">&laquo; First</a>
@@ -66,11 +75,6 @@
             <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
         {% endif %}
     </span>
-    {% if in_followers_user_follows %}
-    <span>
-      <a href="{% url 'nc:user-follower-list' object.username %}">See All Followers</a>
-    </span>
-    {% endif %}
 </div>
 {% endblock %}
 

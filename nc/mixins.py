@@ -211,6 +211,7 @@ class UserAssetsContextMixin(object):
 
             # Build the total assets list for this user. Keep track of
             # all the issuers to query if they have User instances with us
+            # TODO: Refactor this and templates to use as key asset_id = asset_code-asset_issuer
             assets = {}
             for public_key, address in addresses.iteritems():
                 for b in address.balances:
@@ -235,10 +236,14 @@ class UserAssetsContextMixin(object):
             # Build the model assets for pic of token in template
             # NOTE: Getting all of the assets each issuer offers here versus just those
             # the current user owns to make the Asset query easier
+            model_asset_ids = [
+                k[1] + '-' + k[0]
+                if k[0] else 'XLM-native'
+                for k, v in assets.iteritems()
+            ]
             model_assets = {
                 (a.issuer_address, a.code): a
-                for a in Asset.objects\
-                    .filter(issuer_address__in=issuer_public_keys)\
+                for a in Asset.objects.filter(asset_id__in=model_asset_ids)\
                     .select_related('issuer')
             }
 
@@ -252,6 +257,12 @@ class UserAssetsContextMixin(object):
                 model_assets.update(new_model_assets)
             except:
                 pass
+
+            # Update the list of assets the user associated with the profile trusts in db
+            # TODO: When implement tx activity listener for Stellar accounts, listen to Change Trust
+            # ops to implement the below in real time for ledger changes
+            user.assets_trusting.clear()
+            user.assets_trusting.add(*Asset.objects.filter(asset_id__in=model_asset_ids))
 
             # Update the kwargs
             kwargs.update({

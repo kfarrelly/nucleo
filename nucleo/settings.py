@@ -316,6 +316,16 @@ else:
     STELLAR_HORIZON_INITIALIZATION_METHOD = horizon.horizon_livenet
     STELLAR_NETWORK = 'PUBLIC'
 
+
+# StellarExpert
+if DEBUG:
+    STELLAR_EXPERT_URL = 'https://stellar.expert/explorer/testnet'
+else:
+    STELLAR_EXPERT_URL = 'https://stellar.expert/explorer/public'
+STELLAR_EXPERT_ACCOUNT_URL = STELLAR_EXPERT_URL + '/account/'
+STELLAR_EXPERT_TRANSACTION_URL = STELLAR_EXPERT_URL + '/tx/'
+
+
 # StellarTerm
 STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 
