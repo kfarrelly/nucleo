@@ -188,15 +188,17 @@
   <div class="card-body card-leaderboard p-0">
     <ol class="list-group">
       {% for a in page_obj %}
-      <a class="list-group-item d-flex justify-content-between align-items-center">
-        <div class="d-inline-flex justify-content-start align-items-center">
-          <span class="badge badge-white mr-2">{{ forloop.counter0|add:page_top_number }}</span>
-          <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
-          <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
-            <strong>{{ a.code }}</strong>
-            <small class="text-muted">{% if a.domain %}{{ a.domain }}{% endif %}</small>
+      <div class="list-group-item d-flex justify-content-between align-items-center">
+        <a href="{% url 'nc:asset-detail' a.asset_id %}" class="list-group-item list-group-item-action p-0 border-0">
+          <div class="d-inline-flex justify-content-start align-items-center">
+            <span class="badge badge-white mr-2">{{ forloop.counter0|add:page_top_number }}</span>
+            <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+            <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+              <strong>{{ a.code }}</strong>
+              <small class="text-muted">{% if a.domain %}{{ a.domain }}{% endif %}</small>
+            </div>
           </div>
-        </div>
+        </a>
         <div class="asset-ticker py-1">
           <button type="button" title="StellarTerm Activity Score" class="d-none btn btn-sm btn-warning btn-topassets btn-activityScore">
             <span data-feather="star"></span>
@@ -225,7 +227,7 @@
           {% endwith %}
           {% endwith %}
         </div>
-      </a>
+      </div>
       {% endfor %}
     </ol>
   </div>
