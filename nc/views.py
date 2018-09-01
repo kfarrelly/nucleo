@@ -817,9 +817,16 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
 
         context['asset'] = record
 
+
+        # Update the context for trust related info
+        context['is_trusting'] = self.object.trusters\
+            .filter(id=self.request.user.id).exists()\
+            if self.request.user.is_authenticated\
+            else False
+        context['trusters_count'] = self.object.trusters.count()
+
         # Update the context for short teaser line of users
         # who trust self.object that self.request.user also follows
-        context['trusters_count'] = self.object.trusters.count()
         q_trusters_user_follows = self.object.trusters\
             .filter(profile__in=self.request.user.profiles_following.all())\
             .order_by(Lower('username'))\
@@ -828,6 +835,8 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
         context['trusters_user_follows_teaser'] = q_trusters_user_follows[0:2]
         context['trusters_user_follows_teaser_count'] = len(context['trusters_user_follows_teaser'])
         context['trusters_teaser_more_count'] = context['trusters_count'] - context['trusters_user_follows_teaser_count']
+        if context['is_trusting']:
+            context['trusters_teaser_more_count'] -= 1
 
         # Include accounts user has for account related info (positions, offers)
         if self.request.user.is_authenticated:

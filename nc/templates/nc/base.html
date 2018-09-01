@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block head %}{% endblock %}
 
@@ -49,6 +50,14 @@
       </button>
       <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
         <h6 class="dropdown-header">@{{ request.user.username }}</h6>
+        {% with request.user.profile.portfolio.rawdata.first as portfolio_latest_rawdata %}
+        {% if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value > 0 %}
+        <strong class="dropdown-header text-dark py-0">
+          ${{ portfolio_latest_rawdata.usd_value|floatformat:2|intcomma }}
+        </strong>
+        {% endif %}
+        {% endwith %}
+        <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
           <span data-feather="award"></span>
           Leaderboard

@@ -50,6 +50,7 @@
             <small class="text-muted">
               Trusted by
               {% if trusters_user_follows_teaser_count > 0 %}
+              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a>,{% endif %}
               {% for u in trusters_user_follows_teaser %}
               <a href="{% url 'nc:user-detail' u.username %}" class="text-dark font-weight-bold">@{{ u.username }}</a>{% if forloop.counter < trusters_user_follows_teaser_count %}, {% endif %}
               {% endfor %}
@@ -57,6 +58,7 @@
               and <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} other{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
               {% endif %}
               {% else %}
+              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a> and{% endif %}
               <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} user{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
               {% endif %}
             </small>
@@ -105,7 +107,7 @@
       <div class="d-flex flex-wrap justify-content-between align-items-end">
         <div class="py-1 d-flex flex-column align-items-start justify-content-center">
           <div>
-            <a href="{% url 'nc:asset-trust-list' object.asset_id %}" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
+            <a href="{% url 'nc:asset-trust-list' object.asset_id %}" {% if is_trusting %}class="btn btn-sm btn-outline-primary active"{% else %}class="btn btn-sm btn-outline-primary"{% endif %} data-toggle="tooltip" data-placement="bottom" title="An asset must be trusted before it can be traded">
               <span data-feather="shield"></span>
               Change Trust
             </a>
@@ -121,6 +123,7 @@
             <small class="text-muted">
               Trusted by
               {% if trusters_user_follows_teaser_count > 0 %}
+              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a>{% if trusters_user_follows_teaser_count > 1 %}, {% else %} and{% endif %}{% endif %}
               {% for u in trusters_user_follows_teaser %}
               <a href="{% url 'nc:user-detail' u.username %}" class="text-dark font-weight-bold">@{{ u.username }}</a>{% if forloop.counter < trusters_user_follows_teaser_count %}, {% endif %}
               {% endfor %}
@@ -128,7 +131,10 @@
               and <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} other{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
               {% endif %}
               {% else %}
+              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a>{% endif %}
+              {% if trusters_teaser_more_count > 0 %}
               <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} user{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
+              {% endif %}
               {% endif %}
             </small>
           </div>
