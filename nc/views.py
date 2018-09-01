@@ -817,7 +817,6 @@ class AssetDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMix
 
         context['asset'] = record
 
-
         # Update the context for trust related info
         context['is_trusting'] = self.object.trusters\
             .filter(id=self.request.user.id).exists()\
@@ -1094,8 +1093,8 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
               order_by: 'asc' or 'desc' }
         """
         # Display types in query param to give flexibility
-        self.allowed_displays = [ 'activityScore', 'price_USD', 'price_XLM',
-            'change24h_USD', 'change24h_XLM' ]
+        self.allowed_displays = [ 'activityScore', 'price_USD',
+            'change24h_USD', 'price_XLM', 'change24h_XLM' ]
         self.display = self.request.GET.get('display')
         if self.display not in self.allowed_displays:
             self.display = self.allowed_displays[0] # default to activityScore
@@ -1111,7 +1110,6 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         json = r.json()
         ticker_assets = json.get('assets', [])
 
-        # TODO: ADD IN XLM META IN LOOP. STORE VARS HERE FROM JSON!
         # NOTE: Need to get USD/XLM 24 hour change from _meta key (not in XLM-native asset)
         xlm_change24h_USD = None
         if '_meta' in json and 'externalPrices' in json['_meta']\
