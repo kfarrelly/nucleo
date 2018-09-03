@@ -60,11 +60,13 @@ class PasswordChangeView(allauth_account_views.PasswordChangeView):
 ## User
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
     mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
-    mixins.ViewTypeContextMixin, mixins.UserAssetsContextMixin, generic.DetailView):
+    mixins.FeedActivityContextMixin, mixins.ViewTypeContextMixin,
+    mixins.UserAssetsContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
     prefetch_related_lookups = ['accounts', 'profile__portfolio']
+    feed_type = settings.STREAM_USER_FEED
     user_field = 'object'
     view_type = 'profile'
 
@@ -1285,8 +1287,10 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 ### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, generic.TemplateView):
+    mixins.FeedActivityContextMixin, mixins.ViewTypeContextMixin, generic.TemplateView):
+    feed_type = settings.STREAM_TIMELINE_FEED
     template_name = "nc/feed_activity_list.html"
+    user_field = 'request.user'
     view_type = 'feed'
 
     def get_context_data(self, **kwargs):
@@ -1304,12 +1308,6 @@ class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
         follower_requests = self.request.user.follower_requests\
             .prefetch_related('requester__profile')
         context['follower_requests'] = follower_requests
-
-        # Include non-sensitive stream api key and a current user timeline feed token
-        feed = feed_manager.get_feed(settings.STREAM_TIMELINE_FEED, self.request.user.id)
-        context['stream_api_key'] = settings.STREAM_API_KEY
-        context['stream_timeline_feed'] = settings.STREAM_TIMELINE_FEED
-        context['stream_feed_token'] = feed.get_readonly_token()
 
         return context
 

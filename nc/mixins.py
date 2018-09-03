@@ -11,6 +11,8 @@ from operator import attrgetter
 
 from stellar_base.address import Address
 
+from stream_django.feed_manager import feed_manager
+
 from . import forms
 from .models import Account, Asset
 
@@ -144,6 +146,37 @@ class ViewTypeContextMixin(object):
         kwargs.update({
             'view_type': self.view_type,
         })
+        return kwargs
+
+
+class FeedActivityContextMixin(object):
+    """
+    A mixin that adds activity feed variables to the context for easy
+    client-side access to stream_django.
+    """
+    user_field = ''
+    feed_type = None
+
+    def get_context_data(self, **kwargs):
+        """
+        Include non-sensitive stream api key and a current user feed token
+        for specified feed type.
+        """
+        kwargs = super(FeedActivityContextMixin, self).get_context_data(**kwargs)
+
+        try:
+            user = attrgetter(self.user_field)(self)
+        except AttributeError:
+            user = None
+
+        if user and not user.is_anonymous:
+            feed = feed_manager.get_feed(self.feed_type, user.id)
+            kwargs.update({
+                'stream_api_key': settings.STREAM_API_KEY,
+                'stream_feed_id': user.id,
+                'stream_feed_type': self.feed_type,
+                'stream_feed_token': feed.get_readonly_token(),
+            })
         return kwargs
 
 

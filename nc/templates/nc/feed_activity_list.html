@@ -102,7 +102,7 @@
     </ul>
   </div>
   <div class="card-footer border-0 d-flex justify-content-start align-items-center">
-    <button id="moreButton" type="button" class="btn btn-sm btn-link more p-0" data-parent="#activityList" data-has_more="true" data-id_lt="">More</button>
+    <button id="moreButton" type="button" class="btn btn-sm btn-link more-feed p-0" data-parent="#activityList" data-has_more="true" data-id_lt="">More</button>
   </div>
 </div>
 {% endblock %}
@@ -111,8 +111,8 @@
 {% block nc_script %}
 <script>
   const STREAM_API_KEY = "{{ stream_api_key }}",
-        STREAM_TIMELINE_FEED = "{{ stream_timeline_feed }}",
-        STREAM_FEED_ID = "{{ request.user.id }}",
+        STREAM_FEED_TYPE = "{{ stream_feed_type }}",
+        STREAM_FEED_ID = "{{ stream_feed_id }}",
         STREAM_FEED_TOKEN = "{{ stream_feed_token }}",
         STREAM_FEED_LIMIT = 25;
 </script>

@@ -5,15 +5,15 @@
   Initialize Stream client and get current user timeline.
   */
   $(document).ready(function() {
-    streamClient = stream.connect(STREAM_API_KEY, null, '39403');
-    streamFeed = streamClient.feed(STREAM_TIMELINE_FEED, STREAM_FEED_ID, STREAM_FEED_TOKEN);
+    streamClient = stream.connect(STREAM_API_KEY, null);
+    streamFeed = streamClient.feed(STREAM_FEED_TYPE, STREAM_FEED_ID, STREAM_FEED_TOKEN);
 
     // Load the first batch of activities by clicking the "more" button
     $('#moreButton')[0].click()
   });
 
   /** Load more activity items when the MORE button is clicked **/
-  $('button.more').on('click', function() {
+  $('button.more-feed').on('click', function() {
     // Get the more button container to prep for DOM
     // insertion before the div (in the activityList)
     let button = this;
