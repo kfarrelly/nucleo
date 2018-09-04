@@ -316,7 +316,6 @@ else:
     STELLAR_HORIZON_INITIALIZATION_METHOD = horizon.horizon_livenet
     STELLAR_NETWORK = 'PUBLIC'
 
-
 # StellarExpert
 if DEBUG:
     STELLAR_EXPERT_URL = 'https://stellar.expert/explorer/testnet'
@@ -325,7 +324,6 @@ else:
 STELLAR_EXPERT_ACCOUNT_URL = STELLAR_EXPERT_URL + '/account/'
 STELLAR_EXPERT_TRANSACTION_URL = STELLAR_EXPERT_URL + '/tx/'
 
-
 # StellarTerm
 STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 
@@ -333,6 +331,11 @@ STELLARTERM_TICKER_URL = 'https://api.stellarterm.com/v1/ticker.json'
 KRAKEN_TICKER_URL = 'https://api.kraken.com/0/public/OHLC'
 KRAKEN_XLMUSD_PAIR_NAME = 'XXLMZUSD'
 KRAKEN_XLMBTC_PAIR_NAME = 'XXLMXXBT'
+
+# Papaya
+PAPAYA_DOMAIN = 'apay.io'
+PAPAYA_API_URL = 'https://apay.io/api'
+PAPAYA_API_DEPOSIT_URL = PAPAYA_API_URL + '/deposit/'
 
 # CryptoPanic
 CRYPTOPANIC_API_KEY = os.environ.get('CRYPTOPANIC_API_KEY')

@@ -180,6 +180,21 @@ class FeedActivityContextMixin(object):
         return kwargs
 
 
+class DepositAssetsContextMixin(object):
+    """
+    A mixin that adds the deposit assets in our db associated with
+    crypto anchor.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(DepositAssetsContextMixin, self).get_context_data(**kwargs)
+        assets = Asset.objects.filter(domain=settings.PAPAYA_DOMAIN, verified=True).order_by('code')
+        kwargs.update({
+            'deposit_assets': assets,
+            'papaya_api_deposit_url': settings.PAPAYA_API_DEPOSIT_URL,
+        })
+        return kwargs
+
+
 class UserAssetsContextMixin(object):
     """
     A mixin that adds in Stellar address dictionary associated with each account

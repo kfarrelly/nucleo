@@ -34,8 +34,9 @@ function displayAlert(obj, alertMessage, alertClass, before=false) {
   alertDiv.setAttribute("role", "alert");
 
   // Insert the alert text
-  var alertText = document.createTextNode(alertMessage);
-  alertDiv.appendChild(alertText);
+  $(alertDiv).html(alertMessage);
+  // var alertText = document.createTextNode(alertMessage);
+  // alertDiv.appendChild(alertText);
 
   // Add a button to close the panel
   var closeButton = document.createElement("button");

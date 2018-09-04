@@ -7,7 +7,7 @@
       apiKey: ALGOLIA_INDEX_API_KEYS[modelName],
       indexName: ALGOLIA_INDEX_NAMES[modelName],
       searchParameters: {
-        hitsPerPage: 10
+        hitsPerPage: 20
       }
     });
     search.addWidget(

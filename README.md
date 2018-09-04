@@ -13,7 +13,8 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 - [x] Integrate Ledger and StellarGuard
 - [x] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.
 - [ ] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
-- [ ] Offer users ability to buy crypto through [Coinbase buy widget](https://buy.coinbase.com/). Start with deposits/withdrawals of ETH through [Papaya anchor API](https://apay.io/api).
+- [x] Take crypto deposits through [Papaya anchor API](https://apay.io/api).
+- [ ] Offer users ability to buy crypto with fiat through [Coinbase buy widget](https://buy.coinbase.com/).
 - [x] Include user recent activity (from activity feed) in profile section.
 - [ ] Path payments in send.js. Have oninput event for account search box to load Send To account from horizon and determine allowed assets that can be sent (based off assets Send To trusts).
 - [ ] Retrieve feed activity through Nucleo servers where can enrich data properly with active images, urls, etc. Use built in stream_django enrichment procedures.

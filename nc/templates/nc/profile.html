@@ -32,8 +32,14 @@
       </div>
       <div class="d-flex flex-wrap justify-content-between align-items-end">
         <div class="py-1 d-flex flex-column align-items-start justify-content-center">
-          <div class="btn-group">
+          <div class="">
             {% if object.id == request.user.id %}
+            {% if num_addresses > 0 %}
+            <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#depositFundsModal">
+              <span data-feather="download"></span>
+              Deposit Funds
+            </button>
+            {% endif %}
             <a href="{% url 'nc:user-update' user.username %}" class="btn btn-sm btn-outline-secondary">
               <span data-feather="edit"></span>
               Edit Profile
@@ -287,6 +293,78 @@
     </div>
   </form>
 </div>
+
+<!-- Deposit funds modal -->
+<div class="modal fade" id="depositFundsModal" tabindex="-1" role="dialog" aria-labelledby="depositFundsModalTitle" aria-hidden="true">
+  <form method="POST" id="depositFundsModalForm">
+    {% csrf_token %}
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="depositFundsModalTitle">Deposit Funds To Stellar</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 id="depositFundsModalHeader" class="pt-1 mb-3 modal-body-header">Please select an asset type and a Stellar account to receive deposit</h5>
+          <div class="form-group">
+            <label for="depositFundsModalAssetSelect">Asset type</label>
+            <select class="custom-select" id="depositFundsModalAssetSelect" name="asset" required="">
+              <option value="">Choose...</option>
+              {% for a in deposit_assets %}
+              <option value="{{ a.asset_id }}" data-code="{{ a.code }}" data-issuer="{{ a.issuer_address }}">{{ a.code }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+              Please select a valid asset.
+            </div>
+            {% for a in deposit_assets %}
+            <div class="deposit-asset d-none py-3" data-asset_id="{{ a.asset_id }}">
+              <label class="text-muted">Stellar asset to be deposited</label>
+              <div class="d-flex flex-wrap justify-content-start align-items-center border-0">
+                <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" src="{{ a.pic_url }}" alt="">
+                <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+                  <strong>{{ a.code }}</strong>
+                  <span class="text-secondary">{{ a.domain }}</span>
+                  <small class="text-muted" style="font-size: 0.6em">Issuer: {{ a.issuer_address }}</small>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="form-group">
+            <label for="depositFundsModalAccountSelect">Stellar account</label>
+            <select class="custom-select" id="depositFundsModalAccountSelect" name="account" required="">
+              <option value="">Choose...</option>
+              {% for acc in request.user.accounts.all %}
+              <option value="{{ acc.public_key }}">{% if acc.name %}{{ acc.name }} {% endif %}({{ acc.public_key|truncatechars:10 }}{{ acc.public_key|slice:"-7:" }})</option>
+              {% endfor %}
+            </select>
+            <small><a href="{% url 'nc:user-detail' request.user.username %}#accounts">Add a Stellar account</a></small>
+            <div class="invalid-feedback">
+              Please select a valid account.
+            </div>
+          </div>
+        </div>
+        <div class="modal-body py-0">
+          <div class="mb-3 d-inline-flex justify-content-start align-items-center">
+            <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 50px; width: 50px;" src="{% static 'nc/images/papaya.png' %}" alt="">
+            <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+              <strong>Powered by Papaya</strong>
+              <a href="https://apay.io" target="_blank" class="text-secondary">apay.io</a>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s" {% if request.user.accounts.count == 0 %}disabled{% endif %}><span class="ladda-label">Get External Address</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
 <!-- Activity Tx Hash Form -->
 <form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
   {% csrf_token %}
@@ -401,8 +479,8 @@
 
 {% if object.id == request.user.id %}
 <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
-  <button type="button" class="btn btn-lg btn-secondary m-2" data-toggle="modal" data-target="#addStellarModal">Add Stellar Account</button>
-  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create Stellar Account</button>
+  <button type="button" class="btn btn-lg btn-secondary m-2" data-toggle="modal" data-target="#addStellarModal">Add Existing Stellar Account</button>
+  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
 </div>
 
 <!-- Add Stellar Account Modal -->
@@ -461,26 +539,26 @@
         </div>
         <div class="modal-body">
           <h5 id="createStellarModalHeader" class="mb-3">
-            Account details
+            Please <span class="text-primary">store your secret key</span> securely. It will only be shown to you once.
           </h5>
 
           <ul class="list-group">
-            <strong class="pb-1 text-secondary">Public Key:</strong>
+            <strong class="pb-1 text-primary">Secret Key:</strong>
+            <li class="list-group-item">
+              <h6 class="text-primary w-100 my-0 py-0">
+                <abbr id="createStellarModalSecretKey" title="Stellar Account Secret Key"></abbr>
+              </h6>
+            </li>
+            <strong class="pb-1 pt-3 text-secondary">Public Key:</strong>
             <li class="list-group-item">
               <h6 class="text-secondary w-100 my-0 py-0">
                 <abbr id="createStellarModalPublicKey" title="Stellar Account Public Key"></abbr>
               </h6>
             </li>
-            <strong class="pb-1 pt-3 text-info">Secret Key:</strong>
-            <li class="list-group-item">
-              <h6 class="text-info w-100 my-0 py-0">
-                <abbr id="createStellarModalSecretKey" title="Stellar Account Secret Key"></abbr>
-              </h6>
-            </li>
           </ul>
 
           <h6 class="mt-3">
-            Please store your <span class="text-info">secret key</span> securely. It will only be shown to you once. Your <span class="text-secondary">public key</span> is safe to share.
+            Your <span class="text-secondary">public key</span> is safe to share.
           </h6>
 
           <div class="text-danger mt-4">
@@ -516,7 +594,7 @@
 
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 id="accounts" class="h2">Activity</h1>
+  <h1 id="activity" class="h2">Activity</h1>
 </div>
 
 <div class="p-3">
@@ -560,5 +638,14 @@
         STREAM_FEED_LIMIT = 5;
 </script>
 <script src="{% static 'getstream/js/getstream.min.js' %}"></script>
+<script>
+  const PAPAYA_API_DEPOSIT_URL = "{{ papaya_api_deposit_url }}",
+        PAPAYA_ASSET_TRUST_LINKS = {
+          {% for a in deposit_assets %}
+          {{ a.code }}: "{% url 'nc:asset-trust-list' a.asset_id %}",
+          {% endfor %}
+        };
+</script>
+<script src="{% static 'nc/scripts/deposit.js' %}"></script>
 <script src="{% static 'nc/scripts/feed_activity.js' %}"></script>
 {% endblock %}

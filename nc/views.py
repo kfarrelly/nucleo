@@ -61,7 +61,7 @@ class PasswordChangeView(allauth_account_views.PasswordChangeView):
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
     mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
     mixins.FeedActivityContextMixin, mixins.ViewTypeContextMixin,
-    mixins.UserAssetsContextMixin, generic.DetailView):
+    mixins.DepositAssetsContextMixin, mixins.UserAssetsContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
@@ -1060,7 +1060,8 @@ class AssetTrustedByListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 
 class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
-    mixins.LoginRedirectContextMixin, mixins.UserAssetsContextMixin, generic.ListView):
+    mixins.LoginRedirectContextMixin, mixins.DepositAssetsContextMixin,
+    mixins.UserAssetsContextMixin, generic.ListView):
     template_name = "nc/asset_top_list.html"
     paginate_by = 50
     user_field = 'request.user'
@@ -1152,7 +1153,7 @@ class LeaderboardRedirectView(generic.RedirectView):
     pattern_name = 'nc:leaderboard-list'
 
 class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
-    mixins.LoginRedirectContextMixin, generic.ListView):
+    mixins.LoginRedirectContextMixin, mixins.DepositAssetsContextMixin, generic.ListView):
     template_name = "nc/leaderboard_list.html"
     paginate_by = 50
     view_type = 'leaderboard'
@@ -1212,7 +1213,8 @@ class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
 
 ### News
 class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, mixins.JSONResponseMixin, generic.ListView):
+    mixins.DepositAssetsContextMixin, mixins.ViewTypeContextMixin,
+    mixins.JSONResponseMixin, generic.ListView):
     template_name = "nc/feed_news_list.html"
     view_type = 'feed'
 
@@ -1287,7 +1289,8 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 ### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.FeedActivityContextMixin, mixins.ViewTypeContextMixin, generic.TemplateView):
+    mixins.FeedActivityContextMixin, mixins.DepositAssetsContextMixin,
+    mixins.ViewTypeContextMixin, generic.TemplateView):
     feed_type = settings.STREAM_TIMELINE_FEED
     template_name = "nc/feed_activity_list.html"
     user_field = 'request.user'

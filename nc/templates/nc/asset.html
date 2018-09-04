@@ -293,7 +293,7 @@
         {{ object.code }}
       </strong>
 
-      <ul id="accountPositions" class="list-group mt-3" data-parent="#orderbook">
+      <ul id="accountPositions" class="list-group mt-3">
         <strong class="py-1">Holdings By Trusting Account</strong>
         {% for account in accounts %}
         <li class="list-group-item d-none justify-content-between align-items-center" data-public_key="{{ account.public_key }}" data-display_decimals="{{ object.display_decimals }}">
