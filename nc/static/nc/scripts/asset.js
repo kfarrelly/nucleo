@@ -235,11 +235,15 @@
 
   if (!IS_NATIVE) {
     $(document).ready(function() {
-      // Resetting the buy/sell forms
-      resetBuySellForms();
+      // Resetting the buy/sell and manage offer forms
+      resetStellarForms();
 
       // Retrieve orderbook to store for market price calc
       getMarketPrices(asset);
+
+      // Fetch authenticated user's open orders for current asset
+      // by clicking more button for account offers
+      $('button.offer.more').click();
     });
 
     /** Initialization of forms **/
@@ -262,6 +266,18 @@
         resetAvailableBalance('sell');
       }
     };
+
+    function resetCancelOrderModalForm() {
+      let cancelOrderModalForm = $('#cancelOrderModalForm')[0];
+      if (cancelOrderModalForm) {
+        cancelOrderModalForm.reset();
+      }
+    }
+
+    function resetStellarForms() {
+      resetBuySellForms();
+      resetCancelOrderModalForm();
+    }
 
     function getMarketPrices(asset) {
       /*
@@ -301,6 +317,338 @@
       $('#buyPrice').text(numeral(buyPrice).format('0,0.0000000'));
       $('#sellPrice').text(numeral(sellPrice).format('0,0.0000000'));
     }
+
+    /*
+    Fetches and populates user's open orders for current asset.
+    */
+    $('button.offer.more').on('click', function() {
+      // Get the more button container to prep for DOM
+      // insertion before the div (in the activityList)
+      let button = this,
+          openOrdersContainerDiv = $('#openOrdersContainer')[0],
+          openOrdersList = $('#openOrdersList')[0];
+
+      if (openOrdersList) {
+        // Iterate through all accounts to get outstanding offers
+        var hasMore = false;
+        let accountOfferRequests = Object.keys(ACCOUNTS).map(function(publicKey) {
+          if (ACCOUNTS[publicKey].offers.has_more ) {
+            let serverCall = ( ACCOUNTS[publicKey].offers.next != null ?
+              ACCOUNTS[publicKey].offers.next() : server.offers('accounts', publicKey).order('desc').limit(ACCOUNT_OFFER_LIMIT).call() );
+            return serverCall.then(function(offers) {
+              // Store the next function and store boolean of has more
+              ACCOUNTS[publicKey].offers.has_more = (offers.records.length == ACCOUNT_OFFER_LIMIT);
+              ACCOUNTS[publicKey].offers.next = ( ACCOUNTS[publicKey].offers.has_more ? offers.next : null );
+
+              // Keep track of whether any of the accounts has more
+              hasMore = hasMore || ACCOUNTS[publicKey].offers.has_more;
+
+              // Filter by orderbook pairs
+              return offers.records.filter(function(record) {
+                return ( record.buying.asset_type == 'native' && record.selling.asset_code == asset.code && record.selling.asset_issuer == asset.issuer )
+                  || ( record.selling.asset_type == 'native' && record.buying.asset_code == asset.code && record.buying.asset_issuer == asset.issuer );
+              });
+            });
+          }
+        });
+
+        // Time sort all the offers once returned
+        Promise.all(accountOfferRequests)
+        .then(function(offersByAccount) {
+          // Flatten array of arrays
+          return [].concat.apply([], offersByAccount);
+        })
+        .then(function(offers) {
+          // Populate DOM with each offer record
+          var orders = $(openOrdersList).find('li').toArray();
+          offers.forEach(function(offer) {
+            if (offer) {
+              orders.push(parseOffer(offer));
+
+              // If at least one outstanding offer exists, make sure display
+              // the open orders section
+              $(openOrdersContainerDiv).fadeIn();
+            }
+          });
+
+          // Time sort the entire orders list by last modified time
+          orders.sort(function(a, b) {
+            // NOTE: Descending order
+            return moment(b.dataset.last_modified_time).valueOf() - moment(a.dataset.last_modified_time).valueOf();
+          });
+          $(openOrdersList).empty().append(orders);
+          feather.replace(); // Call this so feather icons populate properly
+
+          // If hasMore is false, no more records left so hide the MORE button
+          if (!hasMore) {
+            button.classList.add("invisible");
+          }
+        });
+      }
+    });
+
+    function parseOffer(offer) {
+      /*
+      Parse user offer for open orders container.
+
+      Returns DOM element for appending to ul of open orders container.
+
+      e.x.
+      <li class="list-group-item flex-column align-items-start" data-last_modified_time="2018-09-01T00:00:00Z">
+        <div class="d-flex w-100 justify-content-between">
+          <span>Buy <span class="font-weight-bold">1000.01</span> MOBI at a price of <span class="font-weight-bold text-success">0.133</span> XLM</span>
+          <span class="text-success" data-feather="trending-up"></span>
+        </div>
+        <div><small>Third ... (GD22G...4ON6J)</small></div>
+        <div><small class="text-muted">15 days ago</small></div>
+        <div><button type="button" class="btn btn-link" data-toggle="modal" data-target="#cancelOrderModal" data-public_key="{{ acc.public_key }}" data-offer_id="{{ offer.id }}">
+          <small class="text-info">Cancel Order</small>
+        </button></div>
+      </li>
+      */
+      let featherIcon = "trending-up",
+          action = ( offer.buying.asset_code == asset.code && offer.buying.asset_issuer == asset.issuer ? 'Buy' : 'Sell' ),
+          offerType = ( action == 'Buy' ? 'buying' : 'selling' ),
+          actionColor = ( action == 'Buy' ? 'text-success' : 'text-danger' ),
+          amount = ( offer.offer_type == "Buy" ? String(parseFloat(offer.price) * parseFloat(offer.amount)) : offer.amount ),
+          price = ( offer.offer_type == "Buy" ? String(new BigNumber(1).dividedBy(new BigNumber(offer.price).toPrecision(15)).toFixed(7)) : offer.price ),
+          accountPublicKey = offer.seller,
+          accountPublicKeyText = offer.seller.substring(0, 7) + '...' + offer.seller.substring(offer.seller.length-7),
+          accountName = ACCOUNTS[offer.seller].name,
+          timeSince = moment(offer.last_modified_time).fromNow();
+
+      // Build the DOM structure
+      // Outer li
+      var li = document.createElement("li");
+      li.setAttribute("class", "list-group-item flex-column align-items-start");
+      li.setAttribute("data-last_modified_time", offer.last_modified_time);
+
+      // Order div
+      var orderContentDiv = document.createElement("div");
+      orderContentDiv.setAttribute("class", "d-flex w-100 justify-content-between");
+
+      // Order description span
+      var orderDescriptionSpan = document.createElement("span");
+      orderDescriptionSpan.append(document.createTextNode(action + " "));
+
+      // Order amount with description span
+      var orderAmountSpan = document.createElement("span");
+      orderAmountSpan.setAttribute("class", "font-weight-bold");
+      orderAmountSpan.append(document.createTextNode(amount));
+      orderDescriptionSpan.append(orderAmountSpan);
+
+      // Order price with description span
+      var orderPriceSpan = document.createElement("span");
+      orderDescriptionSpan.append(document.createTextNode(" " + asset.code + " at a price of "));
+      orderPriceSpan.setAttribute("class", "font-weight-bold " + actionColor);
+      orderPriceSpan.append(document.createTextNode(price));
+      orderDescriptionSpan.append(orderPriceSpan);
+      orderDescriptionSpan.append(document.createTextNode(" XLM"));
+
+      // Trending feather icon
+      var orderFeatherIconSpan = document.createElement("span");
+      orderFeatherIconSpan.setAttribute("class", actionColor);
+      orderFeatherIconSpan.setAttribute("data-feather", featherIcon);
+
+      // Append description and feather icon to content div
+      orderContentDiv.append(orderDescriptionSpan);
+      orderContentDiv.append(orderFeatherIconSpan);
+
+      // Account div
+      var accountContainerDiv = document.createElement("div"),
+          accountSmall = document.createElement("small");
+      accountContainerDiv.append(accountSmall);
+      accountSmall.innerHTML = accountName + " (" + accountPublicKeyText + ")"; // NOTE: this will be safe given django template escaping
+
+      // Time ago div
+      var timeAgoContainerDiv = document.createElement("div"),
+          timeAgoSmall = document.createElement("small");
+      timeAgoContainerDiv.append(timeAgoSmall);
+      timeAgoSmall.setAttribute("class", "text-muted");
+      timeAgoSmall.append(document.createTextNode(timeSince));
+
+      // Cancel order div
+      var cancelOrderContainerDiv = document.createElement("div"),
+          cancelOrderButton = document.createElement("button"),
+          cancelOrderSmall = document.createElement("small");
+      cancelOrderContainerDiv.append(cancelOrderButton);
+
+      cancelOrderButton.setAttribute("type", "button");
+      cancelOrderButton.setAttribute("class", "btn btn-sm btn-link m-0 p-0");
+      cancelOrderButton.setAttribute("data-toggle", "modal");
+      cancelOrderButton.setAttribute("data-target", "#cancelOrderModal");
+      cancelOrderButton.setAttribute("data-public_key", accountPublicKey);
+      cancelOrderButton.setAttribute("data-offer_id", offer.id);
+      cancelOrderButton.setAttribute("data-offer_type", offerType);
+      cancelOrderButton.setAttribute("data-offer_price", offer.price);
+      cancelOrderButton.append(cancelOrderSmall);
+
+      cancelOrderSmall.setAttribute("class", "text-info");
+      cancelOrderSmall.append(document.createTextNode("Cancel Order"));
+
+      // Append order content, account, time ago divs to outer li
+      li.append(orderContentDiv);
+      li.append(accountContainerDiv);
+      li.append(timeAgoContainerDiv);
+      li.append(cancelOrderContainerDiv);
+
+      return li;
+    }
+
+    /** Bootstrap signStellarModalForm close **/
+    $('#cancelOrderModal').on('hidden.bs.modal', function (e) {
+      resetCancelOrderModalForm();
+    });
+
+    $('#cancelOrderModal').on('show.bs.modal', function (event) {
+      // Button that triggered the modal
+      let button = $(event.relatedTarget);
+
+      // Extract info from data-* attributes
+      let publicKey = button.data('public_key'),
+          offerId = button.data('offer_id'),
+          offerType = button.data('offer_type'),
+          offerPrice = button.data('offer_price');
+
+      // Get modal form content and update the input values
+      let modal = $(this),
+          form = modal.find('form')[0];
+
+      form.elements["public_key"].value = publicKey;
+      form.elements["offer_id"].value = offerId;
+      form.elements["offer_type"].value = offerType;
+      form.elements["offer_price"].value = offerPrice;
+    });
+
+    /** Bootstrap cancelOrderModalForm submission **/
+    $('#cancelOrderModalForm').submit(function(event) {
+      event.preventDefault();
+
+      // Obtain the modal header to display errors under if POSTings fail
+      let modalHeader = $(this).find('.modal-body-header')[0],
+          publicKey = this.elements["public_key"].value,
+          offerId = this.elements["offer_id"].value,
+          offerType = this.elements["offer_type"].value,
+          offerPrice = this.elements["offer_price"].value,
+          buyingAsset = ( offerType == 'buying' ? asset : StellarSdk.Asset.native() ),
+          sellingAsset = ( offerType == 'buying' ? StellarSdk.Asset.native() : asset ),
+          ledgerButton = this.elements["ledger"],
+          successUrl = this.dataset.success;
+
+      // Attempt to generate Keypair
+      var sourceKeys, ledgerEnabled=false;
+      if (this.elements["secret_key"].disabled && ledgerButton.classList.contains("active")) {
+        // Ledger enabled, so get source keys from public key stored in dataset
+        ledgerEnabled = true;
+        try {
+          sourceKeys = StellarSdk.Keypair.fromPublicKey(ledgerButton.dataset.public_key);
+        }
+        catch (err) {
+          console.error('Keypair generation from Ledger failed', err);
+          displayError(modalHeader, 'Keypair generation from Ledger failed. Please plug in and open the Stellar app on your Ledger device. Make sure Browser support in Settings is set to Yes.');
+          ledgerButton.click(); // NOTE: click to reset ledger button on failure
+          return false;
+        }
+      } else {
+        // Secret key text input
+        try {
+          sourceKeys = StellarSdk.Keypair.fromSecret(this.elements["secret_key"].value);
+        }
+        catch (err) {
+          console.error('Keypair generation failed', err);
+          displayError(modalHeader, 'Keypair generation failed. Please enter a valid secret key.');
+          return false;
+        }
+      }
+
+      // Make sure public address clicked for trust corresponds to sourceKeys.publicKey()
+      if (publicKey != sourceKeys.publicKey()) {
+        displayError(modalHeader, 'Entered secret key does not match public key of the chosen account. Please enter the valid secret key.');
+        return false;
+      }
+
+      // If successful on KeyPair generation, load account to prep for manage data transaction
+      // Start Ladda animation for UI loading
+      let laddaButton = Ladda.create($(this).find(":submit")[0]);
+      laddaButton.start();
+
+      // Load account from Horizon server
+      server.loadAccount(sourceKeys.publicKey())
+      .catch(StellarSdk.NotFoundError, function (error) {
+        throw new Error('No Stellar account with that secret key exists yet.');
+      })
+      // If there was no error, load up-to-date information on your account.
+      .then(function(sourceAccount) {
+        // Start building the Manage Offer transaction.
+
+        // NOTE: Amount set to 0 deletes the offer
+        transaction = new StellarSdk.TransactionBuilder(sourceAccount)
+          .addOperation(StellarSdk.Operation.manageOffer({
+            'offerId': offerId,
+            'buying': buyingAsset,
+            'selling': sellingAsset,
+            'amount': '0',
+            'price': offerPrice,
+          }))
+          .build();
+
+        if (ledgerEnabled) {
+          // Sign the transaction with Ledger to prove you are actually the person sending
+          // then submit to Stellar server
+          return signAndSubmitTransactionWithStellarLedger(server, transaction);
+        } else {
+          // Sign the transaction to prove you are actually the person sending it.
+          transaction.sign(sourceKeys);
+
+          // And finally, send it off to Stellar! Check for StellarGuard protection.
+          if (StellarGuardSdk.hasStellarGuard(sourceAccount)) {
+            // Instantiate client side event listener to verify StellarGuard
+            // transaction has been authorized
+            var es = server.operations().cursor('now').forAccount(sourceAccount.id)
+              .stream({
+              onmessage: function (op) {
+                if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_CHANGE_TRUST) {
+                  // Close the event stream connection
+                  es();
+
+                  // Notify user of successful submission
+                  displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
+                  // Redirect to success url of form
+                  window.location.href = successUrl;
+                }
+              }
+            });
+            // Then tx submit to StellarGuard
+            return StellarGuardSdk.submitTransaction(transaction);
+          } else {
+            return server.submitTransaction(transaction);
+          }
+        }
+      })
+      .then(function(result) {
+        if (result.stellarGuard) {
+          // From StellarGuard: alert user to go to url to authorize
+          let message = 'Please authorize this transaction with StellarGuard.';
+          displayWarning(modalHeader, message);
+        } else {
+          // Notify user of successful submission
+          displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
+          // From Horizon
+          // Redirect to success url of form
+          window.location.href = successUrl;
+        }
+      })
+      .catch(function(error) {
+        // Stop the button loading animation then display the error
+        laddaButton.stop();
+        console.error('Something went wrong with Stellar call', error);
+        displayError(modalHeader, error.message);
+        return false;
+      });
+    });
+
 
     /*
     Buy/Sell dropdown toggle so doesn't clock when click form
@@ -353,7 +701,6 @@
 
       var amount;
       if (val) {
-        // Dividing because buyPrice is in XLM and want asset received amount
         amount = val * sellPrice;
       } else {
         amount = 0.0;

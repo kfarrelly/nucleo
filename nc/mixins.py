@@ -2,6 +2,8 @@ import algoliasearch_django, copy
 
 from algoliasearch_django import algolia_engine
 
+from collections import OrderedDict
+
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
@@ -200,6 +202,8 @@ class UserAssetsContextMixin(object):
     A mixin that adds in Stellar address dictionary associated with each account
     user has plus list of all assets this user owns.
     """
+    # NOTE: This mixin is expensive for now given Horizon API single account only
+    # endpoint. Use with caution!
     user_field = ''
 
     def _build_assets(self, asset_pairs, issuers):
@@ -272,6 +276,8 @@ class UserAssetsContextMixin(object):
                     else:
                         # Update the total balance of this asset type
                         asset['balance'] = str(float(asset['balance']) + float(b['balance'])).decode()
+
+            # TODO?: Sort the assets by total balance in ref of USD/XLM?
 
             # Build list to see if any issuers of assets are in our db
             issuer_public_keys = [ k[0] for k in assets if k[0] ]

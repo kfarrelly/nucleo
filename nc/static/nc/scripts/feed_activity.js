@@ -262,7 +262,7 @@
         break;
       case "offer":
         // Trading offers
-        // e.x.: <span><a href="" class="text-dark font-weight-bold">@mikey.rf</a> bought/sold 100.00 <a href="" class="text-dark font-weight-bold">MOBI</a> at a price of 4.132 XLM/MOBI</span>
+        // e.x.: <span><a href="" class="text-dark font-weight-bold">@mikey.rf</a> bought/sold 100.00 <a href="" class="text-dark font-weight-bold">MOBI</a> at a price of 4.132 XLM</span>
         featherIcon = "trending-up";
 
         assetText = (record.object_type == 'native'? 'XLM': record.object_code);
@@ -275,7 +275,7 @@
         descriptionSpan.append(actorA);
         descriptionSpan.append(document.createTextNode(" " + action + " " + amount + " "));
         descriptionSpan.append(objectA);
-        descriptionSpan.append(document.createTextNode(" at a price of " + price + " XLM/" + assetText));
+        descriptionSpan.append(document.createTextNode(" at a price of " + price + " XLM"));
         break;
       case "follow":
         // Following user activity
