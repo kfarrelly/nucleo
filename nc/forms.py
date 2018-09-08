@@ -259,6 +259,7 @@ class FeedActivityCreateForm(forms.Form):
         """
         self.request = kwargs.pop('request', None)
         self.request_user = self.request.user if self.request else None
+        self.success_url = None
         super(FeedActivityCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -494,8 +495,13 @@ class FeedActivityCreateForm(forms.Form):
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_offer',
                 recipient_list, ctx_email)
 
+            # Set the redirect URL to the asset detail page
+            self.success_url = asset_url
         else:
             # Not a supported activity type
             return None
 
-        return self.feed.add_activity(kwargs)
+        return {
+            'activity': self.feed.add_activity(kwargs),
+            'success_url': self.success_url,
+        }

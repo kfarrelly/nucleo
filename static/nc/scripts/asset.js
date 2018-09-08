@@ -279,10 +279,13 @@
       resetCancelOrderModalForm();
     }
 
-    function getMarketPrices(asset) {
+    function getMarketPrices(asset, buyOptions, sellOptions) {
       /*
       Fetches market buy/sell prices for asset from Stellar orderbook.
       If orderbook has asks/bids, stores the current market price.
+
+      buy/sellOptions take form { 'asset': Asset, 'amount': String },
+      where 'amount' is the quantity of 'asset' user inputted in order form.
 
       Returns { 'buy': float, 'sell': float } with float vals corresponding
       to var buyPrice, sellPrice
@@ -294,7 +297,7 @@
         orderbook = data;
         if (orderbook) {
           // Use the orderbook to refresh market prices
-          setMarketPrices(orderbook);
+          setMarketPrices(buyOptions, sellOptions);
         }
         // Then return market prices
         return { 'buy': buyPrice, 'sell': sellPrice };
@@ -307,15 +310,74 @@
     }
 
     /* Store current market prices for asset given orderbook */
-    function setMarketPrices(orderbook) {
-      // Buy estimate is price of lowest ask and Sell estimate is price of highest bid
-      // NOTE: Horizon response orders prices in asc for asks and desc for bids
-      buyPrice = (orderbook.asks.length > 0 ? orderbook.asks[0].price : 0.0);
-      sellPrice = (orderbook.bids.length > 0 ? orderbook.bids[0].price : 0.0);
+    function setMarketPrices(buyOptions, sellOptions) {
+      // Set default options if they don't yet exist
+      let buyAmountInput = $('#buyAmount')[0],
+          sellAmountInput = $('#sellAmount')[0];
+
+      if (!buyOptions) {
+        buyOptions = {
+          'asset': StellarSdk.Asset.native(),
+          'amount': ( buyAmountInput && buyAmountInput.value ? buyAmountInput.value : "0.0" )
+        };
+      }
+      if (!sellOptions) {
+        sellOptions = {
+          'asset': asset,
+          'amount': ( sellAmountInput && sellAmountInput.value ? sellAmountInput.value : "0.0" )
+        }
+      }
+
+      // Calculate given buy/sellOptions and store in global vars
+      prices = calculateMarketPrices(buyOptions, sellOptions);
+      buyPrice = prices.buy;
+      sellPrice = prices.sell;
 
       // Display to user in buy/sell forms
-      $('#buyPrice').text(numeral(buyPrice).format('0,0.0000000'));
-      $('#sellPrice').text(numeral(sellPrice).format('0,0.0000000'));
+      $('#buyMarketPrice').text(numeral(buyPrice).format('0,0.0000000'));
+      $('#sellMarketPrice').text(numeral(sellPrice).format('0,0.0000000'));
+    }
+
+
+    /*
+    Calculate market prices for an offer of given amount.
+    NOTE: Horizon response orders prices in asc for asks and desc for bids
+    */
+    function calculateMarketPrices(buyOptions, sellOptions) {
+      // Determine needed buy side market offer price given current orderbook ask amounts
+      // Offers are limit so if existing offer on orderbook crosses this buy offer,
+      // it will fill at EXISTING order's price: https://www.stellar.org/developers/guides/concepts/exchange.html
+      var bidOfferPrice, sumExistingAskTotal = 0.0;
+      for (var i=0; i < orderbook.asks.length; i++) {
+        // If amount is in xlm, use current ask price (xlm/asset) to convert to xlm amount
+        sumExistingAskTotal += ( buyOptions.asset.isNative() ?
+          orderbook.asks[i].price * orderbook.asks[i].amount : orderbook.asks[i].amount );
+        if (sumExistingAskTotal >= buyOptions.amount) {
+          // Then this is the last existing offer we need to look at.
+          // Use it's price, to determine the amount of our new bid offer
+          bidOfferPrice = orderbook.asks[i].price;
+          break;
+        }
+      }
+
+      // Determine needed sell side market offer price given current orderbook bid amounts
+      // NOTE: Offers are limit so if existing offer on orderbook crosses this sell offer,
+      // it will fill at EXISTING order's price: https://www.stellar.org/developers/guides/concepts/exchange.html
+      var askOfferPrice, sumExistingBidTotal = 0.0;
+      for (var i=0; i < orderbook.bids.length; i++) {
+        // If amount is in asset, use current bid price (xlm/asset) to convert to asset amount
+        sumExistingBidTotal += ( sellOptions.asset.code == asset.code && sellOptions.asset.issuer == asset.issuer ?
+          orderbook.bids[i].amount / orderbook.bids[i].price : orderbook.bids[i].amount );
+
+        if (sumExistingBidTotal >= sellOptions.amount) {
+          // Then this is the last existing offer we need to look at.
+          // Use it's price, to determine the amount of our new ask offer
+          askOfferPrice = orderbook.bids[i].price;
+          break;
+        }
+      }
+
+      return { 'buy': bidOfferPrice, 'sell': askOfferPrice };
     }
 
     /*
@@ -396,8 +458,8 @@
       e.x.
       <li class="list-group-item flex-column align-items-start" data-last_modified_time="2018-09-01T00:00:00Z">
         <div class="d-flex w-100 justify-content-between">
-          <span>Buy <span class="font-weight-bold">1000.01</span> MOBI at a price of <span class="font-weight-bold text-success">0.133</span> XLM</span>
-          <span class="text-success" data-feather="trending-up"></span>
+          <span>Buy <span class="font-weight-bold">1000.01</span> MOBI at a price of <span class="font-weight-bold text-primary">0.133</span> XLM</span>
+          <span class="text-primary" data-feather="trending-up"></span>
         </div>
         <div><small>Third ... (GD22G...4ON6J)</small></div>
         <div><small class="text-muted">15 days ago</small></div>
@@ -409,9 +471,9 @@
       let featherIcon = "trending-up",
           action = ( offer.buying.asset_code == asset.code && offer.buying.asset_issuer == asset.issuer ? 'Buy' : 'Sell' ),
           offerType = ( action == 'Buy' ? 'buying' : 'selling' ),
-          actionColor = ( action == 'Buy' ? 'text-success' : 'text-danger' ),
-          amount = ( offer.offer_type == "Buy" ? String(parseFloat(offer.price) * parseFloat(offer.amount)) : offer.amount ),
-          price = ( offer.offer_type == "Buy" ? String(new BigNumber(1).dividedBy(new BigNumber(offer.price).toPrecision(15)).toFixed(7)) : offer.price ),
+          actionColor = ( action == 'Buy' ? 'text-primary' : 'text-secondary' ),
+          amount = ( action == "Buy" ? String(new BigNumber(parseFloat(offer.price) * parseFloat(offer.amount)).toFixed(7)) : offer.amount ),
+          price = ( action == "Buy" ? String(new BigNumber(1).dividedBy(new BigNumber(offer.price).toPrecision(15)).toFixed(7)) : offer.price ),
           accountPublicKey = offer.seller,
           accountPublicKeyText = offer.seller.substring(0, 7) + '...' + offer.seller.substring(offer.seller.length-7),
           accountName = ACCOUNTS[offer.seller].name,
@@ -673,13 +735,21 @@
     });
 
     /* On input of new buy/sell amount, recalculate received amount of other asset */
-    $('#buyAmount').on('input', function(event) {
-      let val = event.target.value;
+    function setBuyDisplayAmounts() {
+      let val = $('#buyAmount')[0].value;
 
+      // Recalculate and set the market prices for new amount value
+      let buyOptions = {
+        'asset': StellarSdk.Asset.native(),
+        'amount': val
+      };
+      setMarketPrices(buyOptions, null);
+
+      let price = ( $('#buyPrice')[0].disabled ? buyPrice : $('#buyPrice')[0].value );
       var amount;
-      if (val && buyPrice > 0) {
-        // Dividing because buyPrice is in XLM and want asset received amount
-        amount = val / buyPrice;
+      if (val && price > 0.0) {
+        // Dividing because price is in XLM and want asset received amount
+        amount = val / price;
       } else {
         amount = 0.0;
       }
@@ -691,17 +761,33 @@
       let usdAmountContainer = $('#buyEstimateUsd')[0];
       var xlmPriceUsd = parseFloat(usdAmountContainer.dataset.asset_price_usd);
       if (xlmPriceUsd) {
-        let usdVal = amount * buyPrice * xlmPriceUsd;
+        let usdVal = amount * price * xlmPriceUsd;
         $(usdAmountContainer).text(numeral(usdVal).format('$0,0.0000000'));
       }
+    }
+
+    $('#buyAmount').on('input', function(event) {
+      setBuyDisplayAmounts();
     });
 
-    $('#sellAmount').on('input', function(event) {
-      let val = event.target.value;
+    $('#buyPrice').on('input', function(event) {
+      setBuyDisplayAmounts();
+    });
 
+    function setSellDisplayAmounts() {
+      let val = $('#sellAmount')[0].value;
+
+      // Recalculate and set the market prices for new amount value
+      let sellOptions = {
+        'asset': asset,
+        'amount': val
+      };
+      setMarketPrices(null, sellOptions);
+
+      let price = ( $('#sellPrice')[0].disabled ? sellPrice : $('#sellPrice')[0].value );
       var amount;
       if (val) {
-        amount = val * sellPrice;
+        amount = val * price;
       } else {
         amount = 0.0;
       }
@@ -716,6 +802,14 @@
         let usdVal = amount * xlmPriceUsd;
         $(usdAmountContainer).text(numeral(usdVal).format('$0,0.0000000'));
       }
+    }
+
+    $('#sellAmount').on('input', function(event) {
+      setSellDisplayAmounts();
+    });
+
+    $('#sellPrice').on('input', function(event) {
+      setSellDisplayAmounts();
     });
 
     /* Reset asset available balance to clear out max amount on respective offer type input */
@@ -753,11 +847,16 @@
         })
         // If there was no error, load up-to-date information on your account.
         .then(function(sourceAccount) {
-          // Retrieve the XLM balance
+          // Retrieve the XLM balance minus min reserve + tx fee
+
+          // Determine min balance for this account in XLM
+          let minBalance = getMinBalance(sourceAccount),
+              txFee = getTxFee(1); // only one offer operation will be used for trade
+
           var xlmBalance;
           sourceAccount.balances.forEach(function(balance) {
             if (balance.asset_type == "native") {
-              xlmBalance = balance.balance;
+              xlmBalance = parseFloat(balance.balance) - (txFee + minBalance);
             }
           });
 
@@ -818,6 +917,57 @@
           resetAvailableBalance('sell');
           return false;
         });
+      }
+    });
+
+    // Set event listeners for clicking of available balance amount
+    $('#buyAmountInputAvailable').on('click', function(event) {
+      $('#buyAmount')[0].value = $('#buyAmount')[0].max;
+    });
+
+    $('#sellAmountInputAvailable').on('click', function(event) {
+      $('#sellAmount')[0].value = $('#sellAmount')[0].max;
+    });
+
+    // Set event listeners for clicking on market and limit buttons
+    $('.order-market').on('click', function(event) {
+      if (!this.classList.contains('active')) {
+        // Disable price input
+        let priceInput = $(this.dataset.price_container).find('input[name=price]')[0];
+        priceInput.required = false;
+        priceInput.disabled = true;
+
+        // Hide price input container and show price estimate container
+        $(this.dataset.price_container).addClass('d-none');
+        $(this.dataset.market_container).removeClass('d-none');
+
+        // Switch active button to market
+        $(this.parentNode).find('.order-limit').removeClass('active');
+        this.classList.add('active');
+
+        // Reset displayed amounts for order
+        let setDisplayAmounts = ( this.dataset.order_type == 'buy' ? setBuyDisplayAmounts : setSellDisplayAmounts );
+        setDisplayAmounts();
+      }
+    });
+    $('.order-limit').on('click', function(event) {
+      if (!this.classList.contains('active')) {
+        // Enable price input
+        let priceInput = $(this.dataset.price_container).find('input[name=price]')[0];
+        priceInput.disabled = false;
+        priceInput.required = true;
+
+        // Show price input container and hide price estimate container
+        $(this.dataset.market_container).addClass('d-none');
+        $(this.dataset.price_container).removeClass('d-none');
+
+        // Switch active button to limit
+        $(this.parentNode).find('.order-market').removeClass('active');
+        this.classList.add('active');
+
+        // Reset displayed amounts for order
+        let setDisplayAmounts = ( this.dataset.order_type == 'buy' ? setBuyDisplayAmounts : setSellDisplayAmounts );
+        setDisplayAmounts();
       }
     });
 
@@ -923,7 +1073,10 @@
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
       let formHeader = $(this).find('.form-header')[0],
-          ledgerButton = this.elements["ledger"];
+          isLimit = (!this.elements["price"].disabled),
+          limitPrice = this.elements["price"].value,
+          ledgerButton = this.elements["ledger"],
+          successUrl = this.dataset.success;
 
       // Attempt to generate Keypair
       var sourceKeys, ledgerEnabled=false;
@@ -967,10 +1120,20 @@
 
       // Refetch orderbook to get the buy price and make sure it is non-zero.
       // If zero, means there are no asks out there.
-      getMarketPrices(asset)
+      let buyOptions = {
+        'asset': StellarSdk.Asset.native(),
+        'amount': amount
+      };
+      getMarketPrices(asset, buyOptions, null)
       .then(function(prices) {
-        let buy = prices.buy;
-        if (buy > 0.0) {
+        let bidOfferPrice = ( isLimit ? limitPrice : prices.buy );
+
+        // Throw error if never met the sum threshold to fill order
+        if (!bidOfferPrice && !isLimit) {
+          throw new Error("There aren't enough sellers of this asset for the given amount");
+        }
+
+        if (bidOfferPrice > 0.0) {
           // Load account from Horizon server
           server.loadAccount(sourceKeys.publicKey())
           .catch(StellarSdk.NotFoundError, function (error) {
@@ -999,27 +1162,6 @@
 
             if (!sufficient) {
               throw new Error('Insufficient funds to process this trade');
-            }
-
-            // Determine needed offer price given current orderbook ask amounts
-            // NOTE: Offers are limit so if existing offer on orderbook crosses this buy offer,
-            // it will fill at EXISTING order's price: https://www.stellar.org/developers/guides/concepts/exchange.html
-            var bidOfferPrice, sumExistingAskTotal = 0.0;
-            for (var i=0; i < orderbook.asks.length; i++) {
-              // amount is in xlm versus ask.amount is in asset so use
-              // current ask price (xlm/asset) to convert to xlm amount
-              sumExistingAskTotal += orderbook.asks[i].price * orderbook.asks[i].amount;
-              if (sumExistingAskTotal >= amount) {
-                // Then this is the last existing offer we need to look at.
-                // Use it's price, to determine the amount of our new bid offer
-                bidOfferPrice = orderbook.asks[i].price;
-                break;
-              }
-            }
-
-            // Throw error if never met the ask sum threshold
-            if (!bidOfferPrice) {
-              throw new Error("There aren't enough sellers of this asset for the given amount");
             }
 
             // Need to round down to seven digits for amount, price
@@ -1086,12 +1228,17 @@
               // Notify user of successful submission
               displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
 
-              // From Horizon
-              // Submit the tx hash to Nucleo servers to create
-              // activity in user feeds
-              let activityForm = $('#activityForm')[0];
-              activityForm.elements["tx_hash"].value = result.hash;
-              activityForm.submit();
+              if (!isLimit) {
+                // Submit the tx hash to Nucleo servers to create
+                // activity in user feeds
+                let activityForm = $('#activityForm')[0];
+                activityForm.elements["tx_hash"].value = result.hash;
+                activityForm.submit();
+              } else {
+                // Limit orders simply redirect to success url of form
+                // TODO: implement activity correctly to account for limit orders
+                window.location.href = successUrl;
+              }
             }
           })
           .catch(function(error) {
@@ -1120,7 +1267,10 @@
       // Obtain the form header to display errors under if POSTings fail
       // Also store the success URL
       let formHeader = $(this).find('.form-header')[0],
-          ledgerButton = this.elements["ledger"];
+          isLimit = (!this.elements["price"].disabled),
+          limitPrice = this.elements["price"].value,
+          ledgerButton = this.elements["ledger"],
+          successUrl = this.dataset.success;
 
       // Attempt to generate Keypair
       var sourceKeys, ledgerEnabled=false;
@@ -1164,10 +1314,20 @@
 
       // Refetch orderbook to get the sell price and make sure it is non-zero.
       // If zero, means there are no bids out there.
-      getMarketPrices(asset)
+      let sellOptions = {
+        'asset': asset,
+        'amount': amount
+      };
+      getMarketPrices(asset, null, sellOptions)
       .then(function(prices) {
-        let sell = prices.sell;
-        if (sell > 0.0) {
+        let askOfferPrice = ( isLimit ? limitPrice : prices.sell );
+
+        // Throw error if never met the sum threshold to fill order
+        if (!askOfferPrice && !isLimit) {
+          throw new Error("There aren't enough buyers of this asset for the given amount");
+        }
+
+        if (askOfferPrice > 0.0) {
           // Load account from Horizon server
           server.loadAccount(sourceKeys.publicKey())
           .catch(StellarSdk.NotFoundError, function (error) {
@@ -1175,27 +1335,6 @@
           })
           // If there was no error, load up-to-date information on your account.
           .then(function(sourceAccount) {
-            // Determine needed offer price given current orderbook bid amounts
-            // NOTE: Offers are limit so if existing offer on orderbook crosses this sell offer,
-            // it will fill at EXISTING order's price: https://www.stellar.org/developers/guides/concepts/exchange.html
-            var askOfferPrice, sumExistingBidTotal = 0.0;
-            for (var i=0; i < orderbook.bids.length; i++) {
-              // amount is in asset versus bid.amount is in XLM so use
-              // current bid price (xlm/asset) to convert to asset amount
-              sumExistingBidTotal += orderbook.bids[i].amount / orderbook.bids[i].price;
-              if (sumExistingBidTotal >= amount) {
-                // Then this is the last existing offer we need to look at.
-                // Use it's price, to determine the amount of our new ask offer
-                askOfferPrice = orderbook.bids[i].price;
-                break;
-              }
-            }
-
-            // Throw error if never met the ask sum threshold
-            if (!askOfferPrice) {
-              throw new Error("There aren't enough buyers of this asset for the given amount");
-            }
-
             // Determine min balance for this account in XLM
             let minBalance = getMinBalance(sourceAccount),
                 txFee = getTxFee(1); // only one offer operation will be used for this tx
@@ -1286,12 +1425,17 @@
               // Notify user of successful submission
               displaySuccess(formHeader, 'Successfully submitted transaction to the Stellar network.');
 
-              // From Horizon
-              // Submit the tx hash to Nucleo servers to create
-              // activity in user feeds
-              let activityForm = $('#activityForm')[0];
-              activityForm.elements["tx_hash"].value = result.hash;
-              activityForm.submit();
+              if (!isLimit) {
+                // Submit the tx hash to Nucleo servers to create
+                // activity in user feeds
+                let activityForm = $('#activityForm')[0];
+                activityForm.elements["tx_hash"].value = result.hash;
+                activityForm.submit();
+              } else {
+                // Limit orders simply redirect to success url of form
+                // TODO: implement activity correctly to account for limit orders
+                window.location.href = successUrl;
+              }
             }
           })
           .catch(function(error) {

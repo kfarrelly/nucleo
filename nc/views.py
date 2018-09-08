@@ -1345,6 +1345,15 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
             return self.success_url
         return reverse('nc:user-detail', kwargs={'slug': self.request.user.username})
 
+    def form_valid(self, form):
+        """
+        Override to accomodate success_url determined from parsing retrieval of
+        Stellar transaction of tx_hash.
+        """
+        self.object = form.save()
+        self.success_url = self.object.get('success_url')
+        return HttpResponseRedirect(self.get_success_url())
+
 
 ## Send
 class SendRedirectView(LoginRequiredMixin, generic.RedirectView):
