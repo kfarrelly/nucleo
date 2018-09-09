@@ -425,8 +425,8 @@
 
       // Format background of table row depending on depth at this order
       let askDepthPercentage = ( askDepthOptions.total != 0.0 ? String(new BigNumber(askDepthOptions.cumulative).multipliedBy(100.0).dividedBy(askDepthOptions.total).toFixed(2)) : 0.0 );
-      askTr.setAttribute("style", "background-image: linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%)");
-      askTr.setAttribute("style", "background-image: -webkit-linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%)");
+      askTr.setAttribute("style", "background-image: linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%); background-attachment:fixed;");
+      askTr.setAttribute("style", "background-image: -webkit-linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%); background-attachment:fixed;");
 
       // Format price td and add bid price
       askPriceTd.setAttribute("class", "text-secondary font-weight-bold");
