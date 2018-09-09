@@ -17,6 +17,7 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 - [ ] Offer users ability to buy crypto with fiat through [Coinbase buy widget](https://buy.coinbase.com/).
 - [ ] Create feed activity for deposits and withdrawals. Use server signed string="deposit"/"withdrawal" in transaction memo sent to Papaya for verification.
 - [x] Include user recent activity (from activity feed) in profile section.
+- [ ] Improve signup flow. 3 step beginning: personalize profile with list of leading profiles to follow, add/create stellar accounts, trust top Stellar assets.
 - [ ] Path payments in send.js. Have oninput event for account search box to load Send To account from horizon and determine allowed assets that can be sent (based off assets Send To trusts).
 - [ ] Retrieve feed activity through Nucleo servers where can enrich data properly with active images, urls, etc. Use built in stream_django enrichment procedures.
 - [ ] Upgrade ingestion of assets by querying Horizon assets endpoint in a scheduled cron. Only create model instances in Nucleo db for those with stellar.toml links.
