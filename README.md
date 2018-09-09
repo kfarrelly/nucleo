@@ -12,10 +12,10 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 ## Outstanding tasks
 - [x] Integrate Ledger and StellarGuard
 - [x] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.
-- [ ] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
+- [x] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
 - [x] Take crypto deposits through [Papaya anchor API](https://apay.io/api).
 - [ ] Offer users ability to buy crypto with fiat through [Coinbase buy widget](https://buy.coinbase.com/).
-- [ ] Create feed activity for deposits and withdrawals. Use server signed string="deposit"/"withdrawal" in transaction memo sent to Papaya for verification. 
+- [ ] Create feed activity for deposits and withdrawals. Use server signed string="deposit"/"withdrawal" in transaction memo sent to Papaya for verification.
 - [x] Include user recent activity (from activity feed) in profile section.
 - [ ] Path payments in send.js. Have oninput event for account search box to load Send To account from horizon and determine allowed assets that can be sent (based off assets Send To trusts).
 - [ ] Retrieve feed activity through Nucleo servers where can enrich data properly with active images, urls, etc. Use built in stream_django enrichment procedures.

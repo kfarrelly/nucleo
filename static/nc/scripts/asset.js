@@ -296,6 +296,9 @@
       .then(function(data) {
         orderbook = data;
         if (orderbook) {
+          // Populate the orderbook on page
+          populateOrderbook(orderbook);
+
           // Use the orderbook to refresh market prices
           setMarketPrices(buyOptions, sellOptions);
         }
@@ -307,6 +310,141 @@
         console.error('Something went wrong with Stellar call', error);
         return { 'buy': buyPrice, 'sell': sellPrice };
       });
+    }
+
+    function populateOrderbook(orderbook) {
+      /*
+      Use fetched orderbook to populate bids and asks.
+      */
+      // Go through orderbook first and calculate total depths in XLM
+      // on bid and ask sides
+      var bidTotalDepth = 0.0;
+      orderbook.bids.forEach(function(bid) {
+        bidTotalDepth += parseFloat(bid.amount);
+      });
+
+      var askTotalDepth = 0.0;
+      orderbook.asks.forEach(function(ask) {
+        askTotalDepth += parseFloat(String(new BigNumber(ask.price).multipliedBy(ask.amount).toFixed(7)));
+      });
+
+      // Loop through each side again, parsing offer and appending
+      // to orderbook itself
+      var bids = [], bidDepthOptions = { cumulative: 0.0, total: bidTotalDepth };
+      orderbook.bids.forEach(function(bid) {
+        bids.push(parseBid(bid, bidDepthOptions));
+      });
+      $('#orderbookBids > tbody').empty().append(bids);
+
+      var asks = [], askDepthOptions = { cumulative: 0.0, total: askTotalDepth };
+      orderbook.asks.forEach(function(ask) {
+        asks.push(parseAsk(ask, askDepthOptions));
+      })
+      $('#orderbookAsks > tbody').empty().append(asks);
+    }
+
+    function parseBid(bid, bidDepthOptions) {
+      /*
+      Parse bid for orderbook bid table.
+
+      Returns DOM element for appending to tbody of orderbook bid table.
+
+      price is in XLM/asset, amount is in asset, total is in XLM.
+
+      bidDepthOptions is of form { cumulative: float, total: float }
+
+      e.x.
+      <tr class="tr-bid" data-price="1.01321" data-amount="1000" data-total="1013.21">
+        <td class="text-primary font-weight-bold">1.01321</td>
+        <td class="font-weight-bold">1000</td>
+        <td>1013.21</td>
+      </tr>
+      */
+      let bidTr = document.createElement("tr"),
+          bidPriceTd = document.createElement("td"),
+          bidAmountTd = document.createElement("td"),
+          bidTotalTd = document.createElement("td"),
+          amount = String(new BigNumber(bid.amount).dividedBy(new BigNumber(bid.price).toPrecision(15)).toFixed(7)),
+          price = bid.price,
+          total = bid.amount;
+
+      // Recalculate current cumulative depth given total for this order
+      bidDepthOptions.cumulative += parseFloat(total);
+
+      // Format background of table row depending on depth at this order
+      let bidDepthPercentage = ( bidDepthOptions.total != 0.0 ? String(new BigNumber(bidDepthOptions.cumulative).multipliedBy(100.0).dividedBy(bidDepthOptions.total).toFixed(2)) : 0.0 );
+      bidTr.setAttribute("style", "background-image: linear-gradient(right, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.1) " + bidDepthPercentage + "%, transparent " + bidDepthPercentage + "%, transparent 100%)");
+      bidTr.setAttribute("style", "background-image: -webkit-linear-gradient(right, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.1) " + bidDepthPercentage + "%, transparent " + bidDepthPercentage + "%, transparent 100%)");
+
+      // Format price td and add bid price
+      bidPriceTd.setAttribute("class", "text-primary font-weight-bold");
+      bidPriceTd.append(document.createTextNode(price));
+
+      // Format amount td and add bid amount
+      bidAmountTd.setAttribute("class", "font-weight-bold");
+      bidAmountTd.append(document.createTextNode(amount));
+
+      // Calculate XLM total and add
+      bidTotalTd.append(document.createTextNode(total));
+
+      // Append the td columns in order (Price, Amount, Total)
+      bidTr.append(bidPriceTd);
+      bidTr.append(bidAmountTd);
+      bidTr.append(bidTotalTd);
+
+      return bidTr;
+    }
+
+    function parseAsk(ask, askDepthOptions) {
+      /*
+      Parse ask for orderbook ask table.
+
+      Returns DOM element for appending to tbody of orderbook ask table.
+
+      price is in XLM/asset, amount is in asset, total is in XLM.
+
+      askDepthOptions is of form { cumulative: float, total: float }
+
+      e.x.
+      <tr class="tr-ask" data-price="1.01321" data-amount="1000" data-total="1013.21">
+        <td class="text-secondary font-weight-bold">1.01321</td>
+        <td class="font-weight-bold">1000</td>
+        <td>1013.21</td>
+      </tr>
+      */
+      let askTr = document.createElement("tr"),
+          askPriceTd = document.createElement("td"),
+          askAmountTd = document.createElement("td"),
+          askTotalTd = document.createElement("td"),
+          amount = ask.amount,
+          price = ask.price,
+          total = String(new BigNumber(ask.price).multipliedBy(ask.amount).toFixed(7));
+
+      // Recalculate current cumulative depth given total for this order
+      askDepthOptions.cumulative += parseFloat(total);
+
+      // Format background of table row depending on depth at this order
+      let askDepthPercentage = ( askDepthOptions.total != 0.0 ? String(new BigNumber(askDepthOptions.cumulative).multipliedBy(100.0).dividedBy(askDepthOptions.total).toFixed(2)) : 0.0 );
+      askTr.setAttribute("style", "background-image: linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%)");
+      askTr.setAttribute("style", "background-image: -webkit-linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthPercentage + "%, transparent " + askDepthPercentage + "%, transparent 100%)");
+
+      // Format price td and add bid price
+      askPriceTd.setAttribute("class", "text-secondary font-weight-bold");
+      askPriceTd.append(document.createTextNode(price));
+
+      // Format amount td and add bid amount
+      askAmountTd.setAttribute("class", "font-weight-bold");
+      askAmountTd.append(document.createTextNode(amount));
+
+      // Calculate XLM total and add
+      askTotalTd.append(document.createTextNode(total));
+
+      // Append the td columns in order (Price, Amount, Total)
+      askTr.append(askPriceTd);
+      askTr.append(askAmountTd);
+      askTr.append(askTotalTd);
+
+      return askTr;
     }
 
     /* Store current market prices for asset given orderbook */
@@ -337,7 +475,6 @@
       $('#buyMarketPrice').text(numeral(buyPrice).format('0,0.0000000'));
       $('#sellMarketPrice').text(numeral(sellPrice).format('0,0.0000000'));
     }
-
 
     /*
     Calculate market prices for an offer of given amount.
@@ -472,7 +609,7 @@
           action = ( offer.buying.asset_code == asset.code && offer.buying.asset_issuer == asset.issuer ? 'Buy' : 'Sell' ),
           offerType = ( action == 'Buy' ? 'buying' : 'selling' ),
           actionColor = ( action == 'Buy' ? 'text-primary' : 'text-secondary' ),
-          amount = ( action == "Buy" ? String(new BigNumber(parseFloat(offer.price) * parseFloat(offer.amount)).toFixed(7)) : offer.amount ),
+          amount = ( action == "Buy" ? String(new BigNumber(offer.price).multipliedBy(offer.amount).toFixed(7)) : offer.amount ),
           price = ( action == "Buy" ? String(new BigNumber(1).dividedBy(new BigNumber(offer.price).toPrecision(15)).toFixed(7)) : offer.price ),
           accountPublicKey = offer.seller,
           accountPublicKeyText = offer.seller.substring(0, 7) + '...' + offer.seller.substring(offer.seller.length-7),

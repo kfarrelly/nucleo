@@ -188,7 +188,7 @@
           </div>
         </div>
         <div class="text-center py-1">
-          <h4 class="mb-0"><span id="buyEstimate">0.0000000</span> {{ object.code }}</h4>
+          <h4 class="mb-0"><span id="buyEstimate">0.0000000</span> <span id="buyEstimateCode">{{ object.code }}</span></h4>
           <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="buyEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
         </div>
         <div class="form-group">
@@ -252,7 +252,7 @@
           </div>
         </div>
         <div class="text-center py-1">
-          <h4 class="mb-0"><span id="sellEstimate">0.0000000</span> XLM</h4>
+          <h4 class="mb-0"><span id="sellEstimate">0.0000000</span> <span id="sellEstimateCode">XLM</span></h4>
           <small data-asset_id="XLM-native" class="asset-ticker text-muted"><span id="sellEstimateUsd" class="asset-price-data-usd" data-asset_price_usd="">$0.0000000</span></small>
         </div>
         <div class="form-group">
@@ -366,15 +366,32 @@
     </div>
     <div id="orderbook" class="collapse" aria-labelledby="orderbookHeading" data-parent="#orderbookAccordion">
       <div class="card-body">
-        <!-- TODO:
-        <ul>Buy Offers</ul>
-        <ul>Sell Offers</ul>
-      -->
+        <div class="d-flex flex-wrap justify-content-center align-items-start text-center">
+          <table id="orderbookBids" class="table table-hover w-50 border border-1">
+            <thead>
+              <tr>
+                <th class="text-muted font-weight-normal" scope="col">Price (XLM)</th>
+                <th class="text-muted font-weight-normal" scope="col">Amount ({{ object.code }})</th>
+                <th class="text-muted font-weight-normal" scope="col">Total (XLM)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <table id="orderbookAsks" class="table table-hover w-50 border border-1">
+            <thead>
+              <tr>
+                <th class="text-muted font-weight-normal" scope="col">Price (XLM)</th>
+                <th class="text-muted font-weight-normal" scope="col">Amount ({{ object.code }})</th>
+                <th class="text-muted font-weight-normal" scope="col">Total (XLM)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
 
 {% if request.user.is_authenticated %}
 <div id="openOrdersContainer" class="card my-4" style="display: none;">
