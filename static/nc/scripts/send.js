@@ -39,6 +39,35 @@
   );
   search.start();
 
+  $(document).ready(function() {
+    // If query param exists, make sure to show send to results
+    let params = (new URL(document.location)).searchParams,
+        query = params.get("query");
+    if (query) {
+      $('#sendToDropdown').removeClass('d-none');
+    }
+  });
+
+  // Set event listeners for dropdown on send to input
+  $('#sendToInput').on('input', function(e) {
+    // Get the toggle and the dropdown
+    let sendToDropdown = $('#sendToDropdown')[0],
+        dropdownIsClosed = sendToDropdown.classList.contains('d-none');
+
+    if (this.value == "" && !dropdownIsClosed) {
+      // Hide the search results in dropdown
+      sendToDropdown.classList.add('d-none');
+    } else if (this.value != "" && dropdownIsClosed) {
+      // Show the search results in dropdown
+      sendToDropdown.classList.remove('d-none');
+    }
+  });
+
+  // Set event listeners for when x button on sendTo input is clicked
+  $('.ais-search-box--reset').on('click', function(e) {
+    $('#sendToDropdown').addClass('d-none');
+  });
+
   /* Reset asset select to clear out all asset options */
   function resetAssetSelect() {
 

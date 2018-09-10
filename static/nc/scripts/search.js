@@ -29,7 +29,6 @@
     search.start();
   }
 
-
   // Set event listeners for dropdown on search input
   $('#searchInput').on('input', function(e) {
     // Get the toggle and the dropdown
