@@ -375,7 +375,7 @@
       // NOTE: table width is 50% so multipliedBy contains 50.0 * (1 + cumulative/total)
       let bidDepthPercentage = ( bidDepthOptions.total != 0.0 ? new BigNumber(bidDepthOptions.cumulative).dividedBy(bidDepthOptions.total).toFixed(2) : 0.0 ),
           bidDepthBackgroundPercentage = new BigNumber(1.0).plus(bidDepthPercentage).multipliedBy(50.0).toFixed(2);
-      bidTr.setAttribute("style", "background-image: -webkit-linear-gradient(right, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.1) " + bidDepthBackgroundPercentage + "%, transparent " + bidDepthBackgroundPercentage + "%, transparent 100%); background-attachment:fixed;");
+      bidTr.setAttribute("style", "background-image: linear-gradient(to left, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.1) " + bidDepthBackgroundPercentage + "%, transparent " + bidDepthBackgroundPercentage + "%, transparent 100%); background-attachment:fixed;");
 
       // Format price td and add bid price
       bidPriceTd.setAttribute("class", "text-primary font-weight-bold");
@@ -428,7 +428,7 @@
       // NOTE: table width is 50% so multipliedBy contains 50.0 * (1 + cumulative/total)
       let askDepthPercentage = ( askDepthOptions.total != 0.0 ? new BigNumber(askDepthOptions.cumulative).dividedBy(askDepthOptions.total).toFixed(2) : 0.0 ),
           askDepthBackgroundPercentage = new BigNumber(1.0).plus(askDepthPercentage).multipliedBy(50.0).toFixed(2);
-      askTr.setAttribute("style", "background-image: -webkit-linear-gradient(left, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthBackgroundPercentage + "%, transparent " + askDepthBackgroundPercentage + "%, transparent 100%); background-attachment:fixed;");
+      askTr.setAttribute("style", "background-image: linear-gradient(to right, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.1) " + askDepthBackgroundPercentage + "%, transparent " + askDepthBackgroundPercentage + "%, transparent 100%); background-attachment:fixed;");
 
       // Format price td and add bid price
       askPriceTd.setAttribute("class", "text-secondary font-weight-bold");
