@@ -317,7 +317,7 @@ class FeedActivityCreateForm(forms.Form):
             # TODO: This is a band-aid for times when tx_ops call gives a 404,
             # which seems to happen most often on offers (settlement time?).
             # Get rid of this once implement a transaction_operations nodejs listener?
-            return None
+            return { 'activity': None, 'success_url': self.success_url }
 
         # Determine activity type and update kwargs for stream call
         request_user_profile = self.request_user.profile
