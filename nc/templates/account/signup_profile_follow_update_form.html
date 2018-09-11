@@ -1,0 +1,85 @@
+{% extends "account/signup_update_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'account/signup_update_profile_follow.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Sign Up | Following Update{% endblock %}
+
+{% block nav_header %}
+  <ol>
+    <li class="done">Add Stellar Account</li>
+    <li class="done">Update Personal Info</li>
+    <li class="">Follow Leaders</li>
+  </ol>
+{% endblock %}
+
+{% block main %}
+<div class="card m-auto">
+  <div class="card-body p-0">
+    <ol class="list-group">
+      {% for u in object_list %}
+      <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <a href="{% url 'nc:user-detail' u.username %}" target="_blank" class="d-inline-flex justify-content-start align-items-center text-dark" style="text-decoration : none">
+          <div class="d-flex flex-column pr-3">
+            {% if u.profile.portfolio.rank %}
+            <button type="button" title="Leaderboard Ranking" class="btn btn-sm btn-warning my-1">
+              <span data-feather="award"></span>
+              {{ u.profile.portfolio.rank }}
+            </button>
+            {% endif %}
+            {% with u.profile.portfolio|get_attribute:'performance_1d' as performance %}
+            {% if performance != None %}
+            <button type="button" title="Performance" {% if performance > 0 %}class="btn btn-sm btn-success my-1"{% elif performance < 0 %}class="btn btn-sm btn-danger my-1"{% else %}class="btn btn-sm btn-secondary my-1"{% endif %}>
+              {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+            </button>
+            {% endif %}
+            {% endwith %}
+          </div>
+          <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 70px; width: 70px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+          <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+            <strong>{{ u.get_full_name }}</strong>
+            <small class="text-muted">@{{ u.username }}</small>
+            <small>
+              {% for a in u.assets_trusting.all %}
+              <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+              {% endfor %}
+            </small>
+          </div>
+        </a>
+        {% if u != request.user %}
+        <form method="POST" action="{% url 'nc:user-follow' u.username %}">
+        {% csrf_token %}
+        <input name="success_url" type="hidden" value="{% url 'account-signup-following-update' %}">
+        {% if u.is_following %}
+        <button type="submit" class="btn btn-sm btn-outline-primary active">
+          <span data-feather="activity"></span>
+          Following
+        </button>
+        {% elif u.requested_to_follow %}
+        <button type="submit" class="btn btn-sm btn-outline-primary active">
+          <span data-feather="activity"></span>
+          Requested
+        </button>
+        {% else %}
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+          <span data-feather="activity"></span>
+          Follow
+        </button>
+        {% endif %}
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+<div class="d-flex justify-content-center align-items-center py-4 my-4">
+  <a href="{% url 'nc:leaderboard-redirect' %}" class="btn btn-lg btn-primary">Complete Signup</a>
+</div>
+{% endblock %}

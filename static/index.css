@@ -1,5 +1,5 @@
 :root {
-  --jumbotron-padding-y: 5rem;
+  --jumbotron-padding-y: 6rem;
 }
 
 body {
@@ -13,18 +13,12 @@ body {
 }
 
 .jumbotron {
-  padding-top: calc(var(--jumbotron-padding-y) * 1.5);
-  padding-bottom: calc(var(--jumbotron-padding-y) * 1.5);
+  padding-top: calc(var(--jumbotron-padding-y));
+  padding-bottom: calc(var(--jumbotron-padding-y));
   border-radius: 0;
   margin-bottom: 0;
   background-color: #222222;
   color: white;
-}
-@media (min-width: 768px) {
-  .jumbotron {
-    padding-top: calc(var(--jumbotron-padding-y) * 2);
-    padding-bottom: calc(var(--jumbotron-padding-y) * 2);
-  }
 }
 
 .jumbotron p:last-child {

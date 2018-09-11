@@ -1,0 +1,143 @@
+{% extends "account/signup_update_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}{% endblock %}
+
+{% block title %}Nucleo | Sign Up | Stellar Update{% endblock %}
+
+{% block nav_header %}
+  <ol>
+    <li class="active">Add Stellar Account</li>
+    <li class="">Update Personal Info</li>
+    <li class="">Follow Leaders</li>
+  </ol>
+{% endblock %}
+
+{% block main %}
+  <div class="d-flex flex-column justify-content-center align-items-center py-0 mb-3">
+    <button type="button" class="btn btn-lg btn-secondary m-3" data-toggle="modal" data-target="#addStellarModal">Add Existing Stellar Account</button>
+    <span class="font-weight-bold">OR</span>
+    <button type="button" class="btn btn-lg btn-primary m-3" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
+  </div>
+
+  <!-- Add Stellar Account Modal -->
+  <div class="modal fade text-dark" id="addStellarModal" tabindex="-1" role="dialog" aria-labelledby="addStellarModalTitle" aria-hidden="true">
+    <form method="POST" id="addStellarModalForm">
+      {% csrf_token %}
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addStellarModalTitle">Add Stellar Account</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <h5 id="addStellarModalBodyHeader" class="pt-1 mb-3 modal-body-header">Please enter your secret key to verify account ownership</h5>
+            <div class="input-group">
+              <input id="addStellarModalSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
+              <div class="input-group-append">
+                <button id="addStellarModalLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#addStellarModalSecretKey" data-alert_ref="#addStellarModalBodyHeader" data-alert_before="false" data-submit_name="Add Account">
+                  <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+                </button>
+              </div>
+            </div>
+            <div class="text-danger mt-4">
+              <strong>Security Notes</strong>
+              <ul>
+                <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+                <li>Nucleo verifies Stellar account ownership by adding a Data Entry to your Stellar account from the browser. Your secret key is used to sign off on this modification to the Stellar ledger.</li>
+                <li>This added Data Entry contains a cryptographically signed version of your Nucleo user ID (signed with our server keys).</li>
+                <li>Once verified, we associate your Stellar account with your Nucleo profile by storing your Stellar public key.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <input type="hidden" name="signed_user" value="{{ signed_user }}">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Add Account</span></button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Create Stellar Account Modal -->
+  <div class="modal fade text-dark" id="createStellarModal" tabindex="-1" role="dialog" aria-labelledby="createStellarModalTitle" aria-hidden="true">
+    <form method="POST" id="createStellarModalForm">
+      {% csrf_token %}
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createStellarModalTitle">Create Stellar Account</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <h5 id="createStellarModalHeader" class="mb-3">
+              Please <span class="text-primary">store your secret key</span> securely. It will only be shown to you once.
+            </h5>
+
+            <ul class="list-group">
+              <strong class="pb-1 text-primary">Secret Key:</strong>
+              <li class="list-group-item">
+                <h6 class="text-primary w-100 my-0 py-0">
+                  <abbr id="createStellarModalSecretKey" title="Stellar Account Secret Key"></abbr>
+                </h6>
+              </li>
+              <strong class="pb-1 pt-3 text-secondary">Public Key:</strong>
+              <li class="list-group-item">
+                <h6 class="text-secondary w-100 my-0 py-0">
+                  <abbr id="createStellarModalPublicKey" title="Stellar Account Public Key"></abbr>
+                </h6>
+              </li>
+            </ul>
+
+            <h6 class="mt-3">
+              Your <span class="text-secondary">public key</span> is safe to share.
+            </h6>
+
+            <div class="text-danger mt-4">
+              <strong>Security Notes</strong>
+              <ul>
+                <li><strong>Secret Key</strong>:
+                  The secret key allows you to access/modify your account and make transactions. DO NOT SHARE IT. Anyone with your secret key will have full access to your account and its funds.
+                </li>
+                <li><strong>Public Key</strong>:
+                  The public key identifies your account. It is completely safe to share with others.
+                </li>
+                <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+                <li>If you lose your secret key, you will no longer be able to access your funds. There is no recovery mechanism.</li>
+                <li>Nucleo will not be able to help you recover your secret key if it is lost.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Create Account</span></button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Add Stellar Account Public Key Form -->
+  <form method="POST" id="addStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-create' %}" data-success="{% url 'account-signup-user-update' %}">
+    {% csrf_token %}
+    {{ account_form }}
+    <button type="submit"></button>
+  </form>
+{% endblock %}
+
+
+{% block nc_script %}
+<script>
+  const STELLAR_DATA_VERIFICATION_KEY = "{{ verification_key }}";
+</script>
+<script src="{% static 'account/scripts/signup_update_stellar.js' %}"></script>
+{% endblock %}

@@ -5,6 +5,7 @@ from algoliasearch_django import algolia_engine
 from collections import OrderedDict
 
 from django.conf import settings
+from django.core import signing
 from django.db.models import prefetch_related_objects
 from django.http import JsonResponse
 from django.views.generic.detail import SingleObjectMixin
@@ -104,6 +105,31 @@ class IndexContextMixin(object):
                 for model in algoliasearch_django.get_registered_model()
             },
         })
+        return kwargs
+
+
+class AccountFormContextMixin(object):
+    """
+    A mixin that adds the create Stellar account form to the context data.
+    """
+    user_field = ''
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(AccountFormContextMixin, self).get_context_data(**kwargs)
+
+        try:
+            user = attrgetter(self.user_field)(self)
+        except AttributeError:
+            user = None
+
+        # Update the context for cryptographically signed username
+        # Include the account creation form as well for Nucleo to store
+        # the verified public key
+        kwargs['verification_key'] = settings.STELLAR_DATA_VERIFICATION_KEY
+        if self.request.user.is_authenticated and self.request.user == user:
+            kwargs['signed_user'] = signing.dumps(self.request.user.id)
+            kwargs['account_form'] = forms.AccountCreateForm()
+
         return kwargs
 
 

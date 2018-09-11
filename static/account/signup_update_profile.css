@@ -1,0 +1,28 @@
+.form-signin input[name="user-first_name"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[name="user-last_name"] {
+  margin-top: -1px;
+  margin-bottom: -1px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[name="profile-bio"] {
+  margin-bottom: 15px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.form-signin input[name="profile-pic"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.form-signin input[name="profile-cover"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

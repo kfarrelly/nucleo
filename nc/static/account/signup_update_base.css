@@ -1,0 +1,109 @@
+:root {
+  --jumbotron-padding-y: 2rem;
+}
+
+body {
+  font-size: .875rem;
+  padding: 10px;
+  padding-bottom: 40px;
+  background: #222222;
+  color: white;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+.img-object-fit-cover {
+  object-fit: cover;
+}
+
+header {
+  margin-top: calc(var(--jumbotron-padding-y));
+  margin-bottom: calc(var(--jumbotron-padding-y));
+}
+
+nav ul,
+nav ol {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+}
+
+nav li {
+  margin: 12px 20px;
+  font-size: 16px;
+  line-height: 26px;
+  color: #f8f9fa;
+}
+
+nav li.active {
+  color: #f8f9fa;
+  font-weight: bold;
+}
+
+nav li.done {
+  color: #6c757d;
+}
+
+nav ol {
+  counter-reset: steps;
+}
+
+nav ol li::before {
+  content: counter(steps);
+  counter-increment: steps;
+  display: block;
+  margin: 5px;
+  background: #007bff;
+  color: #f8f9fa;
+  text-align: center;
+  font-weight: bold;
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+}
+
+nav ol li.active::before {
+  background: #f8f9fa;
+  color: #007bff;
+}
+
+nav ol li.done::before {
+  content: url('https://unpkg.com/feather-icons@4.7.3/dist/icons/check.svg');
+  background: #6c757d;
+  color: #f8f9fa;
+}
+
+.modal-body abbr {
+  word-wrap: break-word;
+}
+
+.form-group { margin: 0; }
+
+.form-signin {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.form-signin .checkbox {
+  font-weight: 400;
+}
+.form-signin .form-control {
+  position: relative;
+  box-sizing: border-box;
+  height: auto;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+
+.has-error .help-block {
+  color: var(--danger);
+}

@@ -1,0 +1,43 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href='{% static 'account/signup_update_base.css' %}' />
+{% block nc_style %}
+{% endblock %}
+{% endblock %}
+
+
+{% block content %}
+<header class="d-flex flex-column justify-content-center align-items-center py-0 mb-2">
+  <img class="mb-1" src="{% static 'nc/images/logo.png' %}" alt="" width="auto" height="80">
+  <nav class="pt-2 pb-1" class="justify-content-center">
+    {% block nav_header %}{% endblock %}
+  </nav>
+</header>
+
+<main class="p-2">
+  {% block main %}{% endblock %}
+</main>
+{% endblock %}
+
+{% block script %}
+<!-- Icons -->
+<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+<script>
+  feather.replace()
+</script>
+
+<!-- Tooltips -->
+<script>
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% block nc_script %}
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "account/signup_update_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'account/signup_update_profile.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Sign Up | Profile Update{% endblock %}
+
+{% block nav_header %}
+  <ol>
+    <li class="done">Add Stellar Account</li>
+    <li class="active">Update Personal Info</li>
+    <li class="">Follow Leaders</li>
+  </ol>
+{% endblock %}
+
+{% block main %}
+{% with request.user.profile as profile %}
+<form id="profileUpdateForm" class="form-signin text-center" method="POST" enctype="multipart/form-data">
+  <div class="mb-3 form-body-header">
+    <img id="profileCover" class="card-img-top img-object-fit-cover border" style="height: 175px; width: 100%; display: block;"{% if profile and profile.cover %} src="{{ profile.cover.url }}"{% endif %} alt="">
+    <img id="profilePic" class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -85px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+  </div>
+  {% csrf_token %}
+  {{ form|bootstrap_inline }}
+  <div class="my-4">
+    <button class="btn btn-lg btn-primary m-1" type="submit">Save Changes</button>
+  </div>
+</form>
+{% endwith %}
+{% endblock %}
+
+
+{% block nc_script %}
+<script src="{% static 'account/scripts/signup_update_profile.js' %}"></script>
+{% endblock %}

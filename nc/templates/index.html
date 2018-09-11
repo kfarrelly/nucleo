@@ -12,31 +12,29 @@
 
 {% block content %}
 <header>
-  <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4">
-    <nav class="navbar navbar-dark fixed-top flex-nowrap">
-      <a href="{% url 'home' %}" class="navbar-brand col-sm-3 col-md-2 mr-0">
-        <img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="40">
-      </a>
-      <div class="btn-group pr-2">
-        <button type="button" class="btn btn-dark navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <span data-feather="activity"></span>
-        </button>
-        <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
-          <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
-            <span data-feather="award"></span>
-            Leaderboard
-          </a>
-          <a class="dropdown-item" href="{% url 'nc:trade-redirect' %}">
-            <span data-feather="trending-up"></span>
-            Trade
-          </a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url 'account_login' %}">Log in</a>
-          <a class="dropdown-item" href="{% url 'account_signup' %}">Sign up</a>
-        </div>
+  <nav class="navbar navbar-dark flex-nowrap justify-content-between p-3 px-md-4">
+    <a href="{% url 'home' %}" class="navbar-brand col-sm-3 col-md-2 mr-0">
+      <img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="40">
+    </a>
+    <div class="btn-group pr-2">
+      <button type="button" class="btn btn-dark navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span data-feather="activity"></span>
+      </button>
+      <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
+        <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
+          <span data-feather="award"></span>
+          Leaderboard
+        </a>
+        <a class="dropdown-item" href="{% url 'nc:trade-redirect' %}">
+          <span data-feather="trending-up"></span>
+          Trade
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="{% url 'account_login' %}">Log in</a>
+        <a class="dropdown-item" href="{% url 'account_signup' %}">Sign up</a>
       </div>
-    </nav>
-  </div>
+    </div>
+  </nav>
 </header>
 
 <main role="main">

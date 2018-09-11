@@ -12,7 +12,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
-from django.core import signing
 from django.db.models import (
     Avg, BooleanField, Case, ExpressionWrapper, F, FloatField,
     prefetch_related_objects, Value, When,
@@ -56,12 +55,96 @@ class PasswordChangeView(allauth_account_views.PasswordChangeView):
     """
     success_url = reverse_lazy('nc:user-settings-redirect')
 
+class SignupStellarUpdateView(LoginRequiredMixin, mixins.AccountFormContextMixin,
+    generic.TemplateView):
+    template_name = 'account/signup_stellar_update_form.html'
+    user_field = 'request.user'
+
+class SignupUserUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
+    generic.UpdateView):
+    model = get_user_model()
+    form_class = forms.UserProfileUpdateMultiForm
+    template_name = 'account/signup_profile_update_form.html'
+    success_url = reverse_lazy('account-signup-following-update')
+    prefetch_related_lookups = ['profile']
+
+    def get_object(self, queryset=None):
+        """
+        Just return the request.user object with prefetched profile.
+        """
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        try:
+            # Get the single item from the filtered queryset
+            obj = queryset.get()
+        except queryset.model.DoesNotExist:
+            raise Http404(_("No %(verbose_name)s found matching the query") %
+                          {'verbose_name': queryset.model._meta.verbose_name})
+        return obj
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in appropriate instances to multiform.
+
+        https://django-betterforms.readthedocs.io/en/latest/multiform.html#working-with-updateview
+        """
+        kwargs = super(SignupUserUpdateView, self).get_form_kwargs()
+        kwargs.update(instance={
+            'user': self.object,
+            'profile': self.object.profile,
+        })
+        return kwargs
+
+    def get_queryset(self):
+        """
+        Authenticated user can only update themselves.
+        """
+        return self.model.objects.filter(id=self.request.user.id)
+
+
+class SignupUserFollowingUpdateView(LoginRequiredMixin, generic.ListView):
+    template_name = 'account/signup_profile_follow_update_form.html'
+
+    def get_queryset(self):
+        """
+        Queryset is users sorted by performance rank.
+        Prefetch assets_trusting to also preview portfolio assets with each list item.
+        """
+        # Aggregate the users current user is following and has requested to follow
+        # for annotation
+        is_following_ids = [
+            u.id for u in get_user_model().objects\
+                .filter(profile__in=self.request.user.profiles_following.all())
+        ]
+        requested_to_follow_ids = [
+            r.user.id for r in self.request.user.requests_to_follow.all()
+        ]
+
+        # Only return top 25 users
+        return get_user_model().objects\
+            .exclude(profile__portfolio__rank=None)\
+            .filter(profile__portfolio__rank__lte=25)\
+            .annotate(is_following=Case(
+                When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .annotate(requested_to_follow=Case(
+                When(id__in=requested_to_follow_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .prefetch_related('assets_trusting', 'profile__portfolio')\
+            .order_by('profile__portfolio__rank')
+
 
 ## User
 class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixin,
     mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
-    mixins.FeedActivityContextMixin, mixins.ViewTypeContextMixin,
-    mixins.DepositAssetsContextMixin, mixins.UserAssetsContextMixin, generic.DetailView):
+    mixins.AccountFormContextMixin, mixins.FeedActivityContextMixin,
+    mixins.ViewTypeContextMixin, mixins.DepositAssetsContextMixin,
+    mixins.UserAssetsContextMixin, generic.DetailView):
     model = get_user_model()
     slug_field = 'username'
     template_name = 'nc/profile.html'
@@ -96,13 +179,6 @@ class UserDetailView(mixins.PrefetchedSingleObjectMixin, mixins.IndexContextMixi
             context['followers_user_follows_teaser_count'] = len(context['followers_user_follows_teaser'])
             context['followers_user_follows_teaser_more_count'] = q_followers_user_follows.count() - context['followers_user_follows_teaser_count']
 
-            # Update the context for cryptographically signed username
-            # Include the account creation form as well for Nucleo to store
-            # the verified public key
-            context['verification_key'] = settings.STELLAR_DATA_VERIFICATION_KEY
-            if self.request.user.is_authenticated and self.request.user == self.object:
-                context['signed_user'] = signing.dumps(self.request.user.id)
-                context['account_form'] = forms.AccountCreateForm()
         return context
 
 
@@ -1191,6 +1267,7 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
     def get_queryset(self):
         """
         Queryset is users sorted by performance rank given date span from query param.
+        Prefetch assets_trusting to also preview portfolio assets with each list item.
 
         Default date span is 24h.
         """
@@ -1202,7 +1279,7 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
             self.date_span = self.allowed_date_orderings[0] # default to 1d
         order = 'profile__portfolio__performance_{0}'.format(self.date_span)
 
-        return get_user_model().objects.prefetch_related('profile__portfolio')\
+        return get_user_model().objects.prefetch_related('assets_trusting', 'profile__portfolio')\
             .order_by(F(order).desc(nulls_last=True))[:100]
 
 
