@@ -26,6 +26,7 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 - [ ] Better and more explicit error handling from Stellar Horizon calls.
 - [ ] User trade history and personalized overall return on assets in portfolio.
 - [ ] Implement [Stellar Notifier](https://github.com/orbitlens/stellar-notifier) to post to nc.views.FeedActivityCreateView when any new Stellar transaction involves an account registered in Nucleo db.
+- [ ] Implement [StellarExpertID](https://id.stellar.expert/demo/) and [Cosmic Links](https://cosmic.link/) for external signing of all transactions.
 - [ ] Unit tests.
 - [ ] Upgrade landing page with top 5 leaders, top 5 assets, and some marketing.
 

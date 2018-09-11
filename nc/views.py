@@ -1428,7 +1428,7 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
         Stellar transaction of tx_hash.
         """
         self.object = form.save()
-        self.success_url = self.object.get('success_url')
+        self.success_url = self.object.get('success_url') if 'success_url' in self.object else self.success_url
         return HttpResponseRedirect(self.get_success_url())
 
 

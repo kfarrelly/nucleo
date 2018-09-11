@@ -499,7 +499,7 @@ class FeedActivityCreateForm(forms.Form):
             self.success_url = asset_url
         else:
             # Not a supported activity type
-            return None
+            return { 'activity': None, 'success_url': self.success_url }
 
         return {
             'activity': self.feed.add_activity(kwargs),
