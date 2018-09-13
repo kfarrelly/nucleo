@@ -48,6 +48,73 @@ from .models import (
 
 
 # Web app views
+# Landing page
+class HomeView(generic.TemplateView):
+    """
+    Queryset is users sorted by performance rank.
+    Prefetch assets_trusting to also preview portfolio assets with each list item.
+    """
+    template_name = 'index.html'
+
+    def get_context_data(self, **kwargs):
+        """
+        Update context with top 5 performing users and top 5 Stellar assets.
+        """
+        context = super(HomeView, self).get_context_data(**kwargs)
+
+        # Only fetch top 5 users
+        context['user_list'] = get_user_model().objects\
+            .exclude(profile__portfolio__rank=None)\
+            .filter(profile__portfolio__rank__lte=5)\
+            .prefetch_related('assets_trusting', 'profile__portfolio')\
+            .order_by('profile__portfolio__rank')
+
+        # Only fetch top 5 assets
+        context['allowed_displays'] = [ 'activityScore', 'price_USD',
+            'change24h_USD' ]
+        context['display'] = 'price_USD'
+
+        # Fetch the StellarTerm ticker json and store
+        r = requests.get(settings.STELLARTERM_TICKER_URL)
+        json = r.json()
+        ticker_assets = json.get('assets', [])
+
+        # NOTE: Need to get USD/XLM 24 hour change from _meta key (not in XLM-native asset)
+        xlm_change24h_USD = None
+        if '_meta' in json and 'externalPrices' in json['_meta']\
+        and 'USD_XLM_change' in json['_meta']['externalPrices']:
+            xlm_change24h_USD = json['_meta']['externalPrices']['USD_XLM_change']
+
+        # Clean the ticker assets to only include those that have
+        # the display attribute
+        cleaned_ticker_assets = [
+            a for a in ticker_assets
+            if a['id'] == 'XLM-native' or ('activityScore' in a and a['activityScore'] != None)
+        ]
+
+        # Parse to get asset_ids for queryset filter
+        top_asset_ids = [ a['id'] for a in cleaned_ticker_assets ]
+
+        # Store the dict version of ticker assets
+        ticker_assets = { a['id']: a for a in cleaned_ticker_assets }
+
+        # Order the qset by activityScore
+        # TODO: Figure out how to annotate qset properly
+        assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))[:5]
+        for a in assets:
+            for display in context['allowed_displays']:
+                if a.asset_id == 'XLM-native' and display == 'change24h_USD':
+                    # Handling the XLM-native USD % change edge case
+                    setattr(a, display, xlm_change24h_USD)
+                else:
+                    setattr(a, display, ticker_assets[a.asset_id].get(display))
+        assets.sort(key=lambda a: getattr(a, 'activityScore'), reverse=True)
+
+        context['asset_list'] = assets
+
+        return context
+
+
 ## Allauth
 class PasswordChangeView(allauth_account_views.PasswordChangeView):
     """
@@ -63,7 +130,7 @@ class SignupStellarUpdateView(LoginRequiredMixin, mixins.AccountFormContextMixin
 class SignupUserUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
     generic.UpdateView):
     model = get_user_model()
-    form_class = forms.UserProfileUpdateMultiForm
+    form_class = forms.UserProfileWithPrivacyUpdateMultiForm
     template_name = 'account/signup_profile_update_form.html'
     success_url = reverse_lazy('account-signup-following-update')
     prefetch_related_lookups = ['profile']

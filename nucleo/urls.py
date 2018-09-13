@@ -23,7 +23,7 @@ from nc import views as nc_views
 
 urlpatterns = [
     # Web urls
-    url(r'^$', TemplateView.as_view(template_name='index.html'), name='home'),
+    url(r'^$', nc_views.HomeView.as_view(), name='home'),
     url(r'^', include('nc.urls')),
     url(r'^admin/', admin.site.urls),
 

@@ -26,3 +26,17 @@
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.form-signin input[name="profile-is_private"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.form-signin .checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.form-signin .checkbox label {
+  font-weight: bold;
+}

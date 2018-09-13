@@ -48,11 +48,34 @@ class ProfileUpdateForm(forms.ModelForm):
         }
 
 
+class ProfileWithPrivacyUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [ 'bio', 'pic', 'cover', 'is_private' ]
+        widgets = {
+            'bio': forms.TextInput(attrs={'placeholder': 'Bio'}),
+        }
+        labels = {
+            'is_private': _('Private profile'),
+        }
+        help_texts = {
+            'is_private': _("When your profile is private, only people you approve to follow you can see your Stellar account info, public keys, assets and balances."),
+        }
+
+
 class UserProfileUpdateMultiForm(multiform.MultiModelForm):
     form_classes = OrderedDict((
         ('user', UserUpdateForm),
         ('profile', ProfileUpdateForm),
     ))
+
+
+class UserProfileWithPrivacyUpdateMultiForm(multiform.MultiModelForm):
+    form_classes = OrderedDict((
+        ('user', UserUpdateForm),
+        ('profile', ProfileWithPrivacyUpdateForm),
+    ))
+
 
 class ProfileEmailSettingsUpdateForm(forms.ModelForm):
     class Meta:
@@ -71,6 +94,7 @@ class ProfileEmailSettingsUpdateForm(forms.ModelForm):
             'allow_trade_email': _('Receive email notification when someone you follow buys/sells an asset.'),
             'allow_follower_email': _('Receive email notification when someone requests to follow you.'),
         }
+
 
 class ProfilePrivacySettingsUpdateForm(forms.ModelForm):
     class Meta:

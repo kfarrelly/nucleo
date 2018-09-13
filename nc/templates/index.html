@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block head %}{% endblock %}
 
@@ -12,32 +13,34 @@
 
 {% block content %}
 <header>
-  <nav class="navbar navbar-dark flex-nowrap justify-content-between p-3 px-md-4">
-    <a href="{% url 'home' %}" class="navbar-brand col-sm-3 col-md-2 mr-0">
-      <img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="40">
-    </a>
-    <div class="btn-group pr-2">
-      <button type="button" class="btn btn-dark navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <span data-feather="activity"></span>
-      </button>
-      <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
-        <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
-          <span data-feather="award"></span>
-          Leaderboard
-        </a>
-        <a class="dropdown-item" href="{% url 'nc:trade-redirect' %}">
-          <span data-feather="trending-up"></span>
-          Trade
-        </a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="{% url 'account_login' %}">Log in</a>
-        <a class="dropdown-item" href="{% url 'account_signup' %}">Sign up</a>
+  <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4">
+    <nav class="navbar navbar-dark fixed-top flex-nowrap">
+      <a href="{% url 'home' %}" class="navbar-brand col-sm-3 col-md-2 mr-0">
+        <img src="{% static 'nc/images/logo-text-align-left.png' %}" alt="" width="auto" height="40">
+      </a>
+      <div class="btn-group pr-2">
+        <button type="button" class="btn btn-dark navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <span data-feather="activity"></span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-right" style="right: 0; left: auto; margin-right: 17px;">
+          <a class="dropdown-item" href="{% url 'nc:leaderboard-redirect' %}">
+            <span data-feather="award"></span>
+            Leaderboard
+          </a>
+          <a class="dropdown-item" href="{% url 'nc:trade-redirect' %}">
+            <span data-feather="trending-up"></span>
+            Trade
+          </a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{% url 'account_login' %}">Log in</a>
+          <a class="dropdown-item" href="{% url 'account_signup' %}">Sign up</a>
+        </div>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
 </header>
 
-<main role="main">
+<main role="main" class="pb-5">
 
   <section class="jumbotron text-center">
     <div class="container">
@@ -51,11 +54,96 @@
     </div>
   </section>
 
+  <div class="d-flex justify-content-center align-items-center p-3" style="margin-top: -125px;">
+    <div class="card w-100" style="max-width: 600px;">
+      <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
+        <h5>Today's Top Portfolios On Nucleo</h5>
+      </div>
+      <div class="card-body card-leaderboard p-0">
+        <ol class="list-group">
+          {% for u in user_list %}
+          <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div class="d-inline-flex justify-content-start align-items-center">
+              <span class="badge badge-white mr-2">{{ forloop.counter }}</span>
+              <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 60px; width: 60px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+              <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+                <strong>{{ u.get_full_name }}</strong>
+                <small class="text-muted">@{{ u.username }}</small>
+                <small>
+                  {% for a in u.assets_trusting.all %}
+                  <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+                  {% endfor %}
+                </small>
+              </div>
+            </div>
+            {% with u.profile.portfolio|get_attribute:'performance_1d' as performance %}
+            {% if performance != None %}
+            <div class="btn-group py-1">
+              <button type="button" title="Performance" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+                {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+              </button>
+            </div>
+            {% endif %}
+            {% endwith %}
+          </a>
+          {% endfor %}
+        </ol>
+      </div>
+      <div class="card-footer border-0 d-flex justify-content-start align-items-center">
+        <a href="{% url 'nc:leaderboard-redirect' %}">View More Leaders</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-center align-items-center p-3">
+    <div class="card w-100" style="max-width: 600px;">
+      <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
+          <h5>Today's Top Assets On Stellar</h5>
+        </div>
+      </div>
+      <div class="card-body card-leaderboard p-0">
+        <ol class="list-group">
+          {% for a in asset_list %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'nc:asset-detail' a.asset_id %}" class="list-group-item list-group-item-action p-0 border-0">
+              <div class="d-inline-flex justify-content-start align-items-center">
+                <span class="badge badge-white mr-2">{{ forloop.counter }}</span>
+                <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+                <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+                  <strong>{{ a.code }}</strong>
+                  <small class="text-muted">{% if a.domain %}{{ a.domain }}{% endif %}</small>
+                </div>
+              </div>
+            </a>
+            <div class="asset-ticker py-1">
+              <button type="button" title="StellarTerm Activity Score" class="d-none btn btn-sm btn-warning btn-topassets btn-activityScore">
+                <span data-feather="star"></span>
+                {{ a.activityScore }}
+              </button>
+              {% with a|get_attribute:'price_USD' as display_val %}
+              {% with a|get_attribute:'change24h_USD' as performance %}
+              <button type="button" {% if performance and display_val != None %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topassets btn-price_USD"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topassets btn-price_USD"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topassets btn-price_USD"{% endif %}>
+                {% if display_val != None %}${{ display_val|intcomma }}{% else %}-{% endif %}
+              </button>
+              <button type="button" {% if performance %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topassets btn-change24h_USD"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topassets btn-change24h_USD"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topassets btn-change24h_USD"{% endif %}>
+                {% if performance != None %}{% if performance > 0 %}+{% endif %}{{ performance|floatformat:2|intcomma }}%{% else %}-{% endif %}
+              </button>
+              {% endwith %}
+              {% endwith %}
+            </div>
+          </div>
+          {% endfor %}
+        </ol>
+      </div>
+      <div class="card-footer border-0 d-flex justify-content-start align-items-center">
+        <a href="{% url 'nc:trade-redirect' %}">View More Assets</a>
+      </div>
+    </div>
+  </div>
+
 </main>
 
-<footer class="text-muted">
-  <div class="container"></div>
-</footer>
 {% endblock %}
 
 
@@ -65,4 +153,14 @@
 <script>
   feather.replace()
 </script>
+
+<script>
+  var CURRENT_DISPLAY = "{{ display }}";
+  const ALLOWED_DISPLAYS = [
+          {% for d in allowed_displays %}
+          "{{ d }}",
+          {% endfor %}
+        ];
+</script>
+<script src="{% static 'nc/scripts/index.js' %}"></script>
 {% endblock %}

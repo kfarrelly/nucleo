@@ -131,7 +131,7 @@
               and <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} other{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
               {% endif %}
               {% else %}
-              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a>{% endif %}
+              {% if is_trusting %}<a href="{% url 'nc:user-detail' request.user.username %}" class="text-dark font-weight-bold">you</a>{% if trusters_teaser_more_count > 0 %} and{% endif %}{% endif %}
               {% if trusters_teaser_more_count > 0 %}
               <a href="{% url 'nc:asset-trusted-by-list' object.asset_id %}" class="text-dark font-weight-bold">{{ trusters_teaser_more_count }} user{% if trusters_teaser_more_count > 1 %}s{% endif %}</a>
               {% endif %}
