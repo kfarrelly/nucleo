@@ -100,7 +100,7 @@ class HomeView(generic.TemplateView):
 
         # Order the qset by activityScore
         # TODO: Figure out how to annotate qset properly
-        assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))[:5]
+        assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))
         for a in assets:
             for display in context['allowed_displays']:
                 if a.asset_id == 'XLM-native' and display == 'change24h_USD':
@@ -110,7 +110,7 @@ class HomeView(generic.TemplateView):
                     setattr(a, display, ticker_assets[a.asset_id].get(display))
         assets.sort(key=lambda a: getattr(a, 'activityScore'), reverse=True)
 
-        context['asset_list'] = assets
+        context['asset_list'] = assets[:5]
 
         return context
 
