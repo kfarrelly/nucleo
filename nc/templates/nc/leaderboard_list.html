@@ -173,6 +173,7 @@
         </a>
         {% with u.profile.portfolio|get_attribute:'usd_value' as display_val %}
         {% with u.profile.portfolio|get_attribute:performance_attr as performance %}
+        {% if performance != None %}
         <button type="button" title="Portfolio Value" {% if performance and display_val >= 0 %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-usd_value"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-usd_value"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-usd_value"{% endif %}>
           {% if u != request.user and not u.is_following and u.profile.is_private %}
           <span data-feather="lock"></span>
@@ -180,7 +181,6 @@
           {% if display_val >= 0 %}${{ display_val|floatformat:2|intcomma }}{% else %}-{% endif %}
           {% endif %}
         </button>
-        {% if performance != None %}
         <button type="button" title="Performance" {% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-{{ performance_attr }}"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-{{ performance_attr }}"{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-{{ performance_attr }}"{% endif %}>
           {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
         </button>
