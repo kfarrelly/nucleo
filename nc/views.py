@@ -1310,8 +1310,8 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         context = super(LeaderboardListView, self).get_context_data(**kwargs)
 
         # Store the allowed displays
-        context['allowed_displays'] = [ 'usd_value', 'performance_1d' ]
-        context['display'] = 'performance_1d'
+        context['allowed_displays'] = [ 'usd_value', 'performance_{0}'.format(self.date_span) ]
+        context['display'] = 'performance_{0}'.format(self.date_span)
 
         # Add date span and associated performance attribute to use to the context
         context['date_span'] = self.date_span
