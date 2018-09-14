@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime, requests, stream, sys
+import datetime, parse, requests, stream, sys
 
 from allauth.account.adapter import get_adapter
 from allauth.account import views as allauth_account_views
@@ -63,6 +63,8 @@ class HomeView(generic.TemplateView):
         context = super(HomeView, self).get_context_data(**kwargs)
 
         # Only fetch top 5 users
+        context['allowed_portfolio_displays'] = [ 'usd_value', 'performance_1d' ]
+        context['portfolio_display'] = 'performance_1d'
         context['user_list'] = get_user_model().objects\
             .exclude(profile__portfolio__rank=None)\
             .filter(profile__portfolio__rank__lte=5)\
@@ -70,9 +72,9 @@ class HomeView(generic.TemplateView):
             .order_by('profile__portfolio__rank')
 
         # Only fetch top 5 assets
-        context['allowed_displays'] = [ 'activityScore', 'price_USD',
+        context['allowed_asset_displays'] = [ 'activityScore', 'price_USD',
             'change24h_USD' ]
-        context['display'] = 'price_USD'
+        context['asset_display'] = 'price_USD'
 
         # Fetch the StellarTerm ticker json and store
         r = requests.get(settings.STELLARTERM_TICKER_URL)
@@ -102,7 +104,7 @@ class HomeView(generic.TemplateView):
         # TODO: Figure out how to annotate qset properly
         assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))
         for a in assets:
-            for display in context['allowed_displays']:
+            for display in context['allowed_asset_displays']:
                 if a.asset_id == 'XLM-native' and display == 'change24h_USD':
                     # Handling the XLM-native USD % change edge case
                     setattr(a, display, xlm_change24h_USD)
@@ -1307,6 +1309,10 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         """
         context = super(LeaderboardListView, self).get_context_data(**kwargs)
 
+        # Store the allowed displays
+        context['allowed_displays'] = [ 'usd_value', 'performance_1d' ]
+        context['display'] = 'performance_1d'
+
         # Add date span and associated performance attribute to use to the context
         context['date_span'] = self.date_span
         context['allowed_date_orderings'] = self.allowed_date_orderings
@@ -1346,7 +1352,22 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
             self.date_span = self.allowed_date_orderings[0] # default to 1d
         order = 'profile__portfolio__performance_{0}'.format(self.date_span)
 
-        return get_user_model().objects.prefetch_related('assets_trusting', 'profile__portfolio')\
+        # Aggregate the users current user is following and has requested to follow
+        # for annotation
+        is_following_ids = []
+        if self.request.user.is_authenticated:
+            is_following_ids = [
+                u.id for u in get_user_model().objects\
+                    .filter(profile__in=self.request.user.profiles_following.all())
+            ]
+
+        return get_user_model().objects\
+            .annotate(is_following=Case(
+                When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .prefetch_related('assets_trusting', 'profile__portfolio')\
             .order_by(F(order).desc(nulls_last=True))[:100]
 
 
@@ -1514,6 +1535,33 @@ class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
 # Refactor this so it's in a separate 'api' Django app
 # API Viewsets
 
+# Stellar Notifier views
+## Webhook POST
+@method_decorator(csrf_exempt, name='dispatch')
+class ActivityCreateView(mixins.AjaxableResponseMixin, generic.View):
+    """
+    Creates an activity feed record given the JSON POST data
+    received from Stellar Notifier listener watching account subscription.
+    """
+    def _is_valid(self, request):
+        """
+        Verifies auth token and signature header.
+
+        NOTE: Headers will have keys "X-Request-ED25519-Signature" and
+        "Authorization: Token <your_token>".
+        """
+        # auth_token = parse.parse(settings.STELLAR_NOTIFIER_AUTHORIZATION_FORMAT,
+        #     request.META.get(settings.STELLAR_NOTIFIER_AUTHORIZATION_HEADER, 'Token '))
+        return True
+
+    def post(self, request, *args, **kwargs):
+        if self._is_valid(request):
+            # TODO: FEED ACTIVITY FORMATTING ETC ETC
+            # print request.body
+            return HttpResponse()
+        else:
+            return HttpResponseNotFound()
+
 
 # Worker environment views
 ## Cron job tasks (AWS worker tier)
@@ -1612,6 +1660,12 @@ class PerformanceCreateView(generic.View):
                     performance = None
                 setattr(portfolio, attr, performance)
 
+            # Also set the latest balance values for the portfolio for easy reference
+            if portfolio_latest_rawdata:
+                portfolio.usd_value = portfolio_latest_rawdata.usd_value
+                portfolio.xlm_value = portfolio_latest_rawdata.xlm_value
+
+            # Then save the portfolio
             portfolio.save()
 
     def _update_rank_values(self):

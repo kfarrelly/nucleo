@@ -40,7 +40,7 @@
   </div>
 </header>
 
-<main role="main">
+<main role="main" class="pb-sm-5 pb-3">
 
   <section class="jumbotron text-center">
     <div class="container">
@@ -62,30 +62,41 @@
       <div class="card-body card-leaderboard p-0">
         <ol class="list-group">
           {% for u in user_list %}
-          <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div class="d-inline-flex justify-content-start align-items-center">
-              <span class="badge badge-white mr-2">{{ forloop.counter }}</span>
-              <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 60px; width: 60px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
-              <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
-                <strong>{{ u.get_full_name }}</strong>
-                <small class="text-muted">@{{ u.username }}</small>
-                <small>
-                  {% for a in u.assets_trusting.all %}
-                  <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
-                  {% endfor %}
-                </small>
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item list-group-item-action p-0 border-0">
+              <div class="d-inline-flex justify-content-start align-items-center">
+                <span class="badge badge-white mr-2">{{ forloop.counter }}</span>
+                <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 60px; width: 60px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+                <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+                  <strong>{{ u.get_full_name }}</strong>
+                  <small class="text-muted">@{{ u.username }}</small>
+                  <small>
+                    {% for a in u.assets_trusting.all %}
+                    <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+                    {% endfor %}
+                  </small>
+                </div>
               </div>
-            </div>
-            {% with u.profile.portfolio|get_attribute:'performance_1d' as performance %}
-            {% if performance != None %}
-            <div class="btn-group py-1">
-              <button type="button" title="Performance" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            </a>
+            <div class="py-1">
+              {% with u.profile.portfolio|get_attribute:'usd_value' as display_val %}
+              {% with u.profile.portfolio|get_attribute:'performance_1d' as performance %}
+              <button type="button" title="Portfolio Value" {% if performance and display_val >= 0 %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-usd_value"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-usd_value"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-usd_value"{% endif %}>
+                {% if u.profile.is_private %}
+                <span data-feather="lock"></span>
+                {% else %}
+                {% if display_val >= 0 %}${{ display_val|floatformat:2|intcomma }}{% else %}-{% endif %}
+                {% endif %}
+              </button>
+              {% if performance != None %}
+              <button type="button" title="Performance" {% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-performance_1d"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-performance_1d"{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-performance_1d"{% endif %}>
                 {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
               </button>
+              {% endif %}
+              {% endwith %}
+              {% endwith %}
             </div>
-            {% endif %}
-            {% endwith %}
-          </a>
+          </div>
           {% endfor %}
         </ol>
       </div>
@@ -155,9 +166,16 @@
 </script>
 
 <script>
-  var CURRENT_DISPLAY = "{{ display }}";
-  const ALLOWED_DISPLAYS = [
-          {% for d in allowed_displays %}
+  var CURRENT_ASSET_DISPLAY = "{{ asset_display }}",
+      CURRENT_PORTFOLIO_DISPLAY = "{{ portfolio_display }}";
+
+  const ALLOWED_ASSET_DISPLAYS = [
+          {% for d in allowed_asset_displays %}
+          "{{ d }}",
+          {% endfor %}
+        ],
+        ALLOWED_PORTFOLIO_DISPLAYS = [
+          {% for d in allowed_portfolio_displays %}
           "{{ d }}",
           {% endfor %}
         ];

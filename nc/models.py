@@ -373,8 +373,14 @@ class Portfolio(models.Model):
     Stores time series data tracking cumulative value (in XLM) user has
     in all accounts associated with their user profile.
     """
+    NOT_AVAILABLE = -1.0
+
     profile = models.OneToOneField(Profile,
         on_delete=models.CASCADE, related_name='portfolio', primary_key=True)
+
+    # Most recent calculated balance values for easy access
+    xlm_value = models.FloatField(default=NOT_AVAILABLE)
+    usd_value = models.FloatField(default=NOT_AVAILABLE)
 
     # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y.
     # NOTE: Fractional values (i.e. need to mult by 100 to get percentages)

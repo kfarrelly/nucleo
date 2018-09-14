@@ -53,9 +53,10 @@ class AjaxableResponseMixin(object):
 
         # TODO: Add more to the data to be returned!
         if self.request.is_ajax():
-            data = {
-                'pk': self.object.pk,
-            }
+            data = {}
+            if hasattr(self.object, 'pk'):
+                data['pk'] = self.object.pk
+
             return JsonResponse(data)
         else:
             return response
