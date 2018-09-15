@@ -7,6 +7,11 @@
   color: white;
 }
 
+footer {
+  background: #222222;
+  color: white;
+}
+
 .jumbotron {
   padding-top: calc(var(--jumbotron-padding-y) * 1.5);
   padding-bottom: calc(var(--jumbotron-padding-y) * 1.5);
