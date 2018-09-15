@@ -1,8 +1,0 @@
-# asset with meta info
-[[CURRENCIES]]
-code="NUCL"
-issuer="GBFZS253EHZBPVAMMDX3PK5FAM2YSADUONHH6U4OOOKG2TPQAL63XP7S" # testnet account
-display_decimals=7
-name="Nucleon"
-desc="Token powering the Nucleo social banking platform."
-conditions="There will only ever be 500,000,000 NUCL tokens in existence."
