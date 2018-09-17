@@ -121,6 +121,28 @@
         .addMemo(StellarSdk.Memo.text('Nucleo Account Verification'))
         .build();
 
+        // Instantiate client side event listener to verify
+        // transaction has settled.
+        var es = server.operations().cursor('now').forAccount(sourceAccount.id)
+          .stream({
+          onmessage: function (op) {
+            if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_MANAGE_DATA) {
+              // Close the event stream connection
+              es();
+
+              // Notify user of successful submission
+              displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
+
+              // Submit the public key to Nucleo servers to verify account
+              let publicKeyForm = $('#addStellarPublicKeyForm')[0],
+                  publicKeyFormSubmitButton = $('#addStellarPublicKeyForm').find(":submit")[0];
+              publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
+              publicKeyForm.elements["creating_stellar"].checked = false;
+              publicKeyFormSubmitButton.click();
+            }
+          }
+        });
+
       if (ledgerEnabled) {
         // Sign the transaction with Ledger to prove you are actually the person sending
         // then submit to Stellar server
@@ -131,27 +153,6 @@
 
         // And finally, send it off to Stellar! Check for StellarGuard protection.
         if (StellarGuardSdk.hasStellarGuard(sourceAccount)) {
-          // Instantiate client side event listener to verify StellarGuard
-          // transaction has been authorized
-          var es = server.operations().cursor('now').forAccount(sourceAccount.id)
-            .stream({
-            onmessage: function (op) {
-              if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_MANAGE_DATA) {
-                // Close the event stream connection
-                es();
-
-                // Notify user of successful submission
-                displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
-
-                // Submit the public key to Nucleo servers to verify account
-                let publicKeyForm = $('#addStellarPublicKeyForm')[0],
-                    publicKeyFormSubmitButton = $('#addStellarPublicKeyForm').find(":submit")[0];
-                publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
-                publicKeyForm.elements["creating_stellar"].checked = false;
-                publicKeyFormSubmitButton.click();
-              }
-            }
-          });
           // Then tx submit to StellarGuard
           return StellarGuardSdk.submitTransaction(transaction);
         } else {
@@ -164,17 +165,6 @@
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
         displayWarning(modalHeader, message);
-      } else {
-        // Notify user of successful submission
-        displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
-
-        // From Horizon
-        // Submit the public key to Nucleo servers to verify account
-        let publicKeyForm = $('#addStellarPublicKeyForm')[0],
-            publicKeyFormSubmitButton = $('#addStellarPublicKeyForm').find(":submit")[0];
-        publicKeyForm.elements["public_key"].value = sourceKeys.publicKey();
-        publicKeyForm.elements["creating_stellar"].checked = false;
-        publicKeyFormSubmitButton.click();
       }
     })
     .catch(function(error) {
