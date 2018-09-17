@@ -110,6 +110,7 @@
       var es = server.operations().cursor('now').forAccount(sourceAccount.id)
         .stream({
         onmessage: function (op) {
+          console.log(op);
           if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_CHANGE_TRUST) {
             // Close the event stream connection
             es();
@@ -144,6 +145,9 @@
       if (result.stellarGuard) {
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
+        displayWarning(modalHeader, message);
+      } else {
+        let message = 'Confirming transaction settlement ...';
         displayWarning(modalHeader, message);
       }
     })

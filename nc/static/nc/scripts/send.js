@@ -410,6 +410,9 @@
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
         displayWarning(sendFromHeader, message, true);
+      } else {
+        let message = 'Confirming transaction settlement ...';
+        displayWarning(sendFromHeader, message, true);
       }
     })
     .catch(function(error) {

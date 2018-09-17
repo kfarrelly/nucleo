@@ -833,6 +833,9 @@
           // From StellarGuard: alert user to go to url to authorize
           let message = 'Please authorize this transaction with StellarGuard.';
           displayWarning(modalHeader, message);
+        } else {
+          let message = 'Confirming transaction settlement ...';
+          displayWarning(modalHeader, message);
         }
       })
       .catch(function(error) {
@@ -1357,6 +1360,9 @@
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
               displayWarning(formHeader, message);
+            } else {
+              let message = 'Confirming transaction settlement ...';
+              displayWarning(formHeader, message);
             }
           })
           .catch(function(error) {
@@ -1539,6 +1545,9 @@
             if (result.stellarGuard) {
               // From StellarGuard: alert user to go to url to authorize
               let message = 'Please authorize this transaction with StellarGuard.';
+              displayWarning(formHeader, message);
+            } else {
+              let message = 'Confirming transaction settlement ...';
               displayWarning(formHeader, message);
             }
           })
