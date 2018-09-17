@@ -49,7 +49,7 @@ urlpatterns = [
     url(r'^send/payment/$', views.SendDetailView.as_view(), name='send-detail'),
 
     # Activity
-    # TODO: url(r'^activity/create/$', views.ActivityCreateView.as_view(), name='activity-create'),
+    # url(r'^activity/create/$', views.ActivityCreateView.as_view(), name='activity-create'),
 
     # Performance
     url(r'^performance/create/$', views.PerformanceCreateView.as_view(), name='performance-create'),

@@ -30,7 +30,7 @@
 
   // Event listener for selected Stellar account upon select to update
   $('#depositFundsModalAccountSelect').on('change', function(e) {
-    console.log(this.value);
+    // console.log(this.value);
   });
 
   // Bootstrap depositFundsModalForm submission

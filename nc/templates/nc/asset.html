@@ -320,7 +320,7 @@
         {% for account in accounts %}
         <li class="list-group-item d-none justify-content-between align-items-center" data-public_key="{{ account.public_key }}" data-display_decimals="{{ object.display_decimals }}">
           <div class="d-flex justify-content-start align-items-center">
-            <img class="card-img-top rounded mr-2" style="height: 25px; width: 25px;"{% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
+            <img class="card-img-top img-object-fit-cover rounded mr-2" style="height: 25px; width: 25px;"{% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
             <span>
               {{ account.name }} ({{ account.public_key|truncatechars:8 }}{{ account.public_key|slice:"-5:" }})
             </span>

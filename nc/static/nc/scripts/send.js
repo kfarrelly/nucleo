@@ -367,6 +367,27 @@
         .addMemo(memo)
         .build();
 
+      // Instantiate client side event listener to verify
+      // transaction has settled.
+      var es = server.operations().cursor('now').forAccount(sourceAccount.id)
+        .stream({
+        onmessage: function (op) {
+          if (op.source_account == sourceAccount.id && (op.type_i == STELLAR_OPERATION_PAYMENT || op.type_i == STELLAR_OPERATION_PATH_PAYMENT)) {
+            // Close the event stream connection
+            es();
+
+            // Notify user of successful submission
+            displaySuccess(sendFromHeader, 'Successfully submitted transaction to the Stellar network.', true);
+
+            // Submit the tx hash to Nucleo servers to create
+            // activity in user feeds
+            let activityForm = $('#activityForm')[0];
+            activityForm.elements["tx_hash"].value = op.transaction_hash;
+            activityForm.submit();
+          }
+        }
+      });
+
       if (ledgerEnabled) {
         // Sign the transaction with Ledger to prove you are actually the person sending
         // then submit to Stellar server
@@ -377,26 +398,6 @@
 
         // And finally, send it off to Stellar! Check for StellarGuard protection.
         if (StellarGuardSdk.hasStellarGuard(sourceAccount)) {
-          // Instantiate client side event listener to verify StellarGuard
-          // transaction has been authorized
-          var es = server.operations().cursor('now').forAccount(sourceAccount.id)
-            .stream({
-            onmessage: function (op) {
-              if (op.source_account == sourceAccount.id && (op.type_i == STELLAR_OPERATION_PAYMENT || op.type_i == STELLAR_OPERATION_PATH_PAYMENT)) {
-                // Close the event stream connection
-                es();
-
-                // Notify user of successful submission
-                displaySuccess(sendFromHeader, 'Successfully submitted transaction to the Stellar network.', true);
-
-                // Submit the tx hash to Nucleo servers to create
-                // activity in user feeds
-                let activityForm = $('#activityForm')[0];
-                activityForm.elements["tx_hash"].value = op.transaction_hash;
-                activityForm.submit();
-              }
-            }
-          });
           // Then tx submit to StellarGuard
           return StellarGuardSdk.submitTransaction(transaction);
         } else {
@@ -409,16 +410,6 @@
         // From StellarGuard: alert user to go to url to authorize
         let message = 'Please authorize this transaction with StellarGuard.';
         displayWarning(sendFromHeader, message, true);
-      } else {
-        // Notify user of successful submission
-        displaySuccess(sendFromHeader, 'Successfully submitted transaction to the Stellar network.', true);
-
-        // From Horizon
-        // Submit the tx hash to Nucleo servers to create
-        // activity in user feeds
-        let activityForm = $('#activityForm')[0];
-        activityForm.elements["tx_hash"].value = result.hash;
-        activityForm.submit();
       }
     })
     .catch(function(error) {

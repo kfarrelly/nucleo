@@ -1,4 +1,4 @@
-import base64
+import base64, dateutil.parser
 
 from allauth.account.adapter import get_adapter
 from allauth.utils import build_absolute_uri
@@ -311,7 +311,7 @@ class FeedActivityCreateForm(forms.Form):
         # of doing in request/response cycle.
         if self.ops:
             first_op = self.ops[0]
-            self.time = first_op['created_at']
+            self.time = dateutil.parser.parse(first_op['created_at'])
             self.tx_href = first_op['_links']['transaction']['href'] if '_links' in first_op and 'transaction' in first_op['_links'] and 'href' in first_op['_links']['transaction'] else None
             if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
                 raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
@@ -499,7 +499,7 @@ class FeedActivityCreateForm(forms.Form):
             # Send a bulk email to all followers that user has made a trade
             recipient_list = [ u.email for u in request_user_profile.followers\
                 .filter(profile__allow_trade_email=True) ]
-            offer_type_display = 'bought' if record['buying_asset_type'] != 'native' else 'sold'
+            offer_type_display = 'buy' if record['buying_asset_type'] != 'native' else 'sell'
             amount_display = str(float(record['price']) * float(record['amount'])) if offer_type == 'buying' else record['amount']
             price_display = str(round(1/float(record['price']), 7)) if offer_type == 'buying' else record['price']
             asset_path = reverse('nc:asset-detail', kwargs={'slug': asset.asset_id})

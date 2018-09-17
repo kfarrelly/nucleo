@@ -48,7 +48,7 @@ six==1.10.0
 SSEClient==0.0.19
 stellar-base==0.1.8.1
 stream-django==1.4.0
-stream-python==2.8.1
+stream-python==2.11.0
 toml==0.9.4
 tzlocal==1.5.1
 urllib3==1.22

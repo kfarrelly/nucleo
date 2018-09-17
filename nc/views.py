@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime, parse, requests, stream, sys
+import datetime, dateutil.parser, parse, requests, stream, sys
 
 from allauth.account.adapter import get_adapter
 from allauth.account import views as allauth_account_views
@@ -36,6 +36,7 @@ from stellar_base.asset import Asset as StellarAsset
 from stellar_base.operation import Operation
 from stellar_base.stellarxdr import Xdr
 
+from stream_django.client import stream_client
 from stream_django.feed_manager import feed_manager
 
 from urlparse import urlparse
@@ -1542,22 +1543,46 @@ class ActivityCreateView(mixins.AjaxableResponseMixin, generic.View):
     """
     Creates an activity feed record given the JSON POST data
     received from Stellar Notifier listener watching account subscription.
+
+    NOTE: Currently only listening for payments from outside sources.
+    TODO: Eventually spin off FeedActivityCreateForm functionality into this view.
     """
     def _is_valid(self, request):
         """
-        Verifies auth token and signature header.
+        Verifies auth token and signature header, plus whether request body
+        has tx_hash and created times.
 
         NOTE: Headers will have keys "X-Request-ED25519-Signature" and
         "Authorization: Token <your_token>".
         """
         # auth_token = parse.parse(settings.STELLAR_NOTIFIER_AUTHORIZATION_FORMAT,
         #     request.META.get(settings.STELLAR_NOTIFIER_AUTHORIZATION_HEADER, 'Token '))
+
+        # Verify body tx info exists
+        self.tx_hash = request.body["transaction"]["hash"] if "transaction" in request.body and "hash" in request.body["transaction"] else None
+        self.created_at = request.body["transaction"]["created_at"] if "transaction" in request.body and "created_at" in request.body["created_at"] else None
+        if not self.tx_hash or not self.created_at:
+            return False
+
         return True
 
+    def _has_been_added(self):
+        """
+        Verifies whether activity feed already has the transaction in it.
+        """
+        resp = stream_client.get_activities(foreign_id_times=[
+            (self.tx_hash, dateutil.parser.parse(self.created_at))
+        ])
+
+        if len(resp["results"]) > 0:
+            return True
+
+        return False
+
     def post(self, request, *args, **kwargs):
-        if self._is_valid(request):
-            # TODO: FEED ACTIVITY FORMATTING ETC ETC
-            # print request.body
+        if self._is_valid(request) and not self._has_been_added():
+            # TODO: USE FeedActivityCreateForm! FEED ACTIVITY FORMATTING ETC ETC
+            print request.body
             return HttpResponse()
         else:
             return HttpResponseNotFound()

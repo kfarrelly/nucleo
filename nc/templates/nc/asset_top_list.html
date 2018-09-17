@@ -330,7 +330,7 @@
 
 {% block nc_script %}
 <script>
-  var CURRENT_DISPLAY = "{{ display }}";
+  var CURRENT_DISPLAY = {% if display == 'activityScore' %}"price_USD"{% else %}"{{ display }}"{% endif %};
   const ALLOWED_DISPLAYS = [
           {% for d in allowed_displays %}
           "{{ d }}",

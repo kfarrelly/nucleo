@@ -152,10 +152,59 @@ class Account(models.Model):
         null=True, blank=True, default=None
     )
 
+    # StellarNotifier subscription id
+    notifier_subscription_id = models.CharField(_('StellarNotifier subscription ID'), max_length=150,
+        null=True, blank=True, default=None)
+
     # NOTE: user.get_full_name(), user.pic, profile_is_private duplicated here
     # so Algolia search index updates work when user updates occur (kept in sync through signals.py)
     user_full_name = models.CharField(max_length=200, null=True, blank=True, default=None)
     user_pic_url = models.URLField(null=True, blank=True, default=None)
+
+    def create_notifier_subscription(self):
+        """
+        Create StellarNotifier subscription for this account
+        and store the returned ID.
+
+        NOTE: see https://github.com/orbitlens/stellar-notifier#create-subscription
+        """
+        # POST to the StellarNotifier subscription endpoint
+        data = {
+            'reaction_url': reverse('nc:activity-create'),
+            'account': this.public_key
+        }
+        r = requests.post(settings.STELLAR_NOTIFIER_SUBSCRIPTION_URL, data=data)
+
+        # Store the returned notifier ID
+        ret = {}
+        if r.status_code == requests.codes.ok:
+            ret = r.json()
+            self.notifier_subscription_id = ret.get("id")
+            self.save()
+
+        # Return the response from notifier
+        return ret
+
+    def remove_notifier_subcription(self):
+        """
+        Remove StellarNotifier subscription for this account.
+
+        NOTE: see https://github.com/orbitlens/stellar-notifier#remove-subscription
+        """
+        # DELETE to the StellarNotifier subscription endpoint
+        # NOTE: StellarNotifier node js has unhandled promise when fetching subscriptions. WHY? Memory mode only?
+        ret = {}
+        if self.notifier_subscription_id:
+            data = {
+                'subscription_id': self.notifier_subscription_id
+            }
+            url = '{0}{1}'.format(settings.STELLAR_NOTIFIER_SUBSCRIPTION_URL, self.notifier_subscription_id)
+            r = requests.delete(url, data=data)
+            if r.status_code == requests.codes.ok:
+                ret = r.json()
+
+        # Return the response from notifier
+        return ret
 
     def username(self):
         """

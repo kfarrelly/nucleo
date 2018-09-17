@@ -268,14 +268,21 @@
         assetText = (record.object_type == 'native'? 'XLM': record.object_code);
         objectA.append(document.createTextNode(assetText));
 
-        let action = (record.offer_type == "buying" ? 'bought' : 'sold'),
+        let action = (record.offer_type == "buying" ? 'offered to buy' : 'offered to sell'),
             amount = (record.offer_type == "buying" ? String(parseFloat(record.price) * parseFloat(record.amount)) : record.amount),
-            price = (record.offer_type == "buying" ? String(new BigNumber(1).dividedBy(new BigNumber(record.price).toPrecision(15)).toFixed(7)) : record.price);
+            priceSpan = document.createElement("span"),
+            price = (record.offer_type == "buying" ? String(new BigNumber(1).dividedBy(new BigNumber(record.price).toPrecision(15)).toFixed(7)) : record.price),
+            priceCss = (record.offer_type == "buying" ? 'text-primary font-weight-bold' : 'text-secondary font-weight-bold');
+
+        priceSpan.setAttribute("class", priceCss);
+        priceSpan.append(document.createTextNode(price));
 
         descriptionSpan.append(actorA);
         descriptionSpan.append(document.createTextNode(" " + action + " " + amount + " "));
         descriptionSpan.append(objectA);
-        descriptionSpan.append(document.createTextNode(" at a price of " + price + " XLM"));
+        descriptionSpan.append(document.createTextNode(" at a price of "));
+        descriptionSpan.append(priceSpan);
+        descriptionSpan.append(document.createTextNode(" XLM"));
         break;
       case "follow":
         // Following user activity
