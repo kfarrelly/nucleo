@@ -15,6 +15,8 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 - [x] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
 - [x] Take crypto deposits through [Papaya anchor API](https://apay.io/api).
 - [ ] Offer users ability to buy crypto with fiat through [Coinbase buy widget](https://buy.coinbase.com/).
+- [ ] Airdrop tokens button in profile.js to send payments of tokens to Nucleo users that trust the asset.
+- [ ] Include asset change trust operation in options for nc.forms.FeedActivityCreateForm so issuer receives email when another user trusts the asset.
 - [ ] Create feed activity for deposits and withdrawals. Use server signed string="deposit"/"withdrawal" in transaction memo sent to Papaya for verification.
 - [x] Include user recent activity (from activity feed) in profile section.
 - [x] Improve signup flow. 3 step beginning: personalize profile with list of leading profiles to follow, add/create stellar accounts, trust top Stellar assets.
