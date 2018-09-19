@@ -1712,6 +1712,9 @@ class PerformanceCreateView(generic.View):
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job
         if settings.ENV_NAME == 'work':
+            # Keep track of the time cron job takes for performance reasons
+            cron_start = timezone.now()
+
             # Get asset prices
             asset_prices = self._assemble_asset_prices()
 
@@ -1723,6 +1726,14 @@ class PerformanceCreateView(generic.View):
 
             # Update rank values of top performing users.
             self._update_rank_values()
+
+            # Print out length of time cron took
+            cron_duration = timezone.now() - cron_start
+            print 'Performance create cron job took {0} seconds for {1} assets and {2} portfolios'.format(
+                cron_duration.total_seconds(),
+                Asset.objects.count(),
+                Portfolio.objects.count()
+            )
 
             return HttpResponse()
         else:

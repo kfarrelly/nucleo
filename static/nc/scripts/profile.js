@@ -10,7 +10,11 @@
     // when ready.
     $.when(getTickerAssets(server, requiredAssets))
     .done(function(assets) {
+      // Add in values for assets in terms of USD/XLM
       populateAssetValues(assets);
+
+      // Aggregate portfolio allocation data then plot
+      calculateAndPlotAssetAllocationValues(assets);
     });
   });
 
@@ -20,12 +24,16 @@
     */
     var assetIdSet = new Set([]);
     $('.asset-ticker').each(function(i, assetTickerDiv) {
-      if (assetTickerDiv.hasAttribute('data-asset_id') && assetTickerDiv.dataset.asset_id != 'XLM-native') {
+      if (assetTickerDiv.hasAttribute('data-asset_id')) {
         assetIdSet.add(assetTickerDiv.dataset.asset_id);
       }
     });
     return Array.from(assetIdSet).map(function(assetId) {
-      return new StellarSdk.Asset(assetId.split('-')[0], assetId.split('-')[1]);
+      if (assetId != 'XLM-native') {
+        return new StellarSdk.Asset(assetId.split('-')[0], assetId.split('-')[1]);
+      } else {
+        return StellarSdk.Asset.native();
+      }
     });
   }
 
@@ -77,6 +85,83 @@
         // Make the full ticker div visible
         $(assetTickerDiv).fadeIn();
       }
+    });
+  }
+
+  function calculateAndPlotAssetAllocationValues(data) {
+    /*
+    Use ticker data = { asset.id: asset } to populate asset allocation
+    percentages then plot in allocation chart.
+    */
+    // Determine current value of portfolio assets using all the asset price containers
+    var totalValue = 0.0, portfolioValues = {};
+    $('.asset-ticker').each(function(i, assetTickerDiv) {
+      // For each check for an asset in the fetched data
+      let asset = data[assetTickerDiv.dataset.asset_id];
+      if (asset) {
+        let value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
+        if (value > 0.0) {
+          portfolioValues[asset.id] = value;
+          totalValue += value;
+        }
+      }
+    });
+
+    // Chart data are percentages so go through, divide by total, and multiply by 100
+    if (totalValue > 0.0) {
+      var seriesData = [];
+      Object.keys(portfolioValues).forEach(function(assetId) {
+        var name = assetId;
+        if (assetId != 'XLM-native') {
+          let nameSplit = name.split('-');
+          name = nameSplit[0] + '-' + nameSplit[1].substring(0, 5) + '...' + nameSplit[1].substring(nameSplit[1].length - 5);
+        }
+        seriesData.push({
+          name: name,
+          y: 100 * (portfolioValues[assetId] / totalValue)
+        });
+      });
+      $('.asset-allocation-chart').each(function(i, assetAllocationChartDiv) {
+        createAssetAllocationChart(assetAllocationChartDiv.id, 'Asset Allocation', seriesData);
+      });
+    }
+  }
+
+  function createAssetAllocationChart(containerId, seriesName, seriesData) {
+    /**
+    * Create the chart when all data is loaded into seriesOptions
+    */
+    Highcharts.chart(containerId, {
+      chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+      },
+      title: {
+        text: ''
+      },
+      tooltip: {
+          pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
+      },
+      plotOptions: {
+          pie: {
+              allowPointSelect: true,
+              cursor: 'pointer',
+              dataLabels: {
+                  enabled: true,
+                  format: '<b>{point.name}</b>: {point.percentage:.2f} %',
+                  style: {
+                      color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                  }
+              }
+          }
+      },
+      series: [{
+        name: seriesName,
+        colorByPoint: true,
+        data: seriesData,
+      }]
     });
   }
 
