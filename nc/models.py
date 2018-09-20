@@ -80,6 +80,7 @@ class Profile(models.Model):
     allow_token_issuance_email = models.BooleanField(default=True)
     allow_trade_email = models.BooleanField(default=True)
     allow_follower_email = models.BooleanField(default=True)
+    allow_trust_email = models.BooleanField(default=True)
 
     # NOTE: user.get_full_name(), followers.count() are duplicated here
     # so Algolia search index updates work when user, follower updates occur (kept in sync through signals.py)

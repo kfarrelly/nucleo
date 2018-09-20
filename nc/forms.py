@@ -80,17 +80,19 @@ class UserProfileWithPrivacyUpdateMultiForm(multiform.MultiModelForm):
 class ProfileEmailSettingsUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = [ 'allow_payment_email', 'allow_token_issuance_email',
+        fields = [ 'allow_payment_email', 'allow_token_issuance_email', 'allow_trust_email',
             'allow_trade_email', 'allow_follower_email' ]
         labels = {
             'allow_payment_email': _('Payments'),
             'allow_token_issuance_email': _('New tokens'),
+            'allow_trust_email': _('Asset trusts'),
             'allow_trade_email': _('Trades'),
             'allow_follower_email': _('Follow requests'),
         }
         help_texts = {
             'allow_payment_email': _('Receive email notification when someone sends you a payment.'),
             'allow_token_issuance_email': _('Receive email notification when someone you follow issues a new token.'),
+            'allow_trust_email': _("Receive email notification when someone trusts a token you've issued."),
             'allow_trade_email': _('Receive email notification when someone you follow buys/sells an asset.'),
             'allow_follower_email': _('Receive email notification when someone requests to follow you.'),
         }
@@ -329,8 +331,9 @@ class FeedActivityCreateForm(forms.Form):
         Activity types we send to stream:
             1. Payments (verb: send)
             2. Token issuance (verb: issue)
-            3. Buy/sell of asset (verb: offer)
-            4. Follow user (verb: follow; not handled by this form but
+            3. Trusting of asset (verb: trust)
+            4. Buy/sell of asset (verb: offer)
+            5. Follow user (verb: follow; not handled by this form but
                 instead in UserFollowUpdateView)
 
         For verb = 'follow', 'send' should trigger email(s)/notif(s) to only
@@ -467,6 +470,54 @@ class FeedActivityCreateForm(forms.Form):
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_issue',
                 recipient_list, ctx_email)
 
+        # Trusting of asset (not untrusting)
+        elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.CHANGE_TRUST and float(self.ops[0]['limit']) > 0.0:
+            record = self.ops[0]
+
+            # Get account for issuer and either retrieve or create new asset in our db
+            asset, created = Asset.objects.get_or_create(
+                code=record['asset_code'],
+                issuer_address=record['asset_issuer']
+            )
+
+            # Set the kwargs for feed activity
+            kwargs.update({
+                'verb': 'trust',
+                'object': asset.id,
+                'object_type': asset.type(),
+                'object_code': asset.code,
+                'object_issuer': asset.issuer_address,
+                'object_pic_url': asset.pic_url(),
+                'object_href': asset.href()
+            })
+
+            # Send an email to issuer of asset
+            asset_issuer_account = asset.issuer
+            asset_issuer_user = asset.issuer.user if asset_issuer_account else None
+            asset_issuer_profile = asset_issuer_user.profile if asset_issuer_user else None
+            if asset_issuer_account and asset_issuer_user and asset_issuer_profile and asset_issuer_profile.allow_trust_email:
+                asset_display = record['asset_code']
+                profile_path = reverse('nc:user-detail', kwargs={'slug': self.request_user.username})
+                profile_url = build_absolute_uri(self.request, profile_path)
+                email_settings_path = reverse('nc:user-settings-redirect')
+                email_settings_url = build_absolute_uri(self.request, email_settings_path)
+                ctx_email = {
+                    'current_site': current_site,
+                    'username': self.request_user.username,
+                    'asset': asset_display,
+                    'account_name': asset_issuer_account.name,
+                    'account_public_key': asset_issuer_account.public_key,
+                    'profile_url': profile_url,
+                    'email_settings_url': email_settings_url,
+                }
+                get_adapter(self.request).send_mail('nc/email/feed_activity_trust',
+                    asset_issuer_user.email, ctx_email)
+
+            # Set the redirect URL to the asset detail page
+            trust_path = reverse('nc:asset-trust-list', kwargs={'slug': asset.asset_id})
+            trust_url = build_absolute_uri(self.request, trust_path)
+            self.success_url = trust_url
+
         # Buy/sell of asset
         elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
             record = self.ops[0]
@@ -521,6 +572,7 @@ class FeedActivityCreateForm(forms.Form):
 
             # Set the redirect URL to the asset detail page
             self.success_url = asset_url
+
         else:
             # Not a supported activity type
             return { 'activity': None, 'success_url': self.success_url }

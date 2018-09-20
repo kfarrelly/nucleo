@@ -1107,7 +1107,7 @@ class AssetUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixin,
 
 
 class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
-    mixins.ViewTypeContextMixin, generic.ListView):
+    mixins.ViewTypeContextMixin, mixins.ActivityFormContextMixin, generic.ListView):
     template_name = 'nc/asset_trust_list.html'
     paginate_by = 50
     view_type = 'asset'

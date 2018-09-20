@@ -9,7 +9,10 @@
     streamFeed = streamClient.feed(STREAM_FEED_TYPE, STREAM_FEED_ID, STREAM_FEED_TOKEN);
 
     // Load the first batch of activities by clicking the "more" button
-    $('#moreButton')[0].click()
+    let moreButton = $('#moreButton');
+    if (moreButton) {
+      moreButton.click();
+    }
   });
 
   /** Load more activity items when the MORE button is clicked **/
@@ -293,6 +296,17 @@
 
         descriptionSpan.append(actorA);
         descriptionSpan.append(document.createTextNode(" started following "));
+        descriptionSpan.append(objectA);
+        break;
+      case "trust":
+        // Trusting asset
+        // e.x.: <span><a href="" class="text-dark font-weight-bold">@mikey.rf</a> trusted <a href="" class="text-dark font-weight-bold">MOBI</a></span>
+        featherIcon = "shield";
+
+        objectA.append(document.createTextNode(record.object_code));
+
+        descriptionSpan.append(actorA);
+        descriptionSpan.append(document.createTextNode(" trusted "));
         descriptionSpan.append(objectA);
         break;
     }

@@ -110,7 +110,6 @@
       var es = server.operations().cursor('now').forAccount(sourceAccount.id)
         .stream({
         onmessage: function (op) {
-          console.log(op);
           if (op.source_account == sourceAccount.id && op.type_i == STELLAR_OPERATION_CHANGE_TRUST) {
             // Close the event stream connection
             es();
@@ -118,8 +117,11 @@
             // Notify user of successful submission
             displaySuccess(modalHeader, 'Successfully submitted transaction to the Stellar network.');
 
-            // Redirect to success url of form
-            window.location.href = successUrl;
+            // Submit the tx hash to Nucleo servers to create
+            // activity in user feeds
+            let activityForm = $('#activityForm')[0];
+            activityForm.elements["tx_hash"].value = op.transaction_hash;
+            activityForm.submit();
           }
         }
       });

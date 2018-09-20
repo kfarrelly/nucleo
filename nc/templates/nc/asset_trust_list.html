@@ -118,6 +118,12 @@
     </div>
   </form>
 </div>
+
+<!-- Activity Tx Hash Form -->
+<form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
+  {% csrf_token %}
+  {{ activity_form }}
+</form>
 {% endblock %}
 
 

@@ -107,7 +107,7 @@
       }
     });
 
-    // Chart data are percentages so go through, divide by total, and multiply by 100
+    // Chart data in USD value
     if (totalValue > 0.0) {
       var seriesData = [];
       Object.keys(portfolioValues).forEach(function(assetId) {
@@ -118,7 +118,7 @@
         }
         seriesData.push({
           name: name,
-          y: 100 * (portfolioValues[assetId] / totalValue)
+          y: portfolioValues[assetId]
         });
       });
       $('.asset-allocation-chart').each(function(i, assetAllocationChartDiv) {
@@ -142,7 +142,7 @@
         text: ''
       },
       tooltip: {
-          pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
+          pointFormat: '{series.name}: <b>$ {point.y:,.2f}</b>'
       },
       plotOptions: {
           pie: {
