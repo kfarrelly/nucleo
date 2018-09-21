@@ -48,6 +48,10 @@ urlpatterns = [
     url(r'^send/$', views.SendRedirectView.as_view(), name='send-redirect'),
     url(r'^send/payment/$', views.SendDetailView.as_view(), name='send-detail'),
 
+    # Receive
+    url(r'^receive/$', views.ReceiveRedirectView.as_view(), name='receive-redirect'),
+    url(r'^receive/payment/$', views.ReceiveDetailView.as_view(), name='receive-detail'),
+
     # Activity
     # url(r'^activity/create/$', views.ActivityCreateView.as_view(), name='activity-create'),
 

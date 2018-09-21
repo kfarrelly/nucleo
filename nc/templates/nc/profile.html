@@ -281,13 +281,13 @@
           <div class="form-group">
             <label class="control-label sr-only">Issuing Account</label>
             <div class="input-group">
-              <input type="password" name="issuer_secret_key" class="form-control" placeholder="Issuing Account (e.x. SBUVRVHRRGNBFYY...)" aria-label="Issuing Account Secret Key" required>
+              <input type="password" name="issuer_secret_key" class="form-control" placeholder="Issuing Account Secret Key" aria-label="Issuing Account Secret Key" required>
             </div>
           </div>
           <div class="form-group">
             <label class="control-label sr-only">Distribution Account</label>
             <div class="input-group">
-              <input id="issueStellarModalDistributerSecretKey" type="password" name="distributer_secret_key" class="form-control" placeholder="Distribution Account (e.x. SB4YQ6LEODDJRZY...)" aria-label="Distributing Account Secret Key" required>
+              <input id="issueStellarModalDistributerSecretKey" type="password" name="distributer_secret_key" class="form-control" placeholder="Distributing Account Secret Key" aria-label="Distributing Account Secret Key" required>
               <!-- TODO:
               <div class="input-group-append">
                 <button id="issueStellarModalLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#issueStellarModalDistributerSecretKey" data-alert_ref="#issueStellarModalBodyHeader" data-alert_before="false" data-submit_name="Issue Token">
@@ -440,7 +440,7 @@
     <div id="collapse-{{ forloop.counter0 }}" class="collapse account" aria-labelledby="heading-{{ forloop.counter0 }}" data-parent="#accordion" data-more="#more-{{ forloop.counter0 }}">
       <div class="card-body">
         <strong class="py-1">Public Key:</strong>
-        <h6 class="text-secondary w-100 mt-0 pt-0">
+        <h6 class="text-info w-100 mt-0 pt-0">
           <abbr title="Stellar Account Public Key">{{ account.public_key }}</abbr>
         </h6>
 

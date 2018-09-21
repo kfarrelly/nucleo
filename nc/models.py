@@ -431,11 +431,6 @@ class Portfolio(models.Model):
     # Most recent calculated balance values for easy access
     xlm_value = models.FloatField(default=NOT_AVAILABLE)
     usd_value = models.FloatField(default=NOT_AVAILABLE)
-    assets = models.ManyToManyField(
-        Asset,
-        through='Balance',
-        related_name='portfolios_in'
-    )
 
     # Performance stats for: 1d, 1w, 1m, 3m, 6m, 1y.
     # NOTE: Fractional values (i.e. need to mult by 100 to get percentages)
@@ -457,24 +452,11 @@ class Portfolio(models.Model):
 
 
 @python_2_unicode_compatible
-class Balance(models.Model):
-    """
-    Stores current balance data for asset in a portfolio.
-    """
-    NOT_AVAILABLE = -1.0
-
-    portfolio = models.ForeignKey(Portfolio, related_name='balances', on_delete=models.CASCADE)
-    asset = models.ForeignKey(Asset, related_name='portfolio_balances', on_delete=models.CASCADE)
-    xlm_value = models.FloatField(default=NOT_AVAILABLE)
-    usd_value = models.FloatField(default=NOT_AVAILABLE)
-
-    def __str__(self):
-        return str(self.portfolio) + ': ' + str(self.asset) + ': ' + str(self.usd_value)
-
-
-@python_2_unicode_compatible
 class RawPortfolioData(TimeSeriesModel):
-    TIMESERIES_INTERVAL = timedelta(hours=0.5)  # update daily on cron job but put min interval at 1/2 hour to be safe
+    # Update every 5 minutes on cron job but put min interval at 2.5 minutes to be safe.
+    # NOTE: Cron job taking 1 min at this point with 100 portfolios + 100 assets
+    # TODO: Parallelize cron workers for scaling by having separate instances take on smaller subsets of all portfolios?
+    TIMESERIES_INTERVAL = timedelta(minutes=2.5)
     NOT_AVAILABLE = -1.0
 
     portfolio = models.ForeignKey(Portfolio, related_name='rawdata')
@@ -525,10 +507,6 @@ def portfolio_data_collector(queryset, asset_prices):
         pt_user = pt.profile.user
         pt_asset_ids = [ ] # NOTE: keep track of asset_ids in pt to update list of assets user trusts
 
-        # Clear out the current balances for portfolio
-        pt_balances = { } # NOTE: { asset_id: xlm_val } form. append new balance objects for current portfolio values
-        Balance.objects.filter(portfolio=pt).delete()
-
         # Only record portfolio value if user has registered at least one account
         if pt_addrs:
             # Get xlm_val added for each asset held in each account
@@ -546,23 +524,11 @@ def portfolio_data_collector(queryset, asset_prices):
                     # Update the total value
                     xlm_val += float(b['balance']) * price
 
-                    # Update the balance for this asset
-                    if asset_id not in pt_balances:
-                        pt_balances[asset_id] = 0.0
-                    pt_balances[asset_id] += float(b['balance']) * price
-
             # Append to return iterable a dict of the data
             ret.append({ 'portfolio': pt, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })
 
         # Update the list of assets the user associated with the profile trusts in db
         pt_user.assets_trusting.clear()
         pt_user.assets_trusting.add(*Asset.objects.filter(asset_id__in=pt_asset_ids))
-
-        # Bulk create new balance objects
-        balance_objs = [
-            Balance(portfolio=pt, asset_id=model_asset_map[b_asset_id], xlm_value=b_xlm_val, usd_value=b_xlm_val * usd_xlm_price)
-            for b_asset_id, b_xlm_val in pt_balances.iteritems()
-        ]
-        Balance.objects.bulk_create(balance_objs)
 
     return ret

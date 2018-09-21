@@ -1,0 +1,45 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+{% load humanize %}
+{% load nc_extras %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/send.css' %}' />
+{% endblock %}
+
+{% block title %}Nucleo | Receive{% endblock %}
+
+{% block main %}
+<div class="card card-receive my-4">
+  <div class="card-header border-0 d-flex flex-column justify-content-between align-items-start">
+    <h5>Your Accounts To Receive Payment</h5>
+    <span class="text-secondary">Give your public keys to your friends so they can send you crypto.</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="list-group">
+      {% for acc in user.accounts.all %}
+      <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-inline-flex justify-content-start align-items-center">
+          <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 75px; width: 75px;"{% if acc.pic %} src="{{ acc.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
+          <div class="ml-2 d-flex flex-column flex-wrap align-items-start justify-content-center">
+            <strong>{% if acc.name %}{{ acc.name }}{% else %}&nbsp;{% endif %}</strong>
+            <div class="font-italic">Public Key:</div>
+            <div class="btn-group" role="group">
+              <button class="btn btn-light btn-clipboard" title="Copied!" data-toggle="tooltip" data-placement="top" data-trigger="click" data-clipboard-text="{{ acc.public_key }}">
+                <span data-feather="copy"></span>
+              </button>
+              <button value="{{ acc.public_key }}" title="Stellar Account Public Key" class="btn btn-sm btn-light font-weight-bold">
+                {{ acc.public_key }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

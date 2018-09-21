@@ -166,7 +166,7 @@ class ViewTypeContextMixin(object):
     A mixin that adds a view type variable to the context.
 
     Meant to easily identify which navigation item to highlight in HTML.
-    Allowed values are: "leaderboard", "asset", "send", "feed", "profile".
+    Allowed values are: "leaderboard", "asset", "send", "receive", "feed", "profile".
     """
     view_type = ''
 

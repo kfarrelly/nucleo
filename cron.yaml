@@ -2,4 +2,4 @@ version: 1
 cron:
  - name: "performance-job"
    url: "/performance/create/"
-   schedule: "0 * * * *"
+   schedule: "*/5 * * * *"

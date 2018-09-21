@@ -1532,6 +1532,17 @@ class SendDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
     view_type = 'send'
 
 
+## Receive
+class ReceiveRedirectView(LoginRequiredMixin, generic.RedirectView):
+    query_string = True
+    pattern_name = 'nc:receive-detail'
+
+class ReceiveDetailView(LoginRequiredMixin, mixins.IndexContextMixin,
+    mixins.ViewTypeContextMixin, mixins.ActivityFormContextMixin, generic.TemplateView):
+    template_name = "nc/receive.html"
+    view_type = 'receive'
+
+
 # TODO: For way later down the line in the roadmap.
 # Refactor this so it's in a separate 'api' Django app
 # API Viewsets

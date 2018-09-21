@@ -70,6 +70,10 @@
           <span data-feather="send"></span>
           Send
         </a>
+        <a class="dropdown-item" href="{% url 'nc:receive-redirect' %}">
+          <span data-feather="download"></span>
+          Receive
+        </a>
         <a class="dropdown-item" href="{% url 'nc:feed-redirect' %}">
           <span data-feather="activity"></span>
           Feed
@@ -130,6 +134,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a {% if view_type == 'receive' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:receive-redirect' %}">
+                <span data-feather="download"></span>
+                Receive{% if view_type == 'receive' %} <span class="sr-only">(current)</span>{% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
               <a {% if view_type == 'feed' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:feed-redirect' %}">
                 <span data-feather="activity"></span>
                 Feed{% if view_type == 'feed' %} <span class="sr-only">(current)</span>{% endif %}
@@ -177,6 +187,19 @@ $(function () {
 
 $('.popover-dismiss').popover({
   trigger: 'focus'
+});
+</script>
+
+<!-- Clipboard -->
+<script>
+new ClipboardJS('.btn-clipboard');
+
+$('.btn-clipboard[data-toggle="tooltip"]').on('click', function(e) {
+  let delay = ($(this).data('fade_delay') ? parseFloat(this.dataset.fade_delay) : 1000),
+      button = this;
+  setTimeout(function() {
+    $(button).tooltip('hide');
+  }, delay);
 });
 </script>
 
