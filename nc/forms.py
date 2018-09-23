@@ -1,5 +1,6 @@
-import base64, dateutil.parser
+import base64, dateutil.parser, requests
 
+from allauth.account import forms as allauth_account_forms
 from allauth.account.adapter import get_adapter
 from allauth.utils import build_absolute_uri
 
@@ -29,6 +30,35 @@ from stream_django.feed_manager import feed_manager
 from .models import Account, Asset, Profile
 
 
+# Allauth
+class SignupForm(allauth_account_forms.SignupForm):
+    """
+    Override of allauth SignupForm.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        Override __init__ to store reCAPTCHA response.
+        """
+        self.recaptcha_response = kwargs.pop('g-recaptcha-response')
+        super(SignupForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        """
+        Override to validate reCAPTCHA before saving.
+        """
+        # Call the super
+        super(SignupForm, self).clean()
+        # POST to the reCAPTCHA verification endpoint
+        data = {
+            'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
+            'response': self.recaptcha_response
+        }
+        r = requests.post(settings.GOOGLE_RECAPTCHA_VERIFICATION_URL, data=data)
+        if not r.json().get('success'):
+            raise ValidationError(_('reCAPTCHA invalid. Please verify you are not a robot.'))
+
+
+# nc
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = get_user_model()
@@ -177,7 +207,6 @@ class AccountCreateForm(forms.ModelForm):
             profile = user.profile
 
             # Check the quota hasn't been reached
-            print profile.accounts_created
             if profile.accounts_created + 1 > settings.STELLAR_CREATE_ACCOUNT_QUOTA:
                 raise ValidationError(_("Nucleo only funds {0} new Stellar account{1} per user. You can pay to add more accounts using funds from your current accounts".format(
                     settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
@@ -224,6 +253,10 @@ class AccountCreateForm(forms.ModelForm):
             # TODO: Make sure to look at the response body carefully, as it can be an error or a successful response.
             te_xdr = envelope.xdr()
             response = horizon.submit(te_xdr)
+
+            # Check whether account actually created on ledger
+            if 'hash' not in response:
+                raise ValidationError(_('Nucleo was not able to create a Stellar account at this time'))
 
             # If successful, increment the user's account quota val by one
             profile.accounts_created += 1

@@ -13,7 +13,7 @@
   <ol>
     <li class="done">Update Personal Info</li>
     <li class="active">Add Stellar Account</li>
-    <li class="">Follow Leaders</li>
+    <li class="">Follow Friends</li>
   </ol>
 {% endblock %}
 
@@ -26,6 +26,9 @@
     {% else %}
     <button type="button" class="btn btn-lg btn-primary m-3" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account" disabled>Create New Stellar Account</button>
     {% endif %}
+  </div>
+  <div class="d-flex flex-column justify-content-center align-items-center py-4 my-4">
+    <a href="{% url 'account-signup-following-update' %}" class="btn btn-sm btn-light">Skip To Follow Friends</a>
   </div>
 
   <!-- Add Stellar Account Modal -->

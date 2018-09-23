@@ -109,6 +109,16 @@ class IndexContextMixin(object):
         return kwargs
 
 
+class RecaptchaContextMixin(object):
+    """
+    A mixin that adds the reCAPTCHA site key.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(RecaptchaContextMixin, self).get_context_data(**kwargs)
+        kwargs['recaptcha_site_key'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
+        return kwargs
+
+
 class AccountFormContextMixin(object):
     """
     A mixin that adds the create Stellar account form to the context data.

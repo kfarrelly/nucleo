@@ -119,6 +119,22 @@ class HomeView(generic.TemplateView):
 
 
 ## Allauth
+class SignupView(mixins.RecaptchaContextMixin, allauth_account_views.SignupView):
+    """
+    Override so reCAPTCHA is validated.
+    """
+    form_class = forms.SignupForm
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in the request for authenticated user.
+        """
+        kwargs = super(SignupView, self).get_form_kwargs()
+        kwargs.update({
+            'g-recaptcha-response': self.request.POST.get('g-recaptcha-response') 
+        })
+        return kwargs
+
 class PasswordChangeView(allauth_account_views.PasswordChangeView):
     """
     Override so success url redirects to user settings.
@@ -1369,6 +1385,7 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
                 output_field=BooleanField(),
             ))\
             .prefetch_related('assets_trusting', 'profile__portfolio')\
+            .filter(profile__portfolio__xlm_value__gt=settings.STELLAR_CREATE_ACCOUNT_QUOTA * float(settings.STELLAR_CREATE_ACCOUNT_MINIMUM_BALANCE))\
             .order_by(F(order).desc(nulls_last=True))[:100]
 
 
@@ -1714,9 +1731,12 @@ class PerformanceCreateView(generic.View):
         Portfolio.objects.exclude(rank=None).update(rank=None)
 
         # Iterate through top 100 on yearly performance, and store the rank.
+        # NOTE: Only show people on leaderboard that have added more than Nucleo allocated funds to profile
         # TODO: Expensive! Incorporate django_bulk_update and create custom util.TimeSeries classes
         for i, p in enumerate(list(Portfolio.objects\
-            .exclude(performance_1d=None).order_by('-performance_1d')[:100])):
+            .filter(xlm_value__gt=settings.STELLAR_CREATE_ACCOUNT_QUOTA * float(settings.STELLAR_CREATE_ACCOUNT_MINIMUM_BALANCE))\
+            .exclude(performance_1d=None)\
+            .order_by('-performance_1d')[:100])):
             p.rank = i + 1
             p.save()
 

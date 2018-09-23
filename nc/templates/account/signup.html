@@ -3,7 +3,9 @@
 {% load i18n %}
 {% load bootstrap %}
 
-{% block head %}{% endblock %}
+{% block head %}
+<script src='https://www.google.com/recaptcha/api.js'></script>
+{% endblock %}
 
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href='{% static 'account/base.css' %}' />
@@ -21,6 +23,9 @@
   </a>
   <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
   {{ form|bootstrap_inline }}
+  <div class="my-2">
+    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+  </div>
   <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
   <p class="mt-5 mb-3">Have an account? <a href="{% url 'account_login' %}">Log in</a></p>
 </form>

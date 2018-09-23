@@ -28,7 +28,8 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
     ## Allauth
-    ### Override of account_change_password and additional signup flow
+    ### Override of account_signup, account_change_password and additional signup flow
+    url(r'^accounts/signup/$', nc_views.SignupView.as_view(), name='account_signup'),
     url(r'^accounts/password/change/$', nc_views.PasswordChangeView.as_view(), name='account_change_password'),
     url(r'^accounts/signup/stellar/update/$', nc_views.SignupStellarUpdateView.as_view(), name='account-signup-stellar-update'),
     url(r'^accounts/signup/profile/update/$', nc_views.SignupUserUpdateView.as_view(), name='account-signup-user-update'),
