@@ -177,10 +177,14 @@ class AccountCreateForm(forms.ModelForm):
             profile = user.profile
 
             # Check the quota hasn't been reached
+            print profile.accounts_created
             if profile.accounts_created + 1 > settings.STELLAR_CREATE_ACCOUNT_QUOTA:
-                raise ValidationError(_('Your created accounts quota has been reached. Nucleo only funds {0} new Stellar account{1} per user.'.format(
+                raise ValidationError(_("Nucleo only funds {0} new Stellar account{1} per user. You can pay to add more accounts using funds from your current accounts".format(
                     settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
                 )), code='invalid_quota_amount')
+            # Check user has profile picture to counter bots and preserve social network
+            elif not profile.pic:
+                raise ValidationError(_('To preserve our social network, please upload a profile picture before creating a new Stellar account.'))
 
             # Make a call to Horizon to fund new account with Nucleo base account
             horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()

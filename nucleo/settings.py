@@ -167,7 +167,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Auth
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/leaderboard/'
-SIGNUP_REDIRECT_URL = '/accounts/signup/stellar/update/'
+SIGNUP_REDIRECT_URL = '/accounts/signup/profile/update/'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',

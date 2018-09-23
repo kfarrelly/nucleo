@@ -11,8 +11,8 @@
 
 {% block nav_header %}
   <ol>
+    <li class="done">Update Personal Info</li>
     <li class="active">Add Stellar Account</li>
-    <li class="">Update Personal Info</li>
     <li class="">Follow Leaders</li>
   </ol>
 {% endblock %}
@@ -21,7 +21,11 @@
   <div class="d-flex flex-column justify-content-center align-items-center py-0 mb-3">
     <button type="button" class="btn btn-lg btn-secondary m-3" data-toggle="modal" data-target="#addStellarModal">Add Existing Stellar Account</button>
     <span class="font-weight-bold">OR</span>
+    {% if request.user.profile and request.user.profile.pic %}
     <button type="button" class="btn btn-lg btn-primary m-3" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
+    {% else %}
+    <button type="button" class="btn btn-lg btn-primary m-3" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account" disabled>Create New Stellar Account</button>
+    {% endif %}
   </div>
 
   <!-- Add Stellar Account Modal -->
@@ -127,7 +131,7 @@
   </div>
 
   <!-- Add Stellar Account Public Key Form -->
-  <form method="POST" id="addStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-create' %}" data-success="{% url 'account-signup-user-update' %}">
+  <form method="POST" id="addStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-create' %}" data-success="{% url 'account-signup-following-update' %}">
     {% csrf_token %}
     {{ account_form }}
     <button type="submit"></button>

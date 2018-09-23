@@ -135,7 +135,7 @@ class SignupUserUpdateView(LoginRequiredMixin, mixins.PrefetchedSingleObjectMixi
     model = get_user_model()
     form_class = forms.UserProfileWithPrivacyUpdateMultiForm
     template_name = 'account/signup_profile_update_form.html'
-    success_url = reverse_lazy('account-signup-following-update')
+    success_url = reverse_lazy('account-signup-stellar-update')
     prefetch_related_lookups = ['profile']
 
     def get_object(self, queryset=None):

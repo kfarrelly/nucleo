@@ -509,7 +509,11 @@
 {% if object.id == request.user.id %}
 <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
   <button type="button" class="btn btn-lg btn-secondary m-2" data-toggle="modal" data-target="#addStellarModal">Add Existing Stellar Account</button>
+  {% if object.profile and object.profile.pic %}
   <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
+  {% else %}
+  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account" disabled>Create New Stellar Account</button>
+  {% endif %}
 </div>
 
 <!-- Add Stellar Account Modal -->
