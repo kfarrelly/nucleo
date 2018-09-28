@@ -33,15 +33,20 @@
     <form method="POST" action="{% url 'nc:user-follow' u.username %}">
     {% csrf_token %}
     <input name="success_url" type="hidden" {% if in_followers %}value="{% url 'nc:user-follower-list' object.username %}?page={{ page_obj.number }}"{% else %}value="{% url 'nc:user-following-list' object.username %}?page={{ page_obj.number }}"{% endif %}>
-    {% if not u.is_following %}
-    <button type="submit" class="btn btn-sm btn-outline-primary">
-      <span data-feather="activity"></span>
-      Follow
-    </button>
-    {% else %}
-    <button type="submit" class="btn btn-sm btn-outline-primary active">
+    {% if u.is_following %}
+    <button type="submit" class="btn btn-sm btn-outline-info active">
       <span data-feather="activity"></span>
       Following
+    </button>
+    {% elif u.requested_to_follow %}
+    <button type="submit" class="btn btn-sm btn-outline-info active">
+      <span data-feather="activity"></span>
+      Requested
+    </button>
+    {% else %}
+    <button type="submit" class="btn btn-sm btn-outline-info">
+      <span data-feather="activity"></span>
+      Follow
     </button>
     {% endif %}
     </form>

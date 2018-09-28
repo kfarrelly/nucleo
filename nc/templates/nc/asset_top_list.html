@@ -14,141 +14,62 @@
 
 {% block main %}
 {% if request.user.is_authenticated %}
-<div class="card mt-4">
-  <div class="card-header">
-    <h6>Assets In Your Portfolio</h6>
-  </div>
-  <div class="card-body bg-dark text-center">
-    <div id="carouselIndicators" class="carousel slide px-3" data-ride="carousel">
-      <div class="carousel-inner" style="height: 22rem;">
-        {% for tup, asset in assets.items %}
-        <div {% if forloop.first %}class="carousel-item active"{% else %}class="carousel-item"{% endif %}>
-          <div class="card box-shadow text-center m-auto" style="max-width: 15rem;">
-            {% if asset.asset_type == 'native' %}
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="text-success" data-feather="check-circle"></span>
-              <a href="{% url 'nc:asset-detail' 'XLM-native' %}"><span data-feather="info"></span></a>
-            </div>
-            <div class="card-body">
-              <div class="mb-2">
-                <a href="{% url 'nc:asset-detail' 'XLM-native' %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="{% static 'nc/images/rocket.png' %}" style="height: 75px; width: 75px;"></a>
-              </div>
-              <a href="{% url 'nc:asset-detail' 'XLM-native' %}" class="d-inline-block mb-2 text-info">
-                <strong>XLM</strong>
-              </a>
-              <div class="mb-0">
-                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-                <div data-asset_id='XLM-native' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
-              </div>
-            </div>
-            <div class="card-footer text-muted w-100">
-              <div style="font-weight: 500;">
-                Stellar Network
-              </div>
-              <div><small>Native Lumens</small></div>
-            </div>
-            {% else %}
-            {% with model_assets|get_item:tup as model_asset %}
-            {% with asset.asset_code|add:'-'|add:asset.asset_issuer as asset_id %}
-            {% if model_asset %}
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span {% if model_asset.verified %}class="text-success" data-feather="check-circle"{% else %}class="text-danger" data-feather="alert-octagon"{% endif %}></span>
-              <a href="{% url 'nc:asset-detail' asset_id %}"><span data-feather="info"></span></a>
-            </div>
-            <div class="card-body">
-              <div class="mb-2">
-                <a href="{% url 'nc:asset-detail' asset_id %}"><img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} style="height: 75px; width: 75px;"></a>
-              </div>
-              <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
-                <strong>{{ model_asset.code }}</strong>
-              </a>
-              <div class="mb-0">
-                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-                <div data-asset_id='{{ asset_id }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
-              </div>
-            </div>
-            <div class="card-footer text-muted w-100">
-              {% if asset.asset_issuer in issuers %}
-              {% with issuers|get_item:asset.asset_issuer as issuer %}
-              {% with issuer.user as user %}
-              <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% else %}{{ user.get_full_name }}{% endif %}</div>
-              <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}
-                 (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
-              </small></div>
-              {% endwith %}
-              {% endwith %}
-              {% else %}
-              <div style="font-weight: 500;">{% if model_asset.domain %}{{ model_asset.domain }}{% endif %}</div>
-              <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}</small></div>
-              {% endif %}
-            </div>
-            {% else %}
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="text-danger" data-feather="alert-octagon"></span>
-              <span>&nbsp;</span>
-            </div>
-            <div class="card-body">
-              <div class="mb-2">
-                <img class="card-img-top img-object-fit-cover img-thumbnail rounded-circle d-inline-block" src="" style="height: 75px; width: 75px;">
-              </div>
-              <a href="{% url 'nc:asset-detail' asset_id %}" class="d-inline-block mb-2" style="color: black;">
-                <strong>{{ asset.asset_code }}</strong>
-              </a>
-              <div class="mb-0">
-                <h4 class="mb-0">{{ asset.balance|intcomma }}</h4>
-                <div data-asset_id='{{ asset_id }}' data-asset_balance='{{ asset.balance }}' class="asset-ticker" style="display: none;"></div>
-              </div>
-            </div>
-            <div class="card-footer text-muted w-100">
-              {% if asset.asset_issuer in issuers %}
-              {% with issuers|get_item:asset.asset_issuer as issuer %}
-              {% with issuer.user as user %}
-              <div style="font-weight: 500;">{{ user.get_full_name }}</div>
-              <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}
-                 (<a href="{% url 'nc:user-detail' user.username %}">@{{ user.username }}</a>)
-              </small></div>
-              {% endwith %}
-              {% endwith %}
-              {% else %}
-              <div style="font-weight: 500;"></div>
-              <div><small>Issuer: {{ asset.asset_issuer|truncatechars:8 }}{{ asset.asset_issuer|slice:"-5:" }}</small></div>
-              {% endif %}
-            </div>
-            {% endif %}
-            {% endwith %}
-            {% endwith %}
-            {% endif %}
-          </div>
+<div class="list-group mt-4">
+  <div class="list-group-item flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <div class="d-flex flex-row align-items-center my-2">
+        <div class="mr-2">
+          <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 70px; width: 70px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
         </div>
-        {% endfor %}
+        <div class="d-flex flex-column align-items-start justify-content-start">
+          <strong>{{ request.user.get_full_name }}</strong>
+          <small class="text-secondary">@{{ request.user.username }}</small>
+          <small>
+            {% for a in request.user.assets_trusting.all %}
+            <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+            {% endfor %}
+          </small>
+        </div>
       </div>
-      <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="sr-only">Previous</span>
-      </a>
-      <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="sr-only">Next</span>
-      </a>
     </div>
-  </div>
-  <div class="card-footer">
-    <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
-      <span data-feather="user"></span>
-      Head To Profile
-    </a>
-    <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#depositFundsModal">
-      <span data-feather="download"></span>
-      Deposit Funds
-    </button>
-    <a href="{% url 'nc:leaderboard-redirect' %}" class="btn btn-sm btn-outline-warning my-1">
-      <span data-feather="award"></span>
-      Check Leaderboard
-    </a>
-    <a href="{% url 'nc:feed-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
-      <span data-feather="activity"></span>
-      View Activity
-    </a>
+    <div class="d-flex flex-wrap w-100 justify-content-between align-items-end">
+      <div class="d-flex flex-column">
+        <div class="btn-group pr-2 my-1">
+          {% if profile.portfolio.rank %}
+          <a href="{% url 'nc:leaderboard-redirect' %}" title="Leaderboard Ranking (1d)" class="btn btn-sm btn-warning">
+            <span data-feather="award"></span>
+            {{ profile.portfolio.rank }}
+          </a>
+          {% endif %}
+          <button type="button" title="Your Portfolio Value ({{ portfolio_latest_created|naturaltime }})" class="btn btn-sm btn-dark">
+            ${{ portfolio_latest_usd_value|floatformat:2|intcomma }}
+          </button>
+          {% with profile.portfolio|get_attribute:performance_attr as performance %}
+          {% if performance != None %}
+          <button type="button" title="Your Portfolio Performance ({{ date_span }})" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+          </button>
+          {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+      <div class="d-flex flex-column">
+        <div>
+          <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
+            <span data-feather="user"></span>
+            Head To Profile
+          </a>
+          <a href="{% url 'nc:send-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
+            <span data-feather="send"></span>
+            Send Payment
+          </a>
+          <button type="button" class="btn btn-sm btn-outline-dark my-1" data-toggle="modal" data-target="#depositFundsModal">
+            <span data-feather="download"></span>
+            Deposit Funds
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -222,37 +143,149 @@
     </div>
   </form>
 </div>
+
+<!-- Change Trust Modal -->
+<div class="modal fade" id="changeTrustModal" tabindex="-1" role="dialog" aria-labelledby="changeTrustModalTitle" aria-hidden="true">
+  <form method="POST" id="changeTrustModalForm" data-asset_code="" data-asset_issuer="">
+    {% csrf_token %}
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="changeTrustModalTitle">Change Trust For <span class="modal-asset-code"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5 id="changeTrustModalBodyHeader" class="pt-1 mb-3 modal-body-header">Please enter your secret key to toggle trust</h5>
+          <div class="input-group">
+            <div class="input-group">
+              <input id="changeTrustModalSecretKey" type="password" name="secret_key" class="form-control" placeholder="Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key">
+              <div class="input-group-append">
+                <button id="changeTrustModalLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#changeTrustModalSecretKey" data-alert_ref="#changeTrustModalBodyHeader" data-alert_before="false" data-submit_name="Submit">
+                  <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
+                </button>
+              </div>
+            </div>
+            <div class="text-muted mt-2">
+              <small id="changeTrustModalRemovePrompt" style="display: none;">
+                The Stellar account associated with this secret key currently trusts <span class="modal-asset-code"></span>.
+                By clicking Change Trust, you will <span class="font-weight-bold">remove trust</span> for <span class="modal-asset-code"></span>.
+              </small>
+              <small id="changeTrustModalAddPrompt" style="display: none;">
+                The Stellar account associated with this secret key currently does not trust <span class="modal-asset-code"></span>.
+                By clicking Change Trust, you will <span class="font-weight-bold">add trust</span> for <span class="modal-asset-code"></span>.
+              </small>
+            </div>
+          </div>
+          <p class="mt-3">
+            By clicking Change Trust, a transaction with <a href="https://www.stellar.org/developers/guides/concepts/list-of-operations.html#change-trust" class="text-info" target="_blank">Change Trust</a> operation will be added to the Stellar Network.
+          </p>
+          <div class="text-danger mt-4">
+            <strong>Security Notes</strong>
+            <ul>
+              <li>We do NOT store your secret key. Your secret key is never sent to our servers.</li>
+              <li>Nucleo uses your secret key to sign off on this modification to the Stellar ledger.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Change Trust</span></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Activity Tx Hash Form -->
+<form method="POST" id="activityForm" class="d-none" action="{% url 'nc:feed-activity-create' %}">
+  {% csrf_token %}
+  <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+  {{ activity_form }}
+</form>
+
+{% if request.user.follower_requests.count > 0 %}
+<div class="card card-requests my-4">
+  <div class="card-header border-0">
+    Follower requests
+  </div>
+  <div class="card-body p-0">
+    {% for fr in follower_requests %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="{% url 'nc:user-detail' fr.requester.username %}" class="list-group-item-action d-inline-flex justify-content-start align-items-center">
+        <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if fr.requester.profile and fr.requester.profile.pic %} src="{{ fr.requester.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+        <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+          <strong>{{ fr.requester.get_full_name }}</strong>
+          <small class="text-muted">@{{ fr.requester.username }}</small>
+        </div>
+      </a>
+      <div class="btn-group">
+        <form method="POST" action="{% url 'nc:user-follow-request-update' fr.requester.username %}">
+          {% csrf_token %}
+          <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-sm btn-outline-primary">Confirm</button>
+        </form>
+        <form method="POST" class="ml-1" action="{% url 'nc:user-follow-request-delete' fr.requester.username %}">
+          {% csrf_token %}
+          <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 {% endif %}
 
-<div class="card mt-4">
+<div class="card mt-3 mb-2">
+  <div class="card-body p-0 m-0">
+    <ul class="nav nav-pills nav-justified">
+      <li class="nav-item">
+        <a title="Leaderboard" class="nav-link btn-outline-warning rounded-0 rounded-left" href="{% url 'nc:leaderboard-redirect' %}">
+          <span data-feather="award"></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a title="Trade" class="nav-link btn-outline-success rounded-0 active" href="{% url 'nc:trade-redirect' %}">
+          <span data-feather="trending-up"></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a title="Feed" class="nav-link btn-outline-info rounded-0 rounded-right" href="{% url 'nc:feed-redirect' %}">
+          <span data-feather="activity"></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
   <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
     <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
       <h5>Top Assets On Stellar</h5>
-      <span class="text-secondary">Select the asset you wish to trade</span>
+      <span class="text-secondary">Choose an asset to trade on Stellar's built-in DEX</span>
     </div>
     <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
-      {% if display != 'activityScore' %}
-      {% with display|slice:"-3:" as currency %}
       <div class="btn-group my-1" role="group">
-        <a href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}USD&order_by={{ order_by }}" {% if currency == 'USD' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>USD</a>
-        <a href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}XLM&order_by={{ order_by }}" {% if currency == 'XLM' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>XLM</a>
+        <a {% if display == 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display={{ display }}&counter_code=USD&order_by={{ order_by }}"{% else %}href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}USD&counter_code=USD&order_by={{ order_by }}"{% endif %} {% if counter_code == 'USD' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>USD</a>
+        <a {% if display == 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display={{ display }}&counter_code=XLM&order_by={{ order_by }}"{% else %}href="{% url 'nc:asset-top-list' %}?display={{ display|slice:"0:-3" }}XLM&counter_code=XLM&order_by={{ order_by }}"{% endif %} {% if counter_code == 'XLM' %}class="btn btn-sm btn-light active"{% else %}class="btn btn-sm btn-light"{% endif %}>XLM</a>
       </div>
-      {% endwith %}
-      {% endif %}
       <div class="btn-group my-1" role="group">
-        <a {% if display == 'activityScore' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+        <a {% if display == 'activityScore' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=activityScore&counter_code={{ counter_code }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&counter_code={{ counter_code }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% else %}href="{% url 'nc:asset-top-list' %}?display=activityScore&counter_code={{ counter_code }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
           {% if display == 'activityScore' %}
           <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>
           {% endif %}
           Activity
         </a>
-        <a {% if display == 'price_USD' or display == 'price_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_USD&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+        <a {% if display == 'price_USD' or display == 'price_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=price_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=price_{{ counter_code }}&counter_code={{ counter_code }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
           {% if display == 'price_USD' or display == 'price_XLM' %}
           <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>
           {% endif %}
           Price
         </a>
-        <a {% if display == 'change24h_USD' or display == 'change24h_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_USD&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
+        <a {% if display == 'change24h_USD' or display == 'change24h_XLM' %}{% if order_by == 'asc' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by=desc"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by=asc"{% endif %} class="btn btn-sm btn-primary active"{% elif display != 'activityScore' %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ display|slice:"-3:" }}&counter_code={{ counter_code }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% else %}href="{% url 'nc:asset-top-list' %}?display=change24h_{{ counter_code }}&counter_code={{ counter_code }}&order_by={{ order_by }}" class="btn btn-sm btn-primary"{% endif %}>
           {% if display == 'change24h_USD' or display == 'change24h_XLM' %}
           <span {% if order_by == 'desc' %}data-feather="chevrons-up"{% else %}data-feather="chevrons-down"{% endif %}></span>{% endif %}
           Change 24h
@@ -264,22 +297,31 @@
     <ol class="list-group">
       {% for a in page_obj %}
       <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-flex flex-column mr-2">
+          <button type="button" title="StellarTerm Activity Score" style="width: 60px;" {% if a.activityScore %}class="btn btn-sm btn-warning my-1"{% else %}class="btn btn-sm btn-light text-light my-1"{% endif %}>
+            <span data-feather="star"></span>
+            {% if a.activityScore %}{{ a.activityScore|floatformat:0 }}{% endif %}
+          </button>
+          {% if a.is_trusting %}
+          <button type="button" title="Change Trust" style="width: 60px;" class="btn btn-sm btn-outline-primary my-1 active"{% if a.asset_id != 'XLM-native' %} data-toggle="modal" data-target="#changeTrustModal" data-asset_code="{{ a.code }}" data-asset_issuer="{{ a.issuer_address }}"{% endif %}>
+            <span data-feather="shield"></span>
+          </button>
+          {% else %}
+          <button type="button" title="Change Trust" style="width: 60px;" class="btn btn-sm btn-outline-primary my-1"{% if a.asset_id != 'XLM-native' %} data-toggle="modal" data-target="#changeTrustModal" data-asset_code="{{ a.code }}" data-asset_issuer="{{ a.issuer_address }}"{% endif %}>
+            <span data-feather="shield"></span>
+          </button>
+          {% endif %}
+        </div>
         <a href="{% url 'nc:asset-detail' a.asset_id %}" class="list-group-item list-group-item-action p-0 border-0">
           <div class="d-inline-flex justify-content-start align-items-center">
-            <span class="badge badge-white mr-2">{{ forloop.counter0|add:page_top_number }}</span>
-            <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 50px; width: 50px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+            <img class="img-object-fit-cover img-thumbnail rounded-circle flex-auto" style="height: 70px; width: 70px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
             <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
               <strong>{{ a.code }}</strong>
               <small class="text-muted">{% if a.domain %}{{ a.domain }}{% endif %}</small>
             </div>
           </div>
         </a>
-        <div class="asset-ticker py-1">
-          <button type="button" title="StellarTerm Activity Score" class="d-none btn btn-sm btn-warning btn-topassets btn-activityScore">
-            <span data-feather="star"></span>
-            {{ a.activityScore }}
-          </button>
-
+        <div class="ml-2 asset-ticker">
           {% with a|get_attribute:'price_USD' as display_val %}
           {% with a|get_attribute:'change24h_USD' as performance %}
           <button type="button" {% if performance and display_val != None %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topassets btn-price_USD"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topassets btn-price_USD"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topassets btn-price_USD"{% endif %}>
@@ -311,8 +353,8 @@
 <div class="pagination mt-2">
     <span class="step-links">
         {% if page_obj.has_previous %}
-            <a href="?display={{ display }}&order_by={{ order_by }}&page=1">&laquo; First</a>
-            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&counter_code={{ counter_code }}&page=1">&laquo; First</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&counter_code={{ counter_code }}&page={{ page_obj.previous_page_number }}">Previous</a>
         {% endif %}
 
         <span class="current">
@@ -320,8 +362,8 @@
         </span>
 
         {% if page_obj.has_next %}
-            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.next_page_number }}">Next</a>
-            <a href="?display={{ display }}&order_by={{ order_by }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&counter_code={{ counter_code }}&page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?display={{ display }}&order_by={{ order_by }}&counter_code={{ counter_code }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
         {% endif %}
     </span>
 </div>
@@ -330,12 +372,11 @@
 
 {% block nc_script %}
 <script>
-  var CURRENT_DISPLAY = {% if display == 'activityScore' %}"price_USD"{% else %}"{{ display }}"{% endif %};
+  var CURRENT_DISPLAY = {% if display == 'activityScore' %}"price_{{ counter_code }}"{% else %}"{{ display }}"{% endif %};
   const ALLOWED_DISPLAYS = [
-          {% for d in allowed_displays %}
-          "{{ d }}",
-          {% endfor %}
-        ];
+    "price_{{ counter_code }}",
+    "change24h_{{ counter_code }}"
+  ];
 </script>
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
 <script src="{% static 'nc/scripts/asset_top.js' %}"></script>

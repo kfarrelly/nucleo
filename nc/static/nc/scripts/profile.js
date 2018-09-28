@@ -47,40 +47,76 @@
       // For each check for an asset in the fetched data
       let asset = data[assetTickerDiv.dataset.asset_id];
       if (asset) {
-        // If fetched asset exists, set val and % change
-        // data as container text.
-        var value, valueText, percentChange, valueChange, valueChangeText;
-        // Reference to USD val and % change
-        value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
-        valueText = numeral(value).format('$0,0.00');
-        percentChange = asset.change24h_USD/100;
-        valueChange = value * percentChange;
-        valueChangeText = numeral(valueChange).format('$0,0.00');
+        if (!$(assetTickerDiv).data('asset_balance')) {
+          // Then simply filling in the price
+          // If fetched asset exists, set USD, XLM val and % change
+          // data as container text.
+          let usdPrice = asset.price_USD,
+              xlmPrice = asset.price_XLM,
+              usdPercentChange = asset.change24h_USD/100,
+              xlmPercentChange = asset.change24h_XLM/100;
 
-        // Create the asset value div and append to ticker div
-        assetValueDiv = document.createElement('div');
-        assetValueDiv.classList.add('text-muted');
-        assetValueDiv.textContent = valueText;
-        assetTickerDiv.appendChild(assetValueDiv);
+          // Set inner content for asset values
+          // NOTE: Not using numeral() to format here and
+          // trusting StellarTerm returned price val for sig figs
+          $(assetTickerDiv).find('.asset-price-usd').each(function(i, assetPriceUsd) {
+            if (usdPrice) {
+              assetPriceUsd.textContent = numeral(usdPrice).format('$0,0.0000');
+              if (usdPercentChange > 0) {
+                assetPriceUsd.classList.add('text-success');
+              } else if (usdPercentChange < 0) {
+                assetPriceUsd.classList.add('text-danger');
+              }
+            }
+          });
+          $(assetTickerDiv).find('.asset-price-xlm').each(function(i, assetPriceXlm) {
+            // NOTE: check if xlmPrice is even there given some assets mirror XLM (and don't give this attr)
+            if (xlmPrice) {
+              assetPriceXlm.textContent = xlmPrice + ' XLM';
+              if (xlmPercentChange > 0) {
+                assetPriceXlm.classList.add('text-success');
+              } else if (xlmPercentChange < 0) {
+                assetPriceXlm.classList.add('text-danger');
+              }
+            }
+          });
+        } else {
+          // Building the balance ticker div
+          // If fetched asset exists, set val and % change
+          // data as container text.
+          var value, valueText, percentChange, valueChange, valueChangeText;
+          // Reference to USD val and % change
+          value = asset.price_USD * parseFloat(assetTickerDiv.dataset.asset_balance);
+          valueText = numeral(value).format('$0,0.00');
+          percentChange = asset.change24h_USD/100;
+          valueChange = value * percentChange;
+          valueChangeText = numeral(valueChange).format('$0,0.00');
 
-        // Create the 24H change div
-        assetChangeDiv = document.createElement('small');
-        assetChangeDiv.setAttribute('title', 'Change 24h');
-        assetChangeDiv.classList.add('font-weight-bold');
-        changeText = (percentChange > 0 ? valueChangeText + ' (+' + numeral(percentChange).format('0.00%') + ')' : valueChangeText + ' (' + numeral(percentChange).format('0.00%') + ')');
-        assetChangeText = document.createTextNode(changeText);
-        assetChangeDiv.appendChild(assetChangeText);
+          // Create the asset value div and append to ticker div
+          assetValueDiv = document.createElement('div');
+          assetValueDiv.classList.add('text-muted');
+          assetValueDiv.textContent = valueText;
+          assetTickerDiv.appendChild(assetValueDiv);
 
-        // Change asset value color depending
-        // on % change (if exactly zero, don't add color).
-        if (percentChange > 0) {
-          assetChangeDiv.classList.add('text-success');
-        } else if (percentChange < 0) {
-          assetChangeDiv.classList.add('text-danger');
+          // Create the 24H change div
+          assetChangeDiv = document.createElement('small');
+          assetChangeDiv.setAttribute('title', 'Change 24h');
+          assetChangeDiv.classList.add('font-weight-bold');
+          changeText = (percentChange > 0 ? valueChangeText + ' (+' + numeral(percentChange).format('0.00%') + ')' : valueChangeText + ' (' + numeral(percentChange).format('0.00%') + ')');
+          assetChangeText = document.createTextNode(changeText);
+          assetChangeDiv.appendChild(assetChangeText);
+
+          // Change asset value color depending
+          // on % change (if exactly zero, don't add color).
+          if (percentChange > 0) {
+            assetChangeDiv.classList.add('text-success');
+          } else if (percentChange < 0) {
+            assetChangeDiv.classList.add('text-danger');
+          }
+
+          // Append change div to asset ticker
+          assetTickerDiv.appendChild(assetChangeDiv);
         }
-
-        // Append change div to asset ticker
-        assetTickerDiv.appendChild(assetChangeDiv);
 
         // Make the full ticker div visible
         $(assetTickerDiv).fadeIn();

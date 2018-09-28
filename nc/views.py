@@ -131,7 +131,7 @@ class SignupView(mixins.RecaptchaContextMixin, allauth_account_views.SignupView)
         """
         kwargs = super(SignupView, self).get_form_kwargs()
         kwargs.update({
-            'g-recaptcha-response': self.request.POST.get('g-recaptcha-response') 
+            'g-recaptcha-response': self.request.POST.get('g-recaptcha-response')
         })
         return kwargs
 
@@ -599,6 +599,9 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
             u.id for u in get_user_model().objects\
                 .filter(profile__in=self.request.user.profiles_following.all())
         ]
+        requested_to_follow_ids = [
+            r.user.id for r in self.request.user.requests_to_follow.all()
+        ]
 
         # Check whether we're in Followed By list view page
         # If so, then filter queryset by users current user also follows
@@ -609,6 +612,11 @@ class UserFollowerListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
         return qset.annotate(is_following=Case(
                 When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .annotate(requested_to_follow=Case(
+                When(id__in=requested_to_follow_ids, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ))\
@@ -648,10 +656,18 @@ class UserFollowingListView(LoginRequiredMixin, mixins.IndexContextMixin,
             u.id for u in get_user_model().objects\
                 .filter(profile__in=self.request.user.profiles_following.all())
         ]
+        requested_to_follow_ids = [
+            r.user.id for r in self.request.user.requests_to_follow.all()
+        ]
         return get_user_model().objects\
             .filter(profile__in=self.object.profiles_following.all())\
             .annotate(is_following=Case(
                 When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .annotate(requested_to_follow=Case(
+                When(id__in=requested_to_follow_ids, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ))\
@@ -1222,8 +1238,9 @@ class AssetTrustedByListView(LoginRequiredMixin, mixins.IndexContextMixin,
 
 
 class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
-    mixins.LoginRedirectContextMixin, mixins.DepositAssetsContextMixin,
-    mixins.UserAssetsContextMixin, generic.ListView):
+    mixins.LoginRedirectContextMixin, mixins.ActivityFormContextMixin,
+    mixins.DepositAssetsContextMixin, mixins.UserFollowerRequestsContextMixin,
+    mixins.UserPortfolioContextMixin, generic.ListView):
     template_name = "nc/asset_top_list.html"
     paginate_by = 50
     user_field = 'request.user'
@@ -1239,6 +1256,7 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         context['ticker_assets'] = self.ticker_assets
         context['allowed_displays'] = self.allowed_displays
         context['display'] = self.display
+        context['counter_code'] = self.counter_code
         context['order_by'] = self.order_by
 
         # Set list order rank of asset on top of current page
@@ -1263,6 +1281,12 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         self.display = self.request.GET.get('display')
         if self.display not in self.allowed_displays:
             self.display = self.allowed_displays[0] # default to activityScore
+
+        # Get the counter code for reference currency of price, change24h
+        self.allowed_counter_codes = [ 'USD', 'XLM' ]
+        self.counter_code = self.request.GET.get('counter_code')
+        if self.counter_code not in self.allowed_counter_codes:
+            self.counter_code = self.allowed_counter_codes[0] # default to USD
 
         # Ordering type in query param to give flexibility of ascending v. descending
         self.allowed_orderings = [ 'desc', 'asc' ]
@@ -1294,9 +1318,22 @@ class AssetTopListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         # Store the dict version of ticker assets
         self.ticker_assets = { a['id']: a for a in cleaned_ticker_assets }
 
-        # Order the qset by activityScore
-        # TODO: Figure out how to annotate qset properly
-        assets = list(Asset.objects.filter(asset_id__in=top_asset_ids))
+        # Aggregate the assets current user is trusting for annotation
+        is_trusting_asset_ids = []
+        if self.request.user.is_authenticated:
+            is_trusting_asset_ids = [
+                a.asset_id for a in self.request.user.assets_trusting.all()
+            ]
+
+        # Order the qset
+        # TODO: Figure out how to annotate qset properly versus this loop
+        qset = Asset.objects.filter(asset_id__in=top_asset_ids)\
+            .annotate(is_trusting=Case(
+                When(asset_id__in=is_trusting_asset_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+        assets = list(qset)
         for a in assets:
             for display in self.allowed_displays:
                 if a.asset_id == 'XLM-native' and display == 'change24h_USD':
@@ -1315,7 +1352,9 @@ class LeaderboardRedirectView(generic.RedirectView):
     pattern_name = 'nc:leaderboard-list'
 
 class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
-    mixins.LoginRedirectContextMixin, mixins.DepositAssetsContextMixin, generic.ListView):
+    mixins.LoginRedirectContextMixin, mixins.DepositAssetsContextMixin,
+    mixins.UserFollowerRequestsContextMixin, mixins.UserPortfolioContextMixin,
+    generic.ListView):
     template_name = "nc/leaderboard_list.html"
     paginate_by = 50
     view_type = 'leaderboard'
@@ -1326,6 +1365,9 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         """
         context = super(LeaderboardListView, self).get_context_data(**kwargs)
 
+        # TODO: Finish up the three pronged list view clumping AND
+        # spin off performance header into a mixin with self.date_span -> self.performance_date_span
+
         # Store the allowed displays
         context['allowed_displays'] = [ 'usd_value', 'performance_{0}'.format(self.date_span) ]
         context['display'] = 'performance_{0}'.format(self.date_span)
@@ -1333,24 +1375,10 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         # Add date span and associated performance attribute to use to the context
         context['date_span'] = self.date_span
         context['allowed_date_orderings'] = self.allowed_date_orderings
-        context['performance_attr'] = 'performance_{0}'.format(self.date_span)
 
         # Set rank of asset on top of current page
         page_obj = context['page_obj']
         context['page_top_number'] = page_obj.paginator.per_page * (page_obj.number - 1) + 1
-
-        # Include user profile with related portfolio prefetched
-        if self.request.user.is_authenticated:
-            profile = self.request.user.profile
-            prefetch_related_objects([profile], *['portfolio'])
-            context['profile'] = profile
-
-            # Add last portfolio USD value and creation date of raw data
-            portfolio_latest_rawdata = profile.portfolio.rawdata.first()
-            context['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
-                if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
-                else 0.0
-            context['portfolio_latest_created'] = portfolio_latest_rawdata.created if portfolio_latest_rawdata else None
 
         return context
 
@@ -1367,20 +1395,30 @@ class LeaderboardListView(mixins.IndexContextMixin, mixins.ViewTypeContextMixin,
         self.date_span = self.request.GET.get('span')
         if self.date_span not in self.allowed_date_orderings:
             self.date_span = self.allowed_date_orderings[0] # default to 1d
+        self.performance_attr = 'performance_{0}'.format(self.date_span)
         order = 'profile__portfolio__performance_{0}'.format(self.date_span)
 
         # Aggregate the users current user is following and has requested to follow
         # for annotation
         is_following_ids = []
+        requested_to_follow_ids = []
         if self.request.user.is_authenticated:
             is_following_ids = [
                 u.id for u in get_user_model().objects\
                     .filter(profile__in=self.request.user.profiles_following.all())
             ]
+            requested_to_follow_ids = [
+                r.user.id for r in self.request.user.requests_to_follow.all()
+            ]
 
         return get_user_model().objects\
             .annotate(is_following=Case(
                 When(id__in=is_following_ids, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))\
+            .annotate(requested_to_follow=Case(
+                When(id__in=requested_to_follow_ids, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ))\
@@ -1397,6 +1435,7 @@ class FeedRedirectView(LoginRequiredMixin, generic.RedirectView):
 ### News
 class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
     mixins.DepositAssetsContextMixin, mixins.ViewTypeContextMixin,
+    mixins.UserFollowerRequestsContextMixin, mixins.UserPortfolioContextMixin,
     mixins.JSONResponseMixin, generic.ListView):
     template_name = "nc/feed_news_list.html"
     view_type = 'feed'
@@ -1421,16 +1460,6 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
             # Look for a 'format=json' GET argument and only store the object
             # list as 'results' if JSON response expected
             context = { 'results': context['object_list'] }
-        else:
-            # Include user profile with related portfolio prefetched
-            profile = self.request.user.profile
-            prefetch_related_objects([profile], *['portfolio'])
-            context['profile'] = profile
-
-            # Include follower requests with related requester.profile prefetched
-            follower_requests = self.request.user.follower_requests\
-                .prefetch_related('requester__profile')
-            context['follower_requests'] = follower_requests
 
         # Set the next link urls
         context['next'] = '{0}?page={1}&format=json'.format(self.request.path, self.next_page) if self.next_page else None
@@ -1473,29 +1502,12 @@ class FeedNewsListView(LoginRequiredMixin, mixins.IndexContextMixin,
 ### Activity
 class FeedActivityListView(LoginRequiredMixin, mixins.IndexContextMixin,
     mixins.FeedActivityContextMixin, mixins.DepositAssetsContextMixin,
+    mixins.UserFollowerRequestsContextMixin, mixins.UserPortfolioContextMixin,
     mixins.ViewTypeContextMixin, generic.TemplateView):
     feed_type = settings.STREAM_TIMELINE_FEED
     template_name = "nc/feed_activity_list.html"
     user_field = 'request.user'
     view_type = 'feed'
-
-    def get_context_data(self, **kwargs):
-        """
-        Add prefetched user object for profile.
-        """
-        context = super(FeedActivityListView, self).get_context_data(**kwargs)
-
-        # Include user profile with related portfolio prefetched
-        profile = self.request.user.profile
-        prefetch_related_objects([profile], *['portfolio'])
-        context['profile'] = profile
-
-        # Include follower requests with related requester.profile prefetched
-        follower_requests = self.request.user.follower_requests\
-            .prefetch_related('requester__profile')
-        context['follower_requests'] = follower_requests
-
-        return context
 
 class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
     mixins.ViewTypeContextMixin, generic.CreateView):
@@ -1513,6 +1525,7 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
         kwargs = super(FeedActivityCreateView, self).get_form_kwargs()
         kwargs.update({
             'request': self.request,
+            'success_url': self.request.POST.get('success_url')
         })
         kwargs.pop('instance')
         return kwargs
@@ -1536,7 +1549,6 @@ class FeedActivityCreateView(LoginRequiredMixin, mixins.IndexContextMixin,
         self.object = form.save()
         self.success_url = self.object.get('success_url') if 'success_url' in self.object else self.success_url
         return HttpResponseRedirect(self.get_success_url())
-
 
 ## Send
 class SendRedirectView(LoginRequiredMixin, generic.RedirectView):

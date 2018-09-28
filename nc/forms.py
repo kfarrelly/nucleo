@@ -322,7 +322,7 @@ class FeedActivityCreateForm(forms.Form):
         """
         self.request = kwargs.pop('request', None)
         self.request_user = self.request.user if self.request else None
-        self.success_url = None
+        self.success_url = kwargs.pop('success_url', None)
         super(FeedActivityCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -352,7 +352,10 @@ class FeedActivityCreateForm(forms.Form):
             first_op = self.ops[0]
             self.time = dateutil.parser.parse(first_op['created_at'])
             self.tx_href = first_op['_links']['transaction']['href'] if '_links' in first_op and 'transaction' in first_op['_links'] and 'href' in first_op['_links']['transaction'] else None
-            if not self.request_user.accounts.filter(public_key=first_op['source_account']).exists():
+
+            try:
+                self.account = self.request_user.accounts.get(public_key=first_op['source_account'])
+            except ObjectDoesNotExist:
                 raise ValidationError(_('Invalid user id. Decoded account associated with Stellar transaction does not match your user id.'), code='invalid_user')
 
         # Retrieve and store stream feed of current user
@@ -507,8 +510,8 @@ class FeedActivityCreateForm(forms.Form):
             get_adapter(self.request).send_mail_to_many('nc/email/feed_activity_issue',
                 recipient_list, ctx_email)
 
-        # Trusting of asset (not untrusting)
-        elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.CHANGE_TRUST and float(self.ops[0]['limit']) > 0.0:
+        # Trusting of asset
+        elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.CHANGE_TRUST:
             record = self.ops[0]
 
             # Get account for issuer and either retrieve or create new asset in our db
@@ -517,43 +520,57 @@ class FeedActivityCreateForm(forms.Form):
                 issuer_address=record['asset_issuer']
             )
 
-            # Set the kwargs for feed activity
-            kwargs.update({
-                'verb': 'trust',
-                'object': asset.id,
-                'object_type': asset.type(),
-                'object_code': asset.code,
-                'object_issuer': asset.issuer_address,
-                'object_pic_url': asset.pic_url(),
-                'object_href': asset.href()
-            })
-
-            # Send an email to issuer of asset
-            asset_issuer_account = asset.issuer
-            asset_issuer_user = asset.issuer.user if asset_issuer_account else None
-            asset_issuer_profile = asset_issuer_user.profile if asset_issuer_user else None
-            if asset_issuer_account and asset_issuer_user and asset_issuer_profile and asset_issuer_profile.allow_trust_email:
-                asset_display = record['asset_code']
-                profile_path = reverse('nc:user-detail', kwargs={'slug': self.request_user.username})
-                profile_url = build_absolute_uri(self.request, profile_path)
-                email_settings_path = reverse('nc:user-settings-redirect')
-                email_settings_url = build_absolute_uri(self.request, email_settings_path)
-                ctx_email = {
-                    'current_site': current_site,
-                    'username': self.request_user.username,
-                    'asset': asset_display,
-                    'account_name': asset_issuer_account.name,
-                    'account_public_key': asset_issuer_account.public_key,
-                    'profile_url': profile_url,
-                    'email_settings_url': email_settings_url,
-                }
-                get_adapter(self.request).send_mail('nc/email/feed_activity_trust',
-                    asset_issuer_user.email, ctx_email)
-
             # Set the redirect URL to the asset detail page
-            trust_path = reverse('nc:asset-trust-list', kwargs={'slug': asset.asset_id})
-            trust_url = build_absolute_uri(self.request, trust_path)
-            self.success_url = trust_url
+            if not self.success_url:
+                trust_path = reverse('nc:asset-trust-list', kwargs={'slug': asset.asset_id})
+                trust_url = build_absolute_uri(self.request, trust_path)
+                self.success_url = trust_url
+
+            # Test for whether adding/removing trust
+            if float(self.ops[0]['limit']) == 0.0:
+                # Removing trust, so don't add an activity, but remove from
+                # user's asset trusting list.
+                self.account.assets_trusting.remove(asset)
+                if not self.request_user.accounts.filter(assets_trusting=asset).exists():
+                    self.request_user.assets_trusting.remove(asset)
+                return { 'activity': None, 'success_url': self.success_url }
+            else:
+                # Adding trust, so add activity and add to user's asset trusting list.
+                self.account.assets_trusting.add(asset)
+                self.request_user.assets_trusting.add(asset)
+
+                # Set the kwargs for feed activity
+                kwargs.update({
+                    'verb': 'trust',
+                    'object': asset.id,
+                    'object_type': asset.type(),
+                    'object_code': asset.code,
+                    'object_issuer': asset.issuer_address,
+                    'object_pic_url': asset.pic_url(),
+                    'object_href': asset.href()
+                })
+
+                # Send an email to issuer of asset
+                asset_issuer_account = asset.issuer
+                asset_issuer_user = asset.issuer.user if asset_issuer_account else None
+                asset_issuer_profile = asset_issuer_user.profile if asset_issuer_user else None
+                if asset_issuer_account and asset_issuer_user and asset_issuer_profile and asset_issuer_profile.allow_trust_email:
+                    asset_display = record['asset_code']
+                    profile_path = reverse('nc:user-detail', kwargs={'slug': self.request_user.username})
+                    profile_url = build_absolute_uri(self.request, profile_path)
+                    email_settings_path = reverse('nc:user-settings-redirect')
+                    email_settings_url = build_absolute_uri(self.request, email_settings_path)
+                    ctx_email = {
+                        'current_site': current_site,
+                        'username': self.request_user.username,
+                        'asset': asset_display,
+                        'account_name': asset_issuer_account.name,
+                        'account_public_key': asset_issuer_account.public_key,
+                        'profile_url': profile_url,
+                        'email_settings_url': email_settings_url,
+                    }
+                    get_adapter(self.request).send_mail('nc/email/feed_activity_trust',
+                        asset_issuer_user.email, ctx_email)
 
         # Buy/sell of asset
         elif len(self.ops) == 1 and self.ops[0]['type_i'] == Xdr.const.MANAGE_OFFER:
@@ -608,7 +625,8 @@ class FeedActivityCreateForm(forms.Form):
                 recipient_list, ctx_email)
 
             # Set the redirect URL to the asset detail page
-            self.success_url = asset_url
+            if not self.success_url:
+                self.success_url = asset_url
 
         else:
             # Not a supported activity type

@@ -17,55 +17,57 @@
 <div class="list-group mt-4">
   <div class="list-group-item flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
-      <div class="d-flex flex-row align-items-center">
-        <img class="rounded img-object-fit-cover m-2" style="height: 40px; width: 40px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
-        <h5 class="m-2">{{ request.user.get_full_name }}</h5>
-      </div>
-      <div class="d-flex flex-column align-items-end text-right">
-        <span class="text-secondary" style="font-weight: 500">@{{ request.user.username }}</span>
-        <small>
-          {% for a in request.user.assets_trusting.all %}
-          <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
-          {% endfor %}
-        </small>
+      <div class="d-flex flex-row align-items-center my-2">
+        <div class="mr-2">
+          <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 70px; width: 70px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+        </div>
+        <div class="d-flex flex-column align-items-start justify-content-start">
+          <strong>{{ request.user.get_full_name }}</strong>
+          <small class="text-secondary">@{{ request.user.username }}</small>
+          <small>
+            {% for a in request.user.assets_trusting.all %}
+            <img class="img-object-fit-cover rounded-circle" {% if a.name %}title="{{ a.name }}"{% else %}title="{{ a.code }} (Issuer: {{ a.issuer_address|truncatechars:8 }}{{ a.issuer_address|slice:'-5:' }})"{% endif %} style="height: 15px; width: 15px;"{% if a.pic %} src="{{ a.pic.url }}"{% elif a.toml_pic %} src="{{ a.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
+            {% endfor %}
+          </small>
+        </div>
       </div>
     </div>
-    <div class="d-flex flex-wrap w-100 justify-content-between mx-2">
-      <div class="btn-group pr-2 my-1">
-        {% if profile.portfolio.rank %}
-        <a href="{% url 'nc:leaderboard-redirect' %}" title="Leaderboard Ranking (1d)" class="btn btn-sm btn-warning">
-          <span data-feather="award"></span>
-          {{ profile.portfolio.rank }}
-        </a>
-        {% endif %}
-        <button type="button" title="Your Portfolio Value ({{ portfolio_latest_created|naturaltime }})" class="btn btn-sm btn-dark">
-          ${{ portfolio_latest_usd_value|floatformat:2|intcomma }}
-        </button>
-        {% with profile.portfolio|get_attribute:performance_attr as performance %}
-        {% if performance != None %}
-        <button type="button" title="Your Portfolio Performance ({{ date_span }})" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
-          {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
-        </button>
-        {% endif %}
-        {% endwith %}
+    <div class="d-flex flex-wrap w-100 justify-content-between align-items-end">
+      <div class="d-flex flex-column">
+        <div class="btn-group pr-2 my-1">
+          {% if profile.portfolio.rank %}
+          <a href="{% url 'nc:leaderboard-redirect' %}" title="Leaderboard Ranking (1d)" class="btn btn-sm btn-warning">
+            <span data-feather="award"></span>
+            {{ profile.portfolio.rank }}
+          </a>
+          {% endif %}
+          <button type="button" title="Your Portfolio Value ({{ portfolio_latest_created|naturaltime }})" class="btn btn-sm btn-dark">
+            ${{ portfolio_latest_usd_value|floatformat:2|intcomma }}
+          </button>
+          {% with profile.portfolio|get_attribute:performance_attr as performance %}
+          {% if performance != None %}
+          <button type="button" title="Your Portfolio Performance ({{ date_span }})" {% if performance > 0 %}class="btn btn-sm btn-success"{% elif performance < 0 %}class="btn btn-sm btn-danger"{% else %}class="btn btn-sm btn-secondary"{% endif %}>
+            {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+          </button>
+          {% endif %}
+          {% endwith %}
+        </div>
       </div>
-      <div>
-        <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
-          <span data-feather="user"></span>
-          Head To Profile
-        </a>
-        <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#depositFundsModal">
-          <span data-feather="download"></span>
-          Deposit Funds
-        </button>
-        <a href="{% url 'nc:trade-redirect' %}" class="btn btn-sm btn-outline-success my-1">
-          <span data-feather="trending-up"></span>
-          Trade Assets
-        </a>
-        <a href="{% url 'nc:feed-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
-          <span data-feather="activity"></span>
-          View Activity
-        </a>
+      <div class="d-flex flex-column">
+        <div>
+          <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
+            <span data-feather="user"></span>
+            Head To Profile
+          </a>
+          <a href="{% url 'nc:send-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
+            <span data-feather="send"></span>
+            Send Payment
+          </a>
+          <button type="button" class="btn btn-sm btn-outline-dark my-1" data-toggle="modal" data-target="#depositFundsModal">
+            <span data-feather="download"></span>
+            Deposit Funds
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -141,11 +143,69 @@
     </div>
   </form>
 </div>
+
+{% if request.user.follower_requests.count > 0 %}
+<div class="card card-requests my-4">
+  <div class="card-header border-0">
+    Follower requests
+  </div>
+  <div class="card-body p-0">
+    {% for fr in follower_requests %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="{% url 'nc:user-detail' fr.requester.username %}" class="list-group-item-action d-inline-flex justify-content-start align-items-center">
+        <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 50px; width: 50px;"{% if fr.requester.profile and fr.requester.profile.pic %} src="{{ fr.requester.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+        <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
+          <strong>{{ fr.requester.get_full_name }}</strong>
+          <small class="text-muted">@{{ fr.requester.username }}</small>
+        </div>
+      </a>
+      <div class="btn-group">
+        <form method="POST" action="{% url 'nc:user-follow-request-update' fr.requester.username %}">
+          {% csrf_token %}
+          <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-sm btn-outline-primary">Confirm</button>
+        </form>
+        <form method="POST" class="ml-1" action="{% url 'nc:user-follow-request-delete' fr.requester.username %}">
+          {% csrf_token %}
+          <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 {% endif %}
 
-<div class="card mt-4">
+<div class="card mt-3 mb-2">
+  <div class="card-body p-0 m-0">
+    <ul class="nav nav-pills nav-justified">
+      <li class="nav-item">
+        <a title="Leaderboard" class="nav-link btn-outline-warning rounded-0 rounded-left active" href="{% url 'nc:leaderboard-redirect' %}">
+          <span data-feather="award"></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a title="Trade" class="nav-link btn-outline-success rounded-0" href="{% url 'nc:trade-redirect' %}">
+          <span data-feather="trending-up"></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a title="Feed" class="nav-link btn-outline-info rounded-0 rounded-right" href="{% url 'nc:feed-redirect' %}">
+          <span data-feather="activity"></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
   <div class="card-header border-0 d-flex flex-wrap justify-content-between align-items-center">
-    <h5>Top Portfolios On Nucleo</h5>
+    <div class="mb-1 d-flex flex-column justify-content-between align-items-start">
+      <h5>Top Portfolios On Nucleo</h5>
+      <span class="text-secondary">Follow the best performers on Nucleo</span>
+    </div>
     <div class="btn-group" role="group">
       {% for d in allowed_date_orderings %}
       <a href="{% url 'nc:leaderboard-list' %}?span={{ d }}" {% if date_span == d %}class="btn btn-sm btn-primary active"{% else %}class="btn btn-sm btn-primary"{% endif %}>{{ d }}</a>
@@ -156,10 +216,37 @@
     <ol class="list-group">
       {% for u in page_obj %}
       <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-flex flex-column mr-2">
+          <button type="button" title="Leaderboard Ranking (1d)" style="width: 60px;" {% if u.profile.portfolio.rank %}class="btn btn-sm btn-warning my-1"{% else %}class="btn btn-sm btn-light text-light my-1"{% endif %}>
+            <span data-feather="award"></span>
+            {% if u.profile.portfolio.rank %}{{ u.profile.portfolio.rank }}{% endif %}
+          </button>
+          {% if u != request.user %}
+          <form method="POST" action="{% url 'nc:user-follow' u.username %}">
+          {% csrf_token %}
+          <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
+          {% if u.is_following or u.requested_to_follow %}
+          <button type="submit" {% if u.requested_to_follow %}title="Requested"{% else %}title="Following"{% endif %} style="width: 60px;" class="btn btn-sm btn-outline-info my-1 active">
+            <span data-feather="activity"></span>
+            {% if u.requested_to_follow %}
+            <span data-feather="loader"></span>
+            {% endif %}
+          </button>
+          {% else %}
+          <button type="submit" title="Follow" style="width: 60px;" class="btn btn-sm btn-outline-info my-1">
+            <span data-feather="activity"></span>
+          </button>
+          {% endif %}
+          </form>
+          {% else %}
+          <button type="button" style="width: 60px;" class="btn btn-sm btn-light text-light my-1">
+            <span data-feather="activity"></span>
+          </button>
+          {% endif %}
+        </div>
         <a href="{% url 'nc:user-detail' u.username %}" class="list-group-item list-group-item-action p-0 border-0">
           <div class="d-inline-flex justify-content-start align-items-center">
-            <span class="badge badge-white mr-2">{{ forloop.counter0|add:page_top_number }}</span>
-            <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 60px; width: 60px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
+            <img class="img-object-fit-cover img-thumbnail rounded flex-auto" style="height: 70px; width: 70px;"{% if u.profile.pic %} src="{{ u.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
             <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
               <strong>{{ u.get_full_name }}</strong>
               <small class="text-muted">@{{ u.username }}</small>
@@ -171,22 +258,24 @@
             </div>
           </div>
         </a>
-        {% with u.profile.portfolio|get_attribute:'usd_value' as display_val %}
-        {% with u.profile.portfolio|get_attribute:performance_attr as performance %}
-        {% if performance != None %}
-        <button type="button" title="Portfolio Value" {% if performance and display_val >= 0 %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-usd_value"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-usd_value"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-usd_value"{% endif %}>
-          {% if u != request.user and not u.is_following and u.profile.is_private %}
-          <span data-feather="lock"></span>
-          {% else %}
-          {% if display_val >= 0 %}${{ display_val|floatformat:2|intcomma }}{% else %}-{% endif %}
+        <div class="ml-2">
+          {% with u.profile.portfolio|get_attribute:'usd_value' as display_val %}
+          {% with u.profile.portfolio|get_attribute:performance_attr as performance %}
+          {% if performance != None %}
+          <button type="button" title="Portfolio Value" {% if performance and display_val >= 0 %}{% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-usd_value"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-usd_value"{% endif %}{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-usd_value"{% endif %}>
+            {% if u != request.user and not u.is_following and u.profile.is_private %}
+            <span data-feather="lock"></span>
+            {% else %}
+            {% if display_val >= 0 %}${{ display_val|floatformat:2|intcomma }}{% else %}-{% endif %}
+            {% endif %}
+          </button>
+          <button type="button" title="Performance" {% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-{{ performance_attr }}"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-{{ performance_attr }}"{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-{{ performance_attr }}"{% endif %}>
+            {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
+          </button>
           {% endif %}
-        </button>
-        <button type="button" title="Performance" {% if performance > 0 %}class="d-none btn btn-sm btn-success btn-topportfolios btn-{{ performance_attr }}"{% elif performance < 0 %}class="d-none btn btn-sm btn-danger btn-topportfolios btn-{{ performance_attr }}"{% else %}class="d-none btn btn-sm btn-secondary btn-topportfolios btn-{{ performance_attr }}"{% endif %}>
-          {% if performance > 0 %}+{% endif %}{{ performance|percentage }}
-        </button>
-        {% endif %}
-        {% endwith %}
-        {% endwith %}
+          {% endwith %}
+          {% endwith %}
+        </div>
       </div>
       {% endfor %}
     </ol>

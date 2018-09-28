@@ -288,6 +288,12 @@ class Asset(models.Model):
         related_name='assets_trusting'
     )
 
+    # NOTE: Have both user and account trusters to differentiate after add/remove trust with button active state.
+    account_trusters = models.ManyToManyField(
+        Account,
+        related_name='assets_trusting'
+    )
+
     # NOTE: Since these meta fields are defined in the TOML (which Nucleo can't change
     # directly for logged in user clientside), should store them here to be safe
     name = models.CharField(max_length=255, null=True, blank=True, default=None)
@@ -491,7 +497,7 @@ def portfolio_data_collector(queryset, asset_prices):
         {
             'portfolio': pt,
             'addresses': [
-                Address(address=a.public_key, network=settings.STELLAR_NETWORK)
+                (a, Address(address=a.public_key, network=settings.STELLAR_NETWORK))
                 for a in pt.profile.user.accounts.all()
             ]
         }
@@ -511,18 +517,25 @@ def portfolio_data_collector(queryset, asset_prices):
         if pt_addrs:
             # Get xlm_val added for each asset held in each account
             xlm_val = 0.0
-            for a in pt_addrs:
+            for acc, a in pt_addrs:
                 a.get()
+
+                acc_asset_ids = [ ] # NOTE; keep track of asset_ids in account to update list of assets this account trusts
                 for b in a.balances:
                     # Get the asset id and price for asset
                     asset_id = '{0}-{1}'.format(b['asset_code'], b['asset_issuer']) if b['asset_type'] != 'native' else 'XLM-native'
                     price = asset_prices.get(asset_id, 0.0) if b['asset_type'] != 'native' else 1.0
 
                     # Store the involved asset ids
+                    acc_asset_ids.append(asset_id)
                     pt_asset_ids.append(asset_id)
 
                     # Update the total value
                     xlm_val += float(b['balance']) * price
+
+                # Update the list of assets this account trusts in db
+                acc.assets_trusting.clear()
+                acc.assets_trusting.add(*Asset.objects.filter(asset_id__in=acc_asset_ids))
 
             # Append to return iterable a dict of the data
             ret.append({ 'portfolio': pt, 'xlm_value': xlm_val, 'usd_value': xlm_val * usd_xlm_price })

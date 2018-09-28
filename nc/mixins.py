@@ -17,7 +17,7 @@ from stellar_base.address import Address
 from stream_django.feed_manager import feed_manager
 
 from . import forms
-from .models import Account, Asset
+from .models import Account, Asset, RawPortfolioData
 
 
 class PrefetchedSingleObjectMixin(SingleObjectMixin):
@@ -363,5 +363,52 @@ class UserAssetsContextMixin(object):
                 'issuers': issuers,
                 'model_assets': model_assets,
             })
+
+        return kwargs
+
+
+class UserFollowerRequestsContextMixin(object):
+    """
+    A mixin that adds current user's follower requests prefetched.
+    """
+    def get_context_data(self, **kwargs):
+        kwargs = super(UserFollowerRequestsContextMixin, self).get_context_data(**kwargs)
+
+        # Include user profile with related follower requests prefetched
+        if self.request.user.is_authenticated:
+            # Include follower requests with related requester.profile prefetched
+            follower_requests = self.request.user.follower_requests\
+                .prefetch_related('requester__profile')
+            kwargs['follower_requests'] = follower_requests
+
+        return kwargs
+
+
+class UserPortfolioContextMixin(object):
+    """
+    A mixin that adds current user's portfolio related data.
+
+    Default to performance_attr of 1d for portfolio performance to display.
+    """
+    performance_attr = 'performance_1d'
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(UserPortfolioContextMixin, self).get_context_data(**kwargs)
+
+        # Always include the performance attribute
+        kwargs['performance_attr'] = self.performance_attr
+
+        # Include user profile with related portfolio prefetched
+        if self.request.user.is_authenticated:
+            profile = self.request.user.profile
+            prefetch_related_objects([profile], *['portfolio'])
+            kwargs['profile'] = profile
+
+            # Add last portfolio USD value and creation date of raw data
+            portfolio_latest_rawdata = profile.portfolio.rawdata.first()
+            kwargs['portfolio_latest_usd_value'] = portfolio_latest_rawdata.usd_value\
+                if portfolio_latest_rawdata and portfolio_latest_rawdata.usd_value != RawPortfolioData.NOT_AVAILABLE\
+                else 0.0
+            kwargs['portfolio_latest_created'] = portfolio_latest_rawdata.created if portfolio_latest_rawdata else None
 
         return kwargs
