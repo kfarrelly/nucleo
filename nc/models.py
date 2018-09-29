@@ -18,6 +18,7 @@ from functools import partial
 
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.address import Address
+from stellar_base.utils import AccountNotExistError
 
 from timeseries.utils import TimeSeriesModel, TimeSeriesManager
 
@@ -523,33 +524,39 @@ def portfolio_data_collector(queryset, asset_prices):
             xlm_val = 0.0
             for acc, a in pt_addrs:
                 print 'Retrieving from Horizon ' + str(acc)
-                a.get()
+                try:
+                    a.get()
 
-                acc_asset_ids = [ ] # NOTE; keep track of asset_ids in account to update list of assets this account trusts
+                    acc_asset_ids = [ ] # NOTE; keep track of asset_ids in account to update list of assets this account trusts
 
-                print 'Examining balances for ' + str(acc)
-                for b in a.balances:
-                    # Get the asset id and price for asset
-                    asset_id = '{0}-{1}'.format(b['asset_code'], b['asset_issuer']) if b['asset_type'] != 'native' else 'XLM-native'
-                    print 'Asset id for balance: ' + str(asset_id)
+                    print 'Examining balances for ' + str(acc)
+                    for b in a.balances:
+                        # Get the asset id and price for asset
+                        asset_id = '{0}-{1}'.format(b['asset_code'], b['asset_issuer']) if b['asset_type'] != 'native' else 'XLM-native'
+                        print 'Asset id for balance: ' + str(asset_id)
 
-                    price = asset_prices.get(asset_id, 0.0) if b['asset_type'] != 'native' else 1.0
-                    print 'Price for asset: ' + str(price) + ' XLM'
+                        price = asset_prices.get(asset_id, 0.0) if b['asset_type'] != 'native' else 1.0
+                        print 'Price for asset: ' + str(price) + ' XLM'
 
-                    # Store the involved asset ids
-                    acc_asset_ids.append(asset_id)
-                    pt_asset_ids.append(asset_id)
+                        # Store the involved asset ids
+                        acc_asset_ids.append(asset_id)
+                        pt_asset_ids.append(asset_id)
 
-                    # Update the total value
-                    xlm_val += float(b['balance']) * price
+                        # Update the total value
+                        xlm_val += float(b['balance']) * price
 
-                    print 'Value for asset: ' + str(xlm_val) + ' XLM in ' + str(acc)
+                        print 'Value for asset: ' + str(xlm_val) + ' XLM in ' + str(acc)
 
-                # Update the list of assets this account trusts in db
-                print 'Refreshing assets trusted for ' + str(acc)
-                acc.assets_trusting.clear()
-                acc.assets_trusting.add(*Asset.objects.filter(asset_id__in=acc_asset_ids))
-                print 'Asset trusted for ' + str(acc) + ' refreshed'
+                    # Update the list of assets this account trusts in db
+                    print 'Refreshing assets trusted for ' + str(acc)
+                    acc.assets_trusting.clear()
+                    acc.assets_trusting.add(*Asset.objects.filter(asset_id__in=acc_asset_ids))
+                    print 'Asset trusted for ' + str(acc) + ' refreshed'
+
+                except AccountNotExistError:
+                    # If it doesn't exist on the Stellar network, then remove account record from db
+                    print acc
+                    acc.delete()
 
             # Append to return iterable a dict of the data
             print 'Appending raw portfolio data to iterable'
