@@ -1644,6 +1644,7 @@ class PerformanceCreateView(generic.View):
         Assemble a dictionary { asset_id: xlm_price } of current
         market prices in xlm of all assets in our db.
         """
+        print 'Assembling asset prices'
         asset_prices = {}
         for model_asset in Asset.objects.all():
             # NOTE: Expensive! but no other way to implement as far as I see.
@@ -1675,6 +1676,8 @@ class PerformanceCreateView(generic.View):
                 if 'bids' in json and len(json['bids']) > 0:
                     price = float(json['bids'][0]['price'])
                 asset_prices[model_asset.asset_id] = price
+
+        print 'Asset prices assembled'
         return asset_prices
 
     def _record_portfolio_values(self, asset_prices):
@@ -1682,14 +1685,17 @@ class PerformanceCreateView(generic.View):
         Use the given asset_prices dictionary to record current
         portfolio values for all accounts in our db.
         """
+        print 'Recording portfolio values'
         Portfolio.objects.update_timeseries('rawdata',
             partial(portfolio_data_collector, asset_prices=asset_prices))
+        print 'Portfolio values recorded'
 
     def _recalculate_performance_stats(self):
         """
         Recalculate performance stats for all profile portfolios in our db.
         """
         # TODO: Expensive! Figure out how to implement this with aggregates so not looping over queries
+        print 'Recalculating performance stats'
         for portfolio in Portfolio.objects.all():
             # Run queries where filter on created > now - timedelta(1d, 1w, etc.) and
             # not equal to the default of unavailable
@@ -1733,11 +1739,14 @@ class PerformanceCreateView(generic.View):
             # Then save the portfolio
             portfolio.save()
 
+        print 'Performance stats recalculated'
+
     def _update_rank_values(self):
         """
         Update rank values of top 100 users by performance over last day.
         Reset all existing rank values first in update to None.
         """
+        print 'Updating rank values'
         # Reset all existing first so can easily just start from scratch in
         # storing rank list.
         Portfolio.objects.exclude(rank=None).update(rank=None)
@@ -1751,6 +1760,7 @@ class PerformanceCreateView(generic.View):
             .order_by('-performance_1d')[:100])):
             p.rank = i + 1
             p.save()
+        print 'Rank values updated'
 
     def post(self, request, *args, **kwargs):
         # If worker environment, then can process cron job
