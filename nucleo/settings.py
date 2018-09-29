@@ -65,7 +65,7 @@ else:
 INTERNAL_IPS = [ '127.0.0.1' ]
 
 # For error notifications when DEBUG = False
-ADMINS = [('Michael', 'feldman.michael.r@gmail.com')]
+ADMINS = [('Admin', os.environ.get('ADMIN_EMAIL'))]
 
 # Application definition
 
