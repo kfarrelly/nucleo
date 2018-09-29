@@ -1686,8 +1686,13 @@ class PerformanceCreateView(generic.View):
         portfolio values for all accounts in our db.
         """
         print 'Recording portfolio values'
-        Portfolio.objects.update_timeseries('rawdata',
-            partial(portfolio_data_collector, asset_prices=asset_prices))
+        # NOTE: REMOVE! But for debugging now only!
+        import sys
+        try:
+            Portfolio.objects.update_timeseries('rawdata',
+                partial(portfolio_data_collector, asset_prices=asset_prices))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
         print 'Portfolio values recorded'
 
     def _recalculate_performance_stats(self):
