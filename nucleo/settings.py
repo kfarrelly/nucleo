@@ -64,6 +64,8 @@ else:
 # For debug available in template context
 INTERNAL_IPS = [ '127.0.0.1' ]
 
+# For error notifications when DEBUG = False
+ADMINS = [('Michael', 'feldman.michael.r@gmail.com')]
 
 # Application definition
 
