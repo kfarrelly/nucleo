@@ -302,7 +302,11 @@
             <span data-feather="star"></span>
             {% if a.activityScore %}{{ a.activityScore|floatformat:0 }}{% endif %}
           </button>
-          {% if a.is_trusting %}
+          {% if not request.user.is_authenticated %}
+          <a href="{{ login_redirect }}" title="Change Trust" style="width: 60px;" class="btn btn-sm btn-outline-primary my-1">
+            <span data-feather="shield"></span>
+          </a>
+          {% elif a.is_trusting %}
           <button type="button" title="Change Trust" style="width: 60px;" class="btn btn-sm btn-outline-primary my-1 active"{% if a.asset_id != 'XLM-native' %} data-toggle="modal" data-target="#changeTrustModal" data-asset_code="{{ a.code }}" data-asset_issuer="{{ a.issuer_address }}"{% endif %}>
             <span data-feather="shield"></span>
           </button>

@@ -9,21 +9,23 @@
     // and any text associated with asset in modal content
     let changeTrustModalForm = $('#changeTrustModalForm')[0];
 
-    // Clear the form
-    changeTrustModalForm.reset();
+    if (changeTrustModalForm) {
+      // Clear the form
+      changeTrustModalForm.reset();
 
-    // Clear the form attributes
-    changeTrustModalForm.dataset.asset_code = "";
-    changeTrustModalForm.dataset.asset_issuer = "";
+      // Clear the form attributes
+      changeTrustModalForm.dataset.asset_code = "";
+      changeTrustModalForm.dataset.asset_issuer = "";
 
-    // Clear the text within the form
-    $(changeTrustModalForm).find('.modal-asset-code').each(function(i, assetCodeSpan) {
-      assetCodeSpan.textContent = "";
-    });
+      // Clear the text within the form
+      $(changeTrustModalForm).find('.modal-asset-code').each(function(i, assetCodeSpan) {
+        assetCodeSpan.textContent = "";
+      });
 
-    // Hide the add/remove trust prompts
-    $('#changeTrustModalAddPrompt').fadeOut();
-    $('#changeTrustModalRemovePrompt').fadeOut();
+      // Hide the add/remove trust prompts
+      $('#changeTrustModalAddPrompt').fadeOut();
+      $('#changeTrustModalRemovePrompt').fadeOut();
+    }
   };
 
   $(document).ready(function() {
