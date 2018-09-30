@@ -33,6 +33,7 @@ urlpatterns = [
     url(r'^asset/(?P<slug>[\w.@+-]+)/trust/$', views.AssetTrustListView.as_view(), name='asset-trust-list'),
     url(r'^asset/(?P<slug>[\w.@+-]+)/trusting/$', views.AssetTrustedByListView.as_view(), name='asset-trusted-by-list'),
     url(r'^asset/exchange/ticker/$', views.AssetExchangeTickerListView.as_view(), name='asset-exchange-ticker'),
+    url(r'^asset/toml/update/$', views.AssetTomlUpdateView.as_view(), name='asset-toml-update'),
 
     # Leaderboard
     url(r'^leaderboard/$', views.LeaderboardRedirectView.as_view(), name='leaderboard-redirect'),

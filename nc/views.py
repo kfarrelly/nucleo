@@ -1791,3 +1791,56 @@ class PerformanceCreateView(generic.View):
             return HttpResponse()
         else:
             return HttpResponseNotFound()
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AssetTomlUpdateView(generic.View):
+    """
+    Update asset information from fetched toml files on domain of asset.
+
+    AWS EB worker tier cron job POSTs to url endpoint associated with
+    this view.
+    """
+    def _update_assets_from_tomls(self):
+        """
+        For each asset in our db, update details using toml files.
+        """
+        # Query the database for all Asset instances and then
+        # update from toml files. Exclude XLM asset instance.
+        asset_qs = Asset.objects.exclude(issuer_address=None)
+        count = 0
+        for a in asset_qs:
+            # NOTE: this is expensive!
+            toml = None
+            try:
+                if a.toml:
+                    toml = a.toml
+                elif a.domain:
+                    toml = "https://{0}{1}".format(a.domain, settings.STELLAR_TOML_PATH)
+
+                a.update_from_toml(toml)
+                count += 1
+            except:
+                print 'Error occurred fetching {0}'.format(toml)
+
+        print 'Updated {0} assets from .toml files'.format(count)
+
+    def post(self, request, *args, **kwargs):
+        # If worker environment, then can process cron job
+        if settings.ENV_NAME == 'work':
+            # Keep track of the time cron job takes for performance reasons
+            cron_start = timezone.now()
+
+            # For all asets in db, refresh attributes from toml
+            self._update_assets_from_tomls()
+
+            # Print out length of time cron took
+            cron_duration = timezone.now() - cron_start
+            print 'Asset toml update cron job took {0} seconds for {1} assets'.format(
+                cron_duration.total_seconds(),
+                Asset.objects.count()
+            )
+
+            return HttpResponse()
+        else:
+            return HttpResponseNotFound()

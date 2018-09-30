@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.utils import timezone
 
 from nc.models import Asset
+from nc.views import AssetTomlUpdateView
 
 
 class Command(BaseCommand):
@@ -10,22 +12,17 @@ class Command(BaseCommand):
         """
         For each asset in our db, update details using toml files.
         """
-        # Query the database for all Asset instances and then
-        # update from toml files. Exclude XLM asset instance.
-        asset_qs = Asset.objects.exclude(issuer_address=None)
-        count = 0
-        for a in asset_qs:
-            # NOTE: this is expensive!
-            toml = None
-            try:
-                if a.toml:
-                    toml = a.toml
-                elif a.domain:
-                    toml = "https://{0}{1}".format(a.domain, settings.STELLAR_TOML_PATH)
+        asset_toml_view = AssetTomlUpdateView()
 
-                a.update_from_toml(toml)
-                count += 1
-            except:
-                print 'Error occurred fetching {0}'.format(toml)
+        # Keep track of the time cron job takes for performance reasons
+        cron_start = timezone.now()
 
-        print 'Updated {0} assets from .toml files'.format(count)
+        # For all assets in db,refresh attributes from toml
+        asset_toml_view._update_assets_from_tomls()
+
+        # Print out length of time cron took
+        cron_duration = timezone.now() - cron_start
+        print 'Asset toml update cron job took {0} seconds for {1} assets'.format(
+            cron_duration.total_seconds(),
+            Asset.objects.count()
+        )
