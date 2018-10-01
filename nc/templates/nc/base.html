@@ -82,12 +82,14 @@
           <span data-feather="download"></span>
           Receive
         </a>
+        <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="{% url 'nc:user-settings-redirect' %}">
           <span data-feather="settings"></span>
           Settings
         </a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="{% url 'account_logout' %}">Sign out</a>
+        <a class="dropdown-item" href="{% url 'account_logout' %}">
+          Sign out
+        </a>
       </div>
       {% else %}
       <button type="button" class="btn btn-dark navbar-btn dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

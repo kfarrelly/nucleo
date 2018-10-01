@@ -1806,7 +1806,7 @@ class AssetTomlUpdateView(generic.View):
         For each asset in our db, update details using toml files.
         """
         horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
-        
+
         # Query the database for all Asset instances and then
         # update from toml files. Exclude XLM asset instance.
         asset_qs = Asset.objects.exclude(issuer_address=None)

@@ -14,7 +14,10 @@
 
 {% block main %}
 <div class="card bg-white rounded box-shadow my-4">
-  <h5 class="card-header">Send Payment</h5>
+  <div class="card-header d-flex flex-column justify-content-between align-items-start">
+    <h5>Send Payment</h5>
+    <span class="text-secondary">Search for friends to pay by name, Nucleo profile, or Stellar public key.</span>
+  </div>
   <div class="card-body">
     <form id="sendPaymentForm" method="POST">
       {% csrf_token %}
