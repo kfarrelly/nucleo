@@ -1805,23 +1805,37 @@ class AssetTomlUpdateView(generic.View):
         """
         For each asset in our db, update details using toml files.
         """
+        horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
+        
         # Query the database for all Asset instances and then
         # update from toml files. Exclude XLM asset instance.
         asset_qs = Asset.objects.exclude(issuer_address=None)
         count = 0
-        for a in asset_qs:
+        for model_asset in asset_qs:
             # NOTE: this is expensive!
-            toml = None
-            try:
-                if a.toml:
-                    toml = a.toml
-                elif a.domain:
-                    toml = "https://{0}{1}".format(a.domain, settings.STELLAR_TOML_PATH)
+            params = {
+                'asset_issuer': model_asset.issuer_address,
+                'asset_code': model_asset.code,
+            }
+            json = horizon.assets(params=params)
 
-                a.update_from_toml(toml)
+            # Store the asset record from Horizon in context
+            # NOTE: On testnet, won't get a record if mainnet issuer id isn't the same as testnet's
+            record = None
+            if '_embedded' in json and 'records' in json['_embedded'] and json['_embedded']['records']:
+                record = json['_embedded']['records'][0]
+
+            # Use toml attribute of record to update instance from toml file (to fetch)
+            toml_url = record['_links']['toml']['href']\
+                if record and '_links' in record and 'toml' in record['_links']\
+                and 'href' in record['_links']['toml']\
+                else None
+
+            try:
+                model_asset.update_from_toml(toml_url)
                 count += 1
             except:
-                print 'Error occurred fetching {0}'.format(toml)
+                print 'Error occurred fetching {0} for {1}'.format(toml_url, model_asset)
 
         print 'Updated {0} assets from .toml files'.format(count)
 

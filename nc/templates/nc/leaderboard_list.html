@@ -226,15 +226,20 @@
           {% csrf_token %}
           <input name="success_url" type="hidden" value="{{ request.get_full_path }}">
           {% if u.is_following or u.requested_to_follow %}
-          <button type="submit" {% if u.requested_to_follow %}title="Requested"{% else %}title="Following"{% endif %} style="width: 60px;" class="btn btn-sm btn-outline-info my-1 active">
-            <span data-feather="activity"></span>
-            {% if u.requested_to_follow %}
-            <span data-feather="loader"></span>
-            {% endif %}
+          <button type="submit" {% if u.requested_to_follow %}title="Requested"{% else %}title="Following"{% endif %} style="width: 60px; font-size: 0.75em;" class="btn btn-sm btn-outline-info my-1 active">
+            <small>
+              {% if u.requested_to_follow %}
+              Requested
+              {% elif u.is_following %}
+              Following
+              {% endif %}
+            </small>
           </button>
           {% else %}
-          <button type="submit" title="Follow" style="width: 60px;" class="btn btn-sm btn-outline-info my-1">
-            <span data-feather="activity"></span>
+          <button type="submit" title="Follow" style="width: 60px; font-size: 0.75em;" class="btn btn-sm btn-outline-info my-1">
+            <small>
+              Follow
+            </small>
           </button>
           {% endif %}
           </form>
