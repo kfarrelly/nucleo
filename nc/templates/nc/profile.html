@@ -294,9 +294,7 @@
             <div class="d-flex justify-content-start align-items-center">
               {% with asset|get_item:'asset_type' as asset_type %}
               {% if asset_type == 'native' %}
-              <a href="{% url 'nc:asset-detail' 'XLM-native' %}">
-                <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" src="{% static 'nc/images/rocket.png' %}" alt="">
-              </a>
+              <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" src="{% static 'nc/images/rocket.png' %}" alt="">
               <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
                 <strong>XLM</strong>
                 <small class="text-secondary">Stellar Network</small>
@@ -309,9 +307,7 @@
               {% with issuer.user as user %}
 
               {% with model_assets|get_item:tup as model_asset %}
-              <a {% if model_asset %}href="{% url 'nc:asset-detail' model_asset.asset_id %}"{% endif %}>
-                <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
-              </a>
+              <img class="img-object-fit-cover img-thumbnail rounded-circle" style="height: 60px; width: 60px;" {% if model_asset.pic %}src="{{ model_asset.pic.url }}"{% elif model_asset.toml_pic %}src="{{ model_asset.toml_pic }}"{% else %}src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
               <div class="ml-2 d-flex flex-column align-items-start justify-content-center">
                 <strong>{{ asset_code }}</strong>
                 <small class="text-secondary">{% if model_asset and model_asset.domain %}{{ model_asset.domain }}{% endif %}</small>

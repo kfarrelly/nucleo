@@ -3,6 +3,6 @@ cron:
  - name: "performance-job"
    url: "/performance/create/"
    schedule: "*/15 * * * *"
- - name: "asset-toml-job"
-   url: "/asset/toml/update/"
+ - name: "toml-job"
+   url: "/toml/update/"
    schedule: "*/15 * * * *"
