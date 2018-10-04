@@ -25,7 +25,7 @@ urlpatterns = [
     # Web urls
     url(r'^$', nc_views.HomeView.as_view(), name='home'),
     url(r'^', include('nc.urls')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^%s' % settings.ADMIN_PATH, admin.site.urls),
 
     ## Allauth
     ### Override of account_signup, account_change_password and additional signup flow

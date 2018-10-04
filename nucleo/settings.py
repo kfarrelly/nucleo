@@ -203,6 +203,10 @@ USE_L10N = True
 USE_TZ = True
 
 
+# Admin
+ADMIN_PATH = os.environ.get('DJANGO_ADMIN_PATH')
+
+
 # Email
 if ENV_TYPE == 'prod':
     EMAIL_HOST = os.environ.get('SES_HOSTNAME')
