@@ -272,12 +272,15 @@
   <div class="d-flex flex-wrap justify-content-start align-items-center px-3 px-md-5">
     <div class="d-flex flex-column justify-content-start align-items-start">
       <small class="py-1">&copy; 2018 Nucleo.fi</small>
-      <small class="py-1">
-        <a title="Github" href="https://github.com/mikeyrf/nucleo" target="_blank">
-          <img src="{% static 'nc/images/github.png' %}" alt="" width="auto" height="20">
+      <small class="py-1 d-flex flex-row">
+        <a title="Github" href="https://github.com/mikeyrf/nucleo" class="mr-2" target="_blank">
+          <img src="{% static 'nc/images/github.png' %}" alt="" width="auto" height="25">
         </a>
-        <a title="Stellar" href="https://www.stellar.org/blog/stellar-build-challenge-7-results" target="_blank">
-          <img class="rounded-circle" src="{% static 'nc/images/rocket.png' %}" alt="" width="auto" height="20">
+        <a title="Stellar" href="https://www.stellar.org/blog/stellar-build-challenge-7-results" class="mr-2" target="_blank">
+          <img class="rounded-circle" src="{% static 'nc/images/rocket.png' %}" alt="" width="auto" height="25">
+        </a>
+        <a title="Contact" href="mailto:hello@nucleo.fi" class="mr-2">
+          <span class="rounded-circle bg-light text-dark" style="vertical-align: baseline; margin: 0px; padding: 5px; width: auto; height: 25px;" data-feather="mail"></span>
         </a>
       </small>
     </div>
