@@ -373,8 +373,8 @@ class Asset(models.Model):
         updated = False
 
         # Create dict of instance data to check for changes later
-        fields_to_update = [ 'verified', 'toml_pic', 'name', 'description',
-            'conditions', 'display_decimals' ]
+        fields_to_update = [ 'verified', 'toml', 'domain', 'toml_pic', 'name',
+            'description', 'conditions', 'display_decimals' ]
         old_data = model_to_dict(self, fields=fields_to_update)
 
         # Set the new toml value
