@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.db import models
+from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.encoding import python_2_unicode_compatible
@@ -369,6 +370,13 @@ class Asset(models.Model):
         """
         Fetch toml file and update attributes of this instance with its details.
         """
+        updated = False
+
+        # Create dict of instance data to check for changes later
+        fields_to_update = [ 'verified', 'toml_pic', 'name', 'description',
+            'conditions', 'display_decimals' ]
+        old_data = model_to_dict(self, fields=fields_to_update)
+
         # Set the new toml value
         self.toml = toml_url
         self.domain = urlparse.urlparse(toml_url).netloc if toml_url else None
@@ -408,8 +416,15 @@ class Asset(models.Model):
             except requests.exceptions.ConnectionError:
                 self.verified = False
 
+        # Check whether any fields have been updated
+        for field in fields_to_update:
+            if old_data[field] != getattr(self, field):
+                updated = True
+                break
+
         # Save the instance
-        self.save()
+        if updated:
+            self.save()
 
     class Meta:
         unique_together = ('issuer_address', 'code')
