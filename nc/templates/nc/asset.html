@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %}{% endblock %}
+{% block title %}{{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %} | Nucleo{% endblock %}
 
 {% block main %}
 <div class="card mb-4 box-shadow">

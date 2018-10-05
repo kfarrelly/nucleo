@@ -13,6 +13,7 @@ from django.views.generic.detail import SingleObjectMixin
 from operator import attrgetter
 
 from stellar_base.address import Address
+from stellar_base.utils import AccountNotExistError
 
 from stream_django.feed_manager import feed_manager
 
@@ -288,15 +289,32 @@ class UserAssetsContextMixin(object):
 
         if user and user.is_authenticated:
             # Build the accounts dict
+            q_accounts = user.accounts.all()
+            accounts = {
+                account.public_key: account
+                for account in q_accounts
+            }
             addresses = {
                 account.public_key: Address(address=account.public_key,
                     network=settings.STELLAR_NETWORK)
-                for account in user.accounts.all()
+                for account in q_accounts
             }
             # NOTE: This is expensive! Might have to roll out into JS with loader
             # Need to decouple Address initialization from get() method to work!
+            keys_to_pop = []
             for k, a in addresses.iteritems():
-                a.get()
+                try:
+                    a.get()
+                except AccountNotExistError:
+                    # If it doesn't exist on the Stellar network, then remove account record from db
+                    keys_to_pop.append(k)
+                    acc = accounts[k]
+                    acc.delete()
+
+            # For deleted accounts that no longer exist on the network, remove from
+            # addresses dict before next iteration
+            for k in keys_to_pop:
+                addresses.pop(k)
 
             # Build the total assets list for this user. Keep track of
             # all the issuers to query if they have User instances with us

@@ -35,6 +35,7 @@ from stellar_base.address import Address
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.operation import Operation
 from stellar_base.stellarxdr import Xdr
+from stellar_base.utils import AccountNotExistError
 
 from stream_django.client import stream_client
 from stream_django.feed_manager import feed_manager
@@ -1156,6 +1157,10 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
         context['is_native'] = (self.object.issuer_address == None)
 
         # Build the addresses dict
+        accounts = {
+            account.public_key: account
+            for account in self.object_list
+        }
         addresses = {
             account.public_key: Address(address=account.public_key,
                 network=settings.STELLAR_NETWORK)
@@ -1163,8 +1168,20 @@ class AssetTrustListView(LoginRequiredMixin, mixins.IndexContextMixin,
         }
         # NOTE: This is expensive! Might have to roll out into JS with loader
         # Need to decouple Address initialization from get() method to work!
+        keys_to_pop = []
         for k, a in addresses.iteritems():
-            a.get()
+            try:
+                a.get()
+            except AccountNotExistError:
+                # If it doesn't exist on the Stellar network, then remove account record from db
+                keys_to_pop.append(k)
+                acc = accounts[k]
+                acc.delete()
+
+        # For deleted accounts that no longer exist on the network, remove from
+        # addresses dict before next iteration
+        for k in keys_to_pop:
+            addresses.pop(k)
 
         # Build the trust dict with appropriate booleans: { public_key: {already_trusts: bool, can_change_trust: bool} }
         # NOTE: for now, ignore minimum balance issues

@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href='{% static 'nc/profile.css' %}' />
 {% endblock %}
 
-{% block title %}Nucleo | {{ object.get_full_name }} (@{{ object.username }}){% endblock %}
+{% block title %}{{ object.get_full_name }} (@{{ object.username }}) | Nucleo{% endblock %}
 
 {% block main %}
 <div class="card mb-4 box-shadow">
