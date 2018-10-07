@@ -1210,6 +1210,7 @@
       let formHeader = $(this).find('.form-header')[0],
           isLimit = (!this.elements["price"].disabled),
           limitPrice = this.elements["price"].value,
+          memoContent = this.elements["memo-content"].value,
           ledgerButton = this.elements["ledger"],
           successUrl = this.dataset.success;
 
@@ -1245,6 +1246,13 @@
       if (!amount || amount <= 0.0) {
         console.error('Invalid amount', err);
         displayError(formHeader, 'Invalid amount. Must be greater than zero.');
+        return false;
+      }
+
+      // Check if memo details are valid and throw error if exceeds byte length limit
+      if (!isValidMemo(memoContent)) {
+        // Display errors
+        displayError(formHeader, 'Invalid memo length. Please input a valid memo.');
         return false;
       }
 
@@ -1315,6 +1323,7 @@
                 'price': String(sdkPrice),
                 'offerId': 0, // 0 for new offer
               }))
+              .addMemo(StellarSdk.Memo.text(memoContent))
               .build();
 
             // Instantiate client side event listener to verify when
@@ -1393,6 +1402,7 @@
       let formHeader = $(this).find('.form-header')[0],
           isLimit = (!this.elements["price"].disabled),
           limitPrice = this.elements["price"].value,
+          memoContent = this.elements["memo-content"].value,
           ledgerButton = this.elements["ledger"],
           successUrl = this.dataset.success;
 
@@ -1428,6 +1438,13 @@
       if (!amount || amount <= 0.0) {
         console.error('Invalid amount', err);
         displayError(formHeader, 'Invalid amount. Must be greater than zero.');
+        return false;
+      }
+
+      // Check if memo details are valid and throw error if exceeds byte length limit
+      if (!isValidMemo(memoContent)) {
+        // Display errors
+        displayError(formHeader, 'Invalid memo length. Please input a valid memo.');
         return false;
       }
 
@@ -1501,6 +1518,7 @@
                 'price': String(sdkPrice),
                 'offerId': 0, // 0 for new offer
               }))
+              .addMemo(StellarSdk.Memo.text(memoContent))
               .build();
 
             // Instantiate client side event listener to verify when

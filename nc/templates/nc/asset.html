@@ -221,6 +221,13 @@
             </div>
           </div>
         </div>
+        <div id="buyMemoContentContainer" class="form-group">
+          <label for="buyMemoContent" class="d-flex justify-content-between align-items-end">
+            <span>Memo</span>
+            <small class="text-muted"><span id="buyMemoByteDisplay"></span>/28</small>
+          </label>
+          <textarea class="form-control memo-content-text" id="buyMemoContent" name="memo-content" rows="3" placeholder="What's it for?" aria-label="Memo" maxlength="28" required="" data-byte_display="#buyMemoByteDisplay"></textarea>
+        </div>
         <small id="buyMarketPriceContainer" class="asset-ticker" data-asset_id="{{ object.asset_id }}">
           <span class="text-primary" data-feather="trending-up"></span> Market price estimate of <span id="buyMarketPrice" class="font-weight-bold text-primary"></span> XLM to fill order.
         </small>
@@ -285,6 +292,13 @@
             </div>
           </div>
         </div>
+        <div id="sellMemoContentContainer" class="form-group">
+          <label for="sellMemoContent" class="d-flex justify-content-between align-items-end">
+            <span>Memo</span>
+            <small class="text-muted"><span id="sellMemoByteDisplay"></span>/28</small>
+          </label>
+          <textarea class="form-control memo-content-text" id="sellMemoContent" name="memo-content" rows="3" placeholder="What's it for?" aria-label="Memo" maxlength="28" required="" data-byte_display="#sellMemoByteDisplay"></textarea>
+        </div>
         <small id="sellMarketPriceContainer" class="asset-ticker" data-asset_id="{{ object.asset_id }}">
           <span class="text-secondary" data-feather="trending-down"></span> Market price estimate of <span id="sellMarketPrice" class="font-weight-bold text-secondary"></span> XLM to fill order.
         </small>
@@ -322,7 +336,7 @@
           <div class="d-flex justify-content-start align-items-center">
             <img class="card-img-top img-object-fit-cover rounded mr-2" style="height: 25px; width: 25px;"{% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
             <span>
-              {{ account.name }} ({{ account.public_key|truncatechars:8 }}{{ account.public_key|slice:"-5:" }})
+              {% if account.name %}{{ account.name }}{% endif %} ({{ account.public_key|truncatechars:8 }}{{ account.public_key|slice:"-5:" }})
             </span>
           </div>
           <strong class="asset-balance"></strong>
@@ -531,4 +545,5 @@
 <script src="{% static 'nc/scripts/ticker.js' %}"></script>
 <script src="{% static 'nc/scripts/asset_chart.js' %}"></script>
 <script src="{% static 'nc/scripts/asset.js' %}"></script>
+<script src="{% static 'nc/scripts/memo.js' %}"></script>
 {% endblock %}

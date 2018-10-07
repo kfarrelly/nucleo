@@ -45,7 +45,7 @@
           <div class="input-group-prepend">
             <span class="input-group-text" id="basic-addon-from">From:</span>
           </div>
-          <input id="sendFromInput" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (example: SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
+          <input id="sendFromInput" type="password" name="secret_key" class="form-control" placeholder="Your Account Secret Key (e.x. SBUVRVHRRGNBFYY...)" aria-label="Secret Key" aria-describedby="basic-addon-from">
           <div class="input-group-append">
             <button id="sendFromLedger" class="btn btn-outline-secondary ledger-button" type="button" name="ledger" data-public_key="" data-parent="#sendFromInput" data-alert_ref="label[for='sendFromInput']" data-alert_before="true" data-submit_name="Send">
               <img src="{% static 'nc/images/ledger.png' %}" alt="" width="auto" height="16">
@@ -73,27 +73,12 @@
         <small class="text-muted">Available asset balance: <span id="amountInputAvailable"></span></small>
       </div>
       <hr>
-      <div class="form-group">
-        <label for="memoTypeSelect">Memo Type</label>
-        <select class="custom-select" id="memoTypeSelect" name="memo-type" required="">
-          <option>None</option>
-          <option data-memo_placeholder="Memo ID number">Memo ID</option>
-          <option data-memo_placeholder="Up to 28 bytes of text">Memo Text</option>
-          <option data-memo_placeholder="64 character hexadecimal encoded string">Memo Hash</option>
-          <option data-memo_placeholder="64 character hexadecimal encoded string">Memo Return</option>
-        </select>
-        <div class="invalid-feedback">
-          Please select a valid asset.
-        </div>
-      </div>
-      <div id="memoContentFormGroup" class="form-group" style="display: none;">
-        <label class="control-label" for="memo-content">Memo Content</label>
-        <div class="input-group">
-          <input id="memoContent" type="text" name="memo-content" class="form-control" placeholder="" aria-label="Memo">
-        </div>
-        <div class="d-none">
-          To account card if it exists in our system. Or just keep the search box there?
-        </div>
+      <div id="memoContentFormGroup" class="form-group">
+        <label for="memoContent" class="d-flex justify-content-between align-items-end">
+          <span>Memo</span>
+          <small class="text-muted"><span id="memoByteDisplay"></span>/28</small>
+        </label>
+        <textarea class="form-control memo-content-text" id="memoContent" name="memo-content" rows="3" placeholder="What's it for?" aria-label="Memo" maxlength="28" required="" data-byte_display="#memoByteDisplay"></textarea>
       </div>
       <div class="form-group mt-4 mb-0">
         <button id="sendPaymentFormReset" type="reset" class="btn btn-secondary">Reset</button>
@@ -134,4 +119,5 @@
 {% endverbatim %}
 
 <script src="{% static 'nc/scripts/send.js' %}"></script>
+<script src="{% static 'nc/scripts/memo.js' %}"></script>
 {% endblock %}

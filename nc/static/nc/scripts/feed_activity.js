@@ -81,6 +81,7 @@
     //     </div>
     //     <div class="flex-column align-items-start mx-3">
     //       <span><a href="" class="text-dark font-weight-bold">@mikey.rf</a> sent 0.75 <a href="" class="text-dark font-weight-bold">XLM</a> to <a href="" class="text-dark font-weight-bold">@feld27</a></span>
+    //       <h4>Memo!</h4>
     //       <div><small class="text-muted">15 days ago</small></div>
     //       <div><small>Tx #: <a href="https://horizon-testnet.stellar.org/transactions/bfaf2287695c651747e635ca7e03698ba44611ed9a6b919bd1db9727a0b6dfda" class="text-info" title="Stellar Transaction Hash" target="_blank">bfaf221...0b6dfda</a></small></div>
     //     </div>
@@ -149,18 +150,29 @@
     descriptionContentDiv.setAttribute("class", "flex-column align-items-start mx-3");
 
     var descriptionSpan = document.createElement("span"),
+        memoDiv = document.createElement("div"),
+        memoContent = (record.memo ? record.memo : ""),
+        memoText = document.createTextNode(memoContent),
         timeSinceDiv = document.createElement("div"),
         timeSinceSmall = document.createElement("small"),
         timeSince = moment(record.time + "Z").fromNow(), // NOTE: Stellar horizon created_at attribute stored in stream record.time implicitly assumes UTC so add Z here
         timeSinceText = document.createTextNode(timeSince);
+
+    // Description span in description container
+    descriptionSpan.setAttribute("style", "font-size: 0.9em")
+
+    // Memo div in description container
+    memoDiv.setAttribute("class", "h3 pt-2")
+    memoDiv.appendChild(memoText);
 
     // Timesince div in description container
     timeSinceSmall.setAttribute("class", "text-muted");
     timeSinceSmall.appendChild(timeSinceText);
     timeSinceDiv.appendChild(timeSinceSmall);
 
-    // Append description and time since to outer description container
+    // Append description, memo, and time since to outer description container
     descriptionContentDiv.append(descriptionSpan);
+    descriptionContentDiv.append(memoDiv);
     descriptionContentDiv.append(timeSinceDiv);
     contentDiv.append(descriptionContentDiv);
 

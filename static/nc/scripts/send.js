@@ -229,24 +229,6 @@
     $('#amount')[0].setAttribute('max', maxAmount);
   });
 
-  // Event listeners for Memo Type select to show memo text input if type is not None
-  $('#memoTypeSelect').on('change', function(e) {
-    if (this.value != 'None') {
-      // Change the placeholder to fit the memo type selected
-      $('#memoContent')[0].setAttribute('placeholder', this.options[this.selectedIndex].dataset.memo_placeholder);
-
-      // Show memo content input
-      $('#memoContentFormGroup').show();
-    } else {
-      // Hide and clear out memo content input
-      $('#memoContentFormGroup').hide();
-      $('#memoContent')[0].value = "";
-    }
-  });
-
-  // TODO: Event listener on memo content so user doesn't go above max number of characters?
-
-
   // Event listener on sendPaymentFormReset button click
   // Simply reload page to clear out fields
   $('#sendPaymentFormReset').on('click', function(event) {
@@ -303,9 +285,13 @@
       asset = new StellarSdk.Asset(selectedAssetOption.value, selectedAssetOption.dataset.issuer);
     }
 
-    // Get the memo details
-    let memoType = this.elements["memo-type"].value,
-        memoContent = this.elements["memo-content"].value;
+    // Get the memo details and check if valid
+    let memoContent = this.elements["memo-content"].value;
+    if (!isValidMemo(memoContent)) {
+      // Display errors
+      displayError(sendFromHeader, 'Invalid memo length. Please input a valid memo.', true);
+      return false;
+    }
 
     // If successful on KeyPair generation, load account to prep for send payment transaction
     // Start Ladda animation for UI loading
@@ -345,18 +331,6 @@
 
       // Start building the transaction.
       // TODO: Implement path payments at some point
-      // Organize the memo information first
-      let memoMap = {
-        'None': StellarSdk.Memo.none,
-        'Memo ID': StellarSdk.Memo.id,
-        'Memo Text': StellarSdk.Memo.text,
-        'Memo Hash': StellarSdk.Memo.hash,
-        'Memo Return': StellarSdk.Memo.return
-      },
-          memo = (memoType == 'None' ? memoMap[memoType]() : memoMap[memoType](memoContent));
-
-      // TODO: throw error if memo isn't correct. use memoErrorMap dict?
-
       // Build the transaction with memo
       transaction = new StellarSdk.TransactionBuilder(sourceAccount)
         .addOperation(StellarSdk.Operation.payment({
@@ -364,7 +338,7 @@
           'asset': asset,
           'amount': amount,
         }))
-        .addMemo(memo)
+        .addMemo(StellarSdk.Memo.text(memoContent))
         .build();
 
       // Instantiate client side event listener to verify

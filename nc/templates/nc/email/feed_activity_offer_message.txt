@@ -1,6 +1,6 @@
 {% load i18n %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Hello from {{ site_name }}!
 
-You're receiving this e-mail because a user you follow @{{ username }} offered to {{ offer_type }} {{ amount }} {{ asset }} at a price of {{ price }} XLM/{{ asset }}.{% endblocktrans %}
+You're receiving this e-mail because a user you follow @{{ username }} offered to {{ offer_type }} {{ amount }} {{ asset }} at a price of {{ price }} XLM{% endblocktrans %}{% if memo %} for {{ memo }}{% endif %}.
 
 {{ asset_url }}
 

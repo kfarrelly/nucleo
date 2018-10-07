@@ -15,3 +15,12 @@ function getMinBalance(account) {
   */
   return STELLAR_BASE_RESERVE * (2 + account.subentry_count);
 }
+
+function isValidMemo(memo) {
+  /*
+  Determines whether the given memo is valid.
+
+  NOTE: For now, simply assumes the memo is of type TEXT.
+  */
+  return (new TextEncoder('utf-8').encode(memo)).length <= STELLAR_MEMO_TEXT_BYTE_MAX;
+}

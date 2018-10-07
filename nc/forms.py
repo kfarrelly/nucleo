@@ -335,9 +335,13 @@ class FeedActivityCreateForm(forms.Form):
         # Obtain form input parameter
         tx_hash = self.cleaned_data.get("tx_hash")
 
-        # Make a call to Horizon to get tx and all ops associated with given tx hash
+        # Make calls to Horizon to get tx and all ops associated with given tx hash
         horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
+        tx_json = horizon.transaction(tx_hash=tx_hash)
         ops_json = horizon.transaction_operations(tx_hash=tx_hash)
+
+        # Store the memo if there
+        self.memo = tx_json['memo'] if 'memo' in tx_json and tx_json['memo_type'] != "none" else ""
 
         # Store the ops for save method and verify source account
         self.ops = ops_json['_embedded']['records'] if '_embedded' in ops_json and 'records' in ops_json['_embedded'] else None
@@ -398,6 +402,7 @@ class FeedActivityCreateForm(forms.Form):
             'tx_hash': self.cleaned_data.get("tx_hash"),
             'tx_href': self.tx_href,
             'foreign_id': tx_hash,
+            'memo': self.memo,
             'time': self.time,
         }
 
@@ -455,6 +460,7 @@ class FeedActivityCreateForm(forms.Form):
                     'username': self.request_user.username,
                     'amount': record['amount'],
                     'asset': asset_display,
+                    'memo': self.memo,
                     'account_name': object_account.name,
                     'account_public_key': object_account.public_key,
                     'profile_url': profile_url,
@@ -616,6 +622,7 @@ class FeedActivityCreateForm(forms.Form):
                 'username': self.request_user.username,
                 'offer_type': offer_type_display,
                 'amount': amount_display,
+                'memo': self.memo,
                 'price': price_display,
                 'asset': asset.code,
                 'asset_url': asset_url,
