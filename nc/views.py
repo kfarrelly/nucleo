@@ -44,8 +44,8 @@ from urlparse import urlparse
 
 from . import forms, mixins
 from .models import (
-    Account, Asset, FollowRequest, Portfolio, portfolio_data_collector,
-    Profile, RawPortfolioData,
+    Account, AccountFundRequest, Asset, FollowRequest, Portfolio,
+    portfolio_data_collector, Profile, RawPortfolioData,
 )
 
 
@@ -775,7 +775,7 @@ class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
         """
         kwargs = super(AccountCreateView, self).get_form_kwargs()
         kwargs.update({
-            'request_user': self.request.user
+            'request': self.request
         })
         return kwargs
 
@@ -785,7 +785,7 @@ class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
         committing the form.save()
         """
         self.object = form.save(commit=False)
-        self.object.user = self.request.user
+        self.object.user = form.account_user
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
@@ -816,6 +816,34 @@ class AccountDeleteView(LoginRequiredMixin, mixins.IndexContextMixin,
         Authenticated user can only update their verified accounts.
         """
         return self.request.user.accounts.all()
+
+class AccountFundRequestCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
+    mixins.IndexContextMixin, mixins.ViewTypeContextMixin, generic.CreateView):
+    model = AccountFundRequest
+    form_class = forms.AccountFundRequestCreateForm
+    template_name = 'nc/account_fund_request_form.html'
+    success_url = reverse_lazy('nc:user-redirect')
+    view_type = 'profile'
+
+    def get_form_kwargs(self):
+        """
+        Need to override to pass in the request for authenticated user.
+        """
+        kwargs = super(AccountFundRequestCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'request': self.request
+        })
+        return kwargs
+
+    def form_valid(self, form):
+        """
+        Override to set request.user as AccountFundRequest.requester before
+        committing the form.save()
+        """
+        self.object = form.save(commit=False)
+        self.object.requester = self.request.user
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 class AccountOperationListView(mixins.JSONResponseMixin, generic.TemplateView):
     template_name = 'nc/account_operation_list.html'

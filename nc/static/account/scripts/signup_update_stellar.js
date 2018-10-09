@@ -55,10 +55,9 @@
     laddaButton.start();
 
     // Submit the public key to Nucleo servers to verify account
-    let publicKeyForm = $('#addStellarPublicKeyForm')[0],
-        publicKeyFormSubmitButton = $('#addStellarPublicKeyForm').find(":submit")[0];
+    let publicKeyForm = $('#createStellarPublicKeyForm')[0],
+        publicKeyFormSubmitButton = $('#createStellarPublicKeyForm').find(":submit")[0];
     publicKeyForm.elements["public_key"].value = createStellarKeypair.publicKey();
-    publicKeyForm.elements["creating_stellar"].checked = true;
     publicKeyFormSubmitButton.click();
   });
 
@@ -184,8 +183,7 @@
     event.preventDefault();
 
     // Grab the public_key data from the form
-    let successUrl = this.dataset.success,
-        adding = !this.elements["creating_stellar"].checked;
+    let successUrl = this.dataset.success;
 
     // Build the JSON data to be submitted
     var formData = {};
@@ -201,7 +199,45 @@
     })
     .catch(function(error) {
       // Fail response gives form.errors. Make sure to show in error form
-      let modalHeader = (adding ? $("#addStellarModalForm").find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]),
+      let modalHeader = $("#addStellarModalForm").find('.modal-body-header')[0],
+          errorMessage = error.responseJSON.__all__[0];
+
+      // Stop the button loading animation then display the error
+      Ladda.stopAll();
+      console.error('Something went wrong with Nucleo call', error);
+      displayError(modalHeader, errorMessage);
+    });
+  });
+
+  /** createStellarPublicKeyForm submission to Nucleo **/
+  $('#createStellarPublicKeyForm').submit(function(event) {
+    event.preventDefault();
+
+    // Grab the public_key data from the form
+    let successUrl = this.dataset.success;
+
+    // Build the JSON data to be submitted
+    var formData = {};
+    $(this).serializeArray().forEach(function(obj) {
+      formData[obj.name] = obj.value;
+    });
+
+    // Submit it to Nucleo's create account endpoint
+    $.post(this.action, formData)
+    .then(function(result) {
+      let modalHeader = $("#createStellarModalHeader")[0];
+
+      // Display success message to notify user
+      displaySuccess(modalHeader, 'Funding request for new Stellar account has been sent to Nucleo admins for approval.');
+
+      // Then redirect to the user's profile page with successUrl
+      setTimeout(function() {
+        window.location.href = successUrl;
+      }, 3000);
+    })
+    .catch(function(error) {
+      // Fail response gives form.errors. Make sure to show in error form
+      let modalHeader = $("#createStellarModalHeader")[0],
           errorMessage = error.responseJSON.__all__[0];
 
       // Stop the button loading animation then display the error

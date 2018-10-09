@@ -351,7 +351,9 @@
 {% if object.id == request.user.id and num_addresses > 0 %}
 <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
   {% if num_addresses == 1 %}
-  <button type="button" class="btn btn-lg btn-primary" data-toggle="tooltip" data-placement="bottom" title="Two accounts are needed to issue tokens" disabled>Issue New Token</button>
+  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="Two accounts are needed to issue tokens">
+    <button type="button" class="btn btn-lg btn-primary" disabled>Issue New Token</button>
+  </span>
   {% else %}
   <button type="button" class="btn btn-lg btn-primary" data-toggle="modal" data-target="#issueStellarToken">Issue New Token</button>
   {% endif %}
@@ -605,6 +607,27 @@
     </div>
   </div>
   {% endfor %}
+
+  {% for account_request in object.requests_to_fund_account.all %}
+  <div class="card mb-2">
+    <div class="card-header bg-white">
+      <button type="button" class="btn btn-sm btn-outline-secondary float-right" disabled>
+        <span data-feather="loader"></span>
+        Pending
+      </button>
+
+      <div class="d-flex justify-content-start flex-wrap align-items-center mb-0 h5">
+        <img class="img-object-fit-cover img-thumbnail"  style="height: 65px; width: 65px;" {% if account.pic %} src="{{ account.pic.url }}"{% else %} src="{% static 'nc/images/account.png' %}"{% endif %} alt="">
+        <button class="btn btn-link" disabled>
+          <div class="d-flex flex-column align-items-start justify-content-center">
+            <h3 class="mb-0">&nbsp;</h3>
+            <small class="mb-1 text-muted">{{ account_request.public_key|truncatechars:13 }}{{ account_request.public_key|slice:"-10:" }}</small>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
 {% if object.id == request.user.id %}
@@ -613,7 +636,9 @@
   {% if object.profile and object.profile.pic %}
   <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
   {% else %}
-  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account" disabled>Create New Stellar Account</button>
+  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account">
+    <button type="button" class="btn btn-lg btn-primary m-2" disabled>Create New Stellar Account</button>
+  </span>
   {% endif %}
 </div>
 
@@ -666,7 +691,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="createStellarModalTitle">Create Stellar Account</h5>
+          <h5 class="modal-title" id="createStellarModalTitle">Request Funds To Create Stellar Account</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -698,6 +723,7 @@
           <div class="text-danger mt-4">
             <strong>Security Notes</strong>
             <ul>
+              <li>Nucleo reviews requests to fund new Stellar accounts on a case by case basis to avoid spam.</li>
               <li><strong>Secret Key</strong>:
                 The secret key allows you to access/modify your account and make transactions. DO NOT SHARE IT. Anyone with your secret key will have full access to your account and its funds.
               </li>
@@ -712,7 +738,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Create Account</span></button>
+          <button type="submit" class="btn btn-primary ladda-button" data-style="expand-left" data-size="s"><span class="ladda-label">Request New Account</span></button>
         </div>
       </div>
     </div>
@@ -723,6 +749,12 @@
 <form method="POST" id="addStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-create' %}" data-success="{% url 'nc:user-redirect' %}">
   {% csrf_token %}
   {{ account_form }}
+</form>
+
+<!-- Create Stellar Account Fund Request Public Key Form -->
+<form method="POST" id="createStellarPublicKeyForm" class="d-none" action="{% url 'nc:account-fund-request-create' %}" data-success="{% url 'nc:user-redirect' %}">
+  {% csrf_token %}
+  {{ account_fund_request_form }}
 </form>
 {% endif %}
 

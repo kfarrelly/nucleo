@@ -270,9 +270,8 @@
       laddaButton.start();
 
       // Submit the public key to Nucleo servers to verify account
-      let publicKeyForm = $('#addStellarPublicKeyForm')[0];
+      let publicKeyForm = $('#createStellarPublicKeyForm')[0];
       publicKeyForm.elements["public_key"].value = createStellarKeypair.publicKey();
-      publicKeyForm.elements["creating_stellar"].checked = true;
       publicKeyForm.submit();
     });
 
@@ -398,8 +397,7 @@
 
       // Grab the public_key data from the form
       let formData = new FormData(this),
-          successUrl = this.dataset.success,
-          adding = (successUrl != "");
+          successUrl = this.dataset.success;
 
       // Submit it to Nucleo's create account endpoint
       $.post(this.action, formData)
@@ -409,7 +407,37 @@
       })
       .catch(function(error) {
         // Fail response gives form.errors. Make sure to show in error form
-        let modalHeader = (adding ? $("#addStellarModalForm").find('.modal-body-header')[0] : $("#createStellarModalHeader")[0]);
+        let modalHeader = $("#addStellarModalForm").find('.modal-body-header')[0];
+
+        // Stop the button loading animation then display the error
+        Ladda.stopAll();
+        console.error('Something went wrong with Nucleo call', error);
+        displayError(modalHeader, error.message);
+      });
+    })
+
+    /** createStellarPublicKeyForm submission to Nucleo **/
+    $('#createStellarPublicKeyForm').submit(function(event) {
+      event.preventDefault();
+
+      // Grab the public_key data from the form
+      let formData = new FormData(this),
+          successUrl = this.dataset.success;
+
+      // Submit it to Nucleo's create account endpoint
+      $.post(this.action, formData)
+      .then(function(result) {
+        // Display success message to notify user
+        displaySuccess(modalHeader, 'Funding request for new Stellar account has been sent to Nucleo admins for approval.');
+
+        // Then redirect to the user's profile page with successUrl
+        setTimeout(function() {
+          window.location.href = successUrl;
+        }, 1000);
+      })
+      .catch(function(error) {
+        // Fail response gives form.errors. Make sure to show in error form
+        let modalHeader = $("#createStellarModalHeader")[0];
 
         // Stop the button loading animation then display the error
         Ladda.stopAll();

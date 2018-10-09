@@ -19,6 +19,7 @@ urlpatterns = [
 
     # Associated Stellar account
     url(r'^account/create/$', views.AccountCreateView.as_view(), name='account-create'),
+    url(r'^account/fund/request/create/$', views.AccountFundRequestCreateView.as_view(), name='account-fund-request-create'),
     url(r'^account/(?P<slug>[\w.@+-]+)/update/$', views.AccountUpdateView.as_view(), name='account-update'),
     url(r'^account/(?P<slug>[\w.@+-]+)/delete/$', views.AccountDeleteView.as_view(), name='account-delete'),
     url(r'^account/(?P<slug>[\w.@+-]+)/operation/$', views.AccountOperationListView.as_view(), name='account-operation-list'),

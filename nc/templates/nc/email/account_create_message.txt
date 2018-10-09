@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Hello from {{ site_name }}!
+
+You're receiving this e-mail because your account {% endblocktrans %}{{ account_public_key|truncatechars:8 }}{{ account_public_key|slice:"-5:" }} has been approved for funding.
+
+{{ profile_url }}
+
+{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Thank you for using {{ site_name }}!
+{{ site_domain }}
+
+
+To toggle your email settings, visit: {% endblocktrans %}{{ email_settings_url }}

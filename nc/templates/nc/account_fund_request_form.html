@@ -1,0 +1,29 @@
+{% extends "nc/base.html" %}
+{% load static %}
+{% load bootstrap %}
+
+{% block head %}{% endblock %}
+
+{% block nc_style %}
+<link rel="stylesheet" type="text/css" href='{% static 'nc/profile_update.css' %}' />
+{% endblock %}
+
+{% block title %}Request Account Funds | Nucleo{% endblock %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+  <h1 class="h2">Request Account Funds</h1>
+</div>
+<form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:account-fund-request-create' %}">
+  {% csrf_token %}
+  {{ form|bootstrap_horizontal }}
+  <div class="my-4 pt-3 border-top">
+    <a href="{% url 'nc:user-redirect' %}" class="btn btn-secondary m-1">Cancel</a>
+    <button class="btn btn-primary m-1" type="submit">Submit</button>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block nc_script %}
+{% endblock %}

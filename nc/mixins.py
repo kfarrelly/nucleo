@@ -141,6 +141,7 @@ class AccountFormContextMixin(object):
         if self.request.user.is_authenticated and self.request.user == user:
             kwargs['signed_user'] = signing.dumps(self.request.user.id)
             kwargs['account_form'] = forms.AccountCreateForm()
+            kwargs['account_fund_request_form'] = forms.AccountFundRequestCreateForm()
 
         return kwargs
 

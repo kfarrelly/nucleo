@@ -1,0 +1,18 @@
+{% load i18n %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Hello from {{ site_name }}!
+
+You're receiving this e-mail as an admin because @{{ username }} requested funding for a new Stellar account:{% endblocktrans %}
+
+{{ account_public_key }}
+
+Profile:
+{{ profile_url }}
+
+Follow the link and check "Creating stellar" to approve funding:
+
+{{ create_account_url }}
+
+{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Thank you for using {{ site_name }}!
+{{ site_domain }}
+
+
+To toggle your email settings, visit: {% endblocktrans %}{{ email_settings_url }}

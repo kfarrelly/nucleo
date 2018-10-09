@@ -121,7 +121,7 @@ class Profile(models.Model):
 @python_2_unicode_compatible
 class FollowRequest(models.Model):
     """
-    Email settings associated with a user.
+    Follow request for users who have a private profile.
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
         related_name='follower_requests', on_delete=models.CASCADE)
@@ -262,6 +262,23 @@ class Account(models.Model):
     def __str__(self):
         name = self.name + ': ' if self.name else ''
         return name + self.public_key
+
+
+@python_2_unicode_compatible
+class AccountFundRequest(models.Model):
+    """
+    Requests for funding a new Stellar account.
+    """
+    public_key = models.CharField(max_length=56, unique=True)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL,
+        related_name='requests_to_fund_account', on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('public_key', 'requester')
+
+    def __str__(self):
+        return 'Funding request: ' + self.requester.username + ' -> ' + self.public_key
 
 
 @python_2_unicode_compatible

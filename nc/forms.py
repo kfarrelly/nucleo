@@ -27,7 +27,7 @@ from stellar_base.transaction_envelope import TransactionEnvelope as Te
 
 from stream_django.feed_manager import feed_manager
 
-from .models import Account, Asset, Profile
+from .models import Account, Asset, Profile, AccountFundRequest
 
 
 # Allauth
@@ -169,6 +169,74 @@ class UserFollowRequestUpdateForm(forms.ModelForm):
         fields = ['requested']
 
 
+class AccountFundRequestCreateForm(forms.ModelForm):
+    public_key = forms.CharField(max_length=56)
+
+    def __init__(self, *args, **kwargs):
+        """
+        Override __init__ to store authenticated user
+        """
+        self.request = kwargs.pop('request', None)
+        self.request_user = getattr(self.request, 'user', None)
+        super(AccountFundRequestCreateForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        """
+        Override to check for account quota, profile pic, and if has outstanding
+        funding request. If all checks out, send an email to admin notifying of
+        new funding request.
+        """
+        # Call the super
+        super(AccountFundRequestCreateForm, self).clean()
+
+        # Obtain form input parameters
+        public_key = self.cleaned_data.get("public_key")
+        profile = self.request_user.profile
+
+        # Check the quota hasn't been reached
+        if profile.accounts_created + 1 > settings.STELLAR_CREATE_ACCOUNT_QUOTA:
+            raise ValidationError(_("Nucleo only funds {0} new Stellar account{1} per user. You can pay to add more accounts using funds from your current accounts".format(
+                settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
+            )), code='invalid_quota_amount')
+        # Check user has profile picture to counter bots and preserve social network
+        elif not profile.pic:
+            raise ValidationError(_('To preserve our social network, please upload a profile picture before creating a new Stellar account.'))
+        # Check user doesn't already have an outstanding funding request
+        elif self.request_user.requests_to_fund_account.count() > 0:
+            raise ValidationError(_('Outstanding funding request still pending approval.'))
+
+        # Send a bulk email to all the Nucleo admins
+        recipient_list = [ u.email for u in get_user_model().objects\
+            .filter(is_superuser=True) ]
+        profile_path = reverse('nc:user-detail', kwargs={'slug': self.request_user.username})
+        profile_url = build_absolute_uri(self.request, profile_path)
+        create_account_path = reverse('nc:account-create')
+        create_account_url = build_absolute_uri(self.request, create_account_path)
+        current_site = get_current_site(self.request)
+        email_settings_path = reverse('nc:user-settings-redirect')
+        email_settings_url = build_absolute_uri(self.request, email_settings_path)
+        ctx_email = {
+            'current_site': current_site,
+            'username': self.request_user.username,
+            'create_account_url': create_account_url,
+            'account_public_key': public_key,
+            'profile_url': profile_url,
+            'email_settings_url': email_settings_url,
+        }
+        get_adapter(self.request).send_mail_to_many('nc/email/account_fund_request',
+            recipient_list, ctx_email)
+
+        # Return cleaned data
+        return self.cleaned_data
+
+    class Meta:
+        model = AccountFundRequest
+        fields = ['public_key']
+        widgets = {
+            'public_key': forms.TextInput(attrs={'id': 'id_account_request_public_key'}),
+        }
+
+
 class AccountCreateForm(forms.ModelForm):
     """
     Form to either associate an existing Stellar account in Nucleo db OR
@@ -183,7 +251,9 @@ class AccountCreateForm(forms.ModelForm):
         """
         Override __init__ to store authenticated user
         """
-        self.request_user = kwargs.pop('request_user', None)
+        self.request = kwargs.pop('request', None)
+        self.request_user = getattr(self.request, 'user', None)
+        self.account_user = None # NOTE: account user is the user we're associating with the account creating in our db
         super(AccountCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -203,17 +273,21 @@ class AccountCreateForm(forms.ModelForm):
         if creating_stellar:
             # Creating a new Stellar account
             # NOTE: https://stellar-base.readthedocs.io/en/latest/quickstart.html#create-an-account
-            user = self.request_user
-            profile = user.profile
+            request_user = self.request_user
 
-            # Check the quota hasn't been reached
-            if profile.accounts_created + 1 > settings.STELLAR_CREATE_ACCOUNT_QUOTA:
-                raise ValidationError(_("Nucleo only funds {0} new Stellar account{1} per user. You can pay to add more accounts using funds from your current accounts".format(
-                    settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
-                )), code='invalid_quota_amount')
-            # Check user has profile picture to counter bots and preserve social network
-            elif not profile.pic:
-                raise ValidationError(_('To preserve our social network, please upload a profile picture before creating a new Stellar account.'))
+            # Check current request user is an admin allowed to approve funding
+            if not request_user.is_superuser:
+                raise ValidationError(_('Invalid request. You must be an admin to approve funding of new accounts.'))
+            # Check that account for this public key does not already exist
+            elif Account.objects.filter(public_key=public_key).exists():
+                raise ValidationError(_('Invalid public key. This account has already been funded.'))
+
+            # Check that a funding request exists for this public key and fetch it
+            try:
+                funding_request = AccountFundRequest.objects.get(public_key=public_key)
+            except ObjectDoesNotExist:
+                funding_request = None
+                raise ValidationError(_('Funding request for this public key does not exist.'))
 
             # Make a call to Horizon to fund new account with Nucleo base account
             horizon = settings.STELLAR_HORIZON_INITIALIZATION_METHOD()
@@ -259,8 +333,30 @@ class AccountCreateForm(forms.ModelForm):
                 raise ValidationError(_('Nucleo was not able to create a Stellar account at this time'))
 
             # If successful, increment the user's account quota val by one
-            profile.accounts_created += 1
-            profile.save()
+            user_funding = funding_request.requester
+            self.account_user = user_funding
+            profile_funding = user_funding.profile
+            profile_funding.accounts_created += 1
+            profile_funding.save()
+
+            # Delete the funding request
+            funding_request.delete()
+
+            # Email the requester to notify them of approved funding for new account
+            profile_path = reverse('nc:user-detail', kwargs={'slug': user_funding.username})
+            profile_url = build_absolute_uri(self.request, profile_path)
+            current_site = get_current_site(self.request)
+            email_settings_path = reverse('nc:user-settings-redirect')
+            email_settings_url = build_absolute_uri(self.request, email_settings_path)
+            ctx_email = {
+                'current_site': current_site,
+                'username': user_funding.username,
+                'account_public_key': public_key,
+                'profile_url': profile_url,
+                'email_settings_url': email_settings_url,
+            }
+            get_adapter(self.request).send_mail('nc/email/account_create',
+                user_funding.email, ctx_email)
         else:
             # Verify Stellar public key with the added Data Entry
 
@@ -280,6 +376,12 @@ class AccountCreateForm(forms.ModelForm):
             if self.request_user.id != self.loaded_user_id:
                 raise ValidationError(_('Invalid user id. Decoded Stellar Data Entry does not match your user id.'), code='invalid_user')
 
+            # Associate request user with this account
+            self.account_user = self.request_user
+
+            # Delete any existing funding request associated with that key
+            AccountFundRequest.objects.filter(public_key=public_key).delete()
+
             # TODO: SEND EMAIL IF KEY HAS BEEN COMPROMISED, SOMEHOW ALLOW UNFUNDED ACCOUNTS TO BE SEEN?
 
         return self.cleaned_data
@@ -287,6 +389,9 @@ class AccountCreateForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = ['public_key', 'name', 'creating_stellar']
+        widgets = {
+            'public_key': forms.TextInput(attrs={'id': 'id_account_public_key'}),
+        }
 
 
 class AccountUpdateForm(forms.ModelForm):
