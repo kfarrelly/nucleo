@@ -781,12 +781,17 @@ class AccountCreateView(LoginRequiredMixin, mixins.AjaxableResponseMixin,
 
     def form_valid(self, form):
         """
-        Override to set request.user as Account.user before
-        committing the form.save()
+        Override to set request.user as Account.user and Stellar notifier id as
+        Account.notifier_subscription_id before committing the form.save().
         """
+        # Save form inputs for account
         self.object = form.save(commit=False)
         self.object.user = form.account_user
         self.object.save()
+
+        # Create notifier subscription for account
+        # TODO: self.object.create_notifier_subscription(form.request)
+
         return HttpResponseRedirect(self.get_success_url())
 
 class AccountUpdateView(LoginRequiredMixin, mixins.IndexContextMixin,
@@ -1665,12 +1670,15 @@ class ActivityCreateView(mixins.AjaxableResponseMixin, generic.View):
         return False
 
     def post(self, request, *args, **kwargs):
-        if self._is_valid(request) and not self._has_been_added():
+        print request
+        print request.body
+        return HttpResponse()
+        #if self._is_valid(request) and not self._has_been_added():
             # TODO: USE FeedActivityCreateForm! FEED ACTIVITY FORMATTING ETC ETC
-            print request.body
-            return HttpResponse()
-        else:
-            return HttpResponseNotFound()
+        #    print request.body
+        #    return HttpResponse()
+        #else:
+        #    return HttpResponseNotFound()
 
 
 # Worker environment views

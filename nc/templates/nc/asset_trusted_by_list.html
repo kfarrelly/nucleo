@@ -11,7 +11,7 @@
 {% block title %}Users Who Trust {{ object.code }}: Issued by {% if is_native %}Stellar Network{% else %}{{ object.issuer_address|truncatechars:8 }}{{ object.issuer_address|slice:"-5:" }}{% if object.issuer %} (@{{ object.issuer.user.username }}){% endif %}{% endif %} | Nucleo{% endblock %}
 
 {% block main %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-0 mb-3 border-bottom">
   <h1 class="h2">Trusted By</h1>
 </div>
 

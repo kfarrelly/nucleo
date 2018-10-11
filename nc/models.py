@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import os, requests, toml, urlparse
 
+from allauth.utils import build_absolute_uri
+
 from datetime import timedelta
 
 from django.conf import settings
@@ -164,7 +166,7 @@ class Account(models.Model):
     user_full_name = models.CharField(max_length=200, null=True, blank=True, default=None)
     user_pic_url = models.URLField(null=True, blank=True, default=None)
 
-    def create_notifier_subscription(self):
+    def create_notifier_subscription(self, request):
         """
         Create StellarNotifier subscription for this account
         and store the returned ID.
@@ -173,9 +175,10 @@ class Account(models.Model):
         """
         # POST to the StellarNotifier subscription endpoint
         data = {
-            'reaction_url': reverse('nc:activity-create'),
-            'account': this.public_key
+            'reaction_url': build_absolute_uri(request, reverse('nc:activity-create')),
+            'account': self.public_key
         }
+        print data
         r = requests.post(settings.STELLAR_NOTIFIER_SUBSCRIPTION_URL, data=data)
 
         # Store the returned notifier ID

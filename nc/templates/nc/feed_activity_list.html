@@ -13,7 +13,7 @@
 {% block title %}Activity | Nucleo{% endblock %}
 
 {% block main %}
-<div class="list-group mt-4">
+<div class="list-group mb-3">
   <div class="list-group-item flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
       <div class="d-flex flex-row align-items-center my-2">
@@ -54,14 +54,6 @@
       </div>
       <div class="d-flex flex-column">
         <div>
-          <a href="{% url 'nc:user-redirect' %}" class="btn btn-sm btn-outline-primary my-1">
-            <span data-feather="user"></span>
-            Head To Profile
-          </a>
-          <a href="{% url 'nc:send-redirect' %}" class="btn btn-sm btn-outline-secondary my-1">
-            <span data-feather="send"></span>
-            Send Payment
-          </a>
           <button type="button" class="btn btn-sm btn-outline-dark my-1" data-toggle="modal" data-target="#depositFundsModal">
             <span data-feather="download"></span>
             Deposit Funds
@@ -144,7 +136,7 @@
 </div>
 
 {% if request.user.follower_requests.count > 0 %}
-<div class="card card-requests my-4">
+<div class="card card-requests mb-4">
   <div class="card-header border-0">
     Follower requests
   </div>
@@ -176,7 +168,7 @@
 </div>
 {% endif %}
 
-<div class="card mt-3 mb-2">
+<div class="card mb-2">
   <div class="card-body p-0 m-0">
     <ul class="nav nav-pills nav-justified">
       <li class="nav-item">

@@ -15,7 +15,7 @@
 {% block main %}
 <div class="card mb-4 box-shadow">
   {% if is_native %}
-  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;" src="{% static 'nc/images/wireframe-dotted-world.svg' %}" alt="">
+  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 200px; width: 100%; display: block;" src="{% static 'nc/images/wireframe-dotted-world.svg' %}" alt="">
   <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;" src="{% static 'nc/images/rocket.png' %}" alt="">
     <div class="card-body">
       <h2 class="text-info">XLM <button id="assetVerified" type="button" class="btn bg-white p-1 text-success" title="Verified asset"><span data-feather="check-circle"></span> <small>Verified</small></button></h2>
@@ -74,7 +74,7 @@
       </div>
     </div>
   {% else %}
-  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.cover %} src="{{ object.cover.url }}"{% endif %} alt="">
+  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 200px; width: 100%; display: block;"{% if object.cover %} src="{{ object.cover.url }}"{% endif %} alt="">
   <img class="card-img-top rounded-circle img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.pic %} src="{{ object.pic.url }}"{% elif object.toml_pic %} src="{{ object.toml_pic }}"{% else %} src="{% static 'nc/images/asset.png' %}"{% endif %} alt="">
     <div class="card-body">
       <h2>

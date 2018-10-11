@@ -11,7 +11,7 @@
 {% block title %}Follow User | Nucleo{% endblock %}
 
 {% block main %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-0 mb-3 border-bottom">
   <h1 class="h2">Are you sure you want to {% if is_following %}unfollow{% else %}follow{% endif %} @{{ object.username }}?</h1>
 </div>
 <form class="form-update" method="POST" enctype="multipart/form-data" action="{% url 'nc:user-follow' object.username %}">

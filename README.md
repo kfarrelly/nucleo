@@ -14,6 +14,7 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 - [x] Allow private profiles with account info hidden to those who don't follow you. If private, user must approve follow requests.
 - [x] Include collapsable orderbook in nc.views.AssetDetailView. Similar look to StellarTerm.
 - [x] Take crypto deposits through [Papaya anchor API](https://apay.io/api).
+- [ ] Offer privacy settings to hide Stellar account activity and asset balances, but show portfolio as percentage allocation in each coin. Will need to hide public keys, but still allow user to send assets using Nucleo username.
 - [ ] Offer users ability to buy crypto with fiat through [Coinbase buy widget](https://buy.coinbase.com/).
 - [ ] Airdrop tokens button in profile.js to send payments of tokens to Nucleo users that trust the asset.
 - [x] Include asset change trust operation in options for nc.forms.FeedActivityCreateForm so issuer receives email when another user trusts the asset.
@@ -39,3 +40,4 @@ Anything financial or transactional, allow Stellar to do the work. Everything el
 3. Offer users ability to buy XLM with fiat. Likely best way to accomplish this is integrating [Coinbase buy widget](https://buy.coinbase.com/).
 4. Social media integrations for asset-related news/press releases (Medium, Twitter, etc.).
 5. Emphasize the social aspects of Nucleo.fi. To think about: Issuer postings on asset page for updates (Medium-esque), Community ratings system (i.e. 1-5 stars) for Nucleo users to rank assets.
+6. Expand to other networks like ETH, EOS, etc.? Or offer Stellar pegged assets from those networks?

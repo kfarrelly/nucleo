@@ -20,10 +20,11 @@ from django.utils.translation import ugettext_lazy as _
 from stellar_base.address import Address
 from stellar_base.asset import Asset as StellarAsset
 from stellar_base.memo import TextMemo
-from stellar_base.operation import CreateAccount
+from stellar_base.operation import CreateAccount, ManageData
 from stellar_base.stellarxdr import Xdr
 from stellar_base.transaction import Transaction
 from stellar_base.transaction_envelope import TransactionEnvelope as Te
+from stellar_base.utils import AccountNotExistError
 
 from stream_django.feed_manager import feed_manager
 
@@ -198,9 +199,6 @@ class AccountFundRequestCreateForm(forms.ModelForm):
             raise ValidationError(_("Nucleo only funds {0} new Stellar account{1} per user. You can pay to add more accounts using funds from your current accounts".format(
                 settings.STELLAR_CREATE_ACCOUNT_QUOTA, 's' if settings.STELLAR_CREATE_ACCOUNT_QUOTA > 1 else ''
             )), code='invalid_quota_amount')
-        # Check user has profile picture to counter bots and preserve social network
-        elif not profile.pic:
-            raise ValidationError(_('To preserve our social network, please upload a profile picture before creating a new Stellar account.'))
         # Check user doesn't already have an outstanding funding request
         elif self.request_user.requests_to_fund_account.count() > 0:
             raise ValidationError(_('Outstanding funding request still pending approval.'))
@@ -249,11 +247,12 @@ class AccountCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """
-        Override __init__ to store authenticated user
+        Override __init__ to store authenticated user and initialize
+        account_user variable.
         """
         self.request = kwargs.pop('request', None)
         self.request_user = getattr(self.request, 'user', None)
-        self.account_user = None # NOTE: account user is the user we're associating with the account creating in our db
+        self.account_user = None # NOTE: account_user is the user we're associating with the account creating in our db
         super(AccountCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -295,7 +294,7 @@ class AccountCreateForm(forms.ModelForm):
             # Assemble the CreateAccount operation
             amount = settings.STELLAR_CREATE_ACCOUNT_MINIMUM_BALANCE
             memo = TextMemo('Nucleo Created Account')
-            op = CreateAccount({
+            op_create = CreateAccount({
                 'destination': public_key,
                 'starting_balance': amount,
             })
@@ -311,9 +310,7 @@ class AccountCreateForm(forms.ModelForm):
                 opts={
                     'sequence': sequence,
                     'memo': memo,
-                    'operations': [
-                        op,
-                    ],
+                    'operations': [ op_create ],
                 },
             )
 
@@ -363,7 +360,10 @@ class AccountCreateForm(forms.ModelForm):
             # Get the Stellar account for given public key
             # NOTE: Need to decouple Address initialization from get() method to work!
             address = Address(address=public_key, network=settings.STELLAR_NETWORK)
-            address.get()
+            try:
+                address.get()
+            except AccountNotExistError:
+                raise ValidationError(_('Invalid account. Stellar Account associated with given public key does not exist.'), code='invalid_account')
 
             # Obtain the signed_user data entry
             signed_user = address.data.get(settings.STELLAR_DATA_VERIFICATION_KEY, None)

@@ -12,7 +12,7 @@
 
 {% block content %}
 <body class="bg-light text-dark">
-  <nav class="navbar navbar-dark fixed-top flex-nowrap p-0">
+  <nav class="navbar navbar-top navbar-dark fixed-top flex-nowrap p-0">
     <div class="d-inline-flex flex-auto">
       <a href="{% url 'home' %}" class="navbar-brand col-sm-3 col-md-2 mr-0">
         <img src="{% static 'nc/images/logo_transparent_text-align-left.png' %}" alt="" width="auto" height="25">
@@ -70,17 +70,13 @@
           <span data-feather="activity"></span>
           Feed
         </a>
+        <a class="dropdown-item" href="{% url 'nc:send-redirect' %}">
+          <span data-feather="send"></span>
+          Send/Receive
+        </a>
         <a class="dropdown-item" href="{% url 'nc:user-redirect' %}">
           <span data-feather="user"></span>
           Profile
-        </a>
-        <a class="dropdown-item" href="{% url 'nc:send-redirect' %}">
-          <span data-feather="send"></span>
-          Send
-        </a>
-        <a class="dropdown-item" href="{% url 'nc:receive-redirect' %}">
-          <span data-feather="download"></span>
-          Receive
         </a>
         <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="{% url 'nc:user-settings-redirect' %}">
@@ -114,50 +110,44 @@
 
   <div class="container-fluid">
     <div class="row">
-      <nav class="col-md-2 d-none d-md-block sidebar">
-        <div class="sidebar-sticky">
-          <ul class="nav flex-column">
+      <nav class="sidebar navbar-light box-shadow border-bottom">
+        <div class="">
+          <ul class="nav flex-row">
             <li class="nav-item">
               <a {% if view_type == 'leaderboard' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:leaderboard-redirect' %}">
                 <span data-feather="award"></span>
-                Leaderboard{% if view_type == 'leaderboard' %} <span class="sr-only">(current)</span>{% endif %}
+                <span class="d-none d-md-inline-block">Leaderboard{% if view_type == 'leaderboard' %} <span class="sr-only">(current)</span>{% endif %}</span>
               </a>
             </li>
             <li class="nav-item">
               <a {% if view_type == 'asset' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:trade-redirect' %}">
                 <span data-feather="trending-up"></span>
-                Trade{% if view_type == 'asset' %} <span class="sr-only">(current)</span>{% endif %}
+                <span class="d-none d-md-inline-block">Trade{% if view_type == 'asset' %} <span class="sr-only">(current)</span>{% endif %}</span>
               </a>
             </li>
             <li class="nav-item">
               <a {% if view_type == 'feed' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:feed-redirect' %}">
                 <span data-feather="activity"></span>
-                Feed{% if view_type == 'feed' %} <span class="sr-only">(current)</span>{% endif %}
-              </a>
-            </li>
-            <li class="nav-item">
-              <a {% if view_type == 'profile' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:user-redirect' %}">
-                <span data-feather="user"></span>
-                Profile{% if view_type == 'profile' %} <span class="sr-only">(current)</span>{% endif %}
+                <span class="d-none d-md-inline-block">Feed{% if view_type == 'feed' %} <span class="sr-only">(current)</span>{% endif %}</span>
               </a>
             </li>
             <li class="nav-item">
               <a {% if view_type == 'send' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:send-redirect' %}">
                 <span data-feather="send"></span>
-                Send{% if view_type == 'send' %} <span class="sr-only">(current)</span>{% endif %}
+                <span class="d-none d-md-inline-block">Send/Receive{% if view_type == 'send' %} <span class="sr-only">(current)</span>{% endif %}</span>
               </a>
             </li>
             <li class="nav-item">
-              <a {% if view_type == 'receive' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:receive-redirect' %}">
-                <span data-feather="download"></span>
-                Receive{% if view_type == 'receive' %} <span class="sr-only">(current)</span>{% endif %}
+              <a {% if view_type == 'profile' %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="{% url 'nc:user-redirect' %}">
+                <span data-feather="user"></span>
+                <span class="d-none d-md-inline-block">Profile{% if view_type == 'profile' %} <span class="sr-only">(current)</span>{% endif %}</span>
               </a>
             </li>
           </ul>
         </div>
       </nav>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-sm-4 pb-4">
+      <main role="main" class="col-md-9 m-auto col-lg-10 px-sm-4 pb-4">
       {% block main %}
       {% endblock %}
       </main>

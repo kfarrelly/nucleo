@@ -14,7 +14,7 @@
 
 {% block main %}
 <div class="card mb-4 box-shadow">
-  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 300px; width: 100%; display: block;"{% if object.profile and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
+  <img class="card-img-top img-object-fit-cover border-bottom" style="height: 200px; width: 100%; display: block;"{% if object.profile and object.profile.cover %} src="{{ object.profile.cover.url }}"{% endif %} alt="">
   <img class="card-img-top img-thumbnail img-object-fit-cover ml-3" style="height: 100px; width: 100px; margin-top: -50px;"{% if object.profile and object.profile.pic %} src="{{ object.profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
     <div class="card-body">
       <h2>{{ object.get_full_name }}</h2>
@@ -105,7 +105,7 @@
 </div>
 
 {% if not object.profile.is_private or object.id == request.user.id or is_following %}
-<div class="card mt-4 box-shadow">
+<div class="card box-shadow">
   <div class="card-body">
     <div id="portfolioChart" class="portfolio-chart" data-username="{{ object.username }}" data-url="{% url 'nc:user-portfolio-data-list' object.username %}" data-counter_code="USD">
       <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
@@ -144,17 +144,28 @@
 </div>
 
 
-<div class="mt-3 d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 my-3 border-bottom">
   <h1 id="assets" class="h2">Assets</h1>
+  {% if object.id == request.user.id and num_addresses > 0 %}
+  <div>
+    {% if num_addresses == 1 %}
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="Two accounts are needed to issue tokens">
+      <button type="button" class="btn btn-sm btn-primary" disabled>Issue</button>
+    </span>
+    {% else %}
+    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#issueStellarToken">Issue</button>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
-<div class="card mt-1 mb-4">
+<div class="card box-shadow">
   <div class="card-body bg-dark text-center">
     <div id="carouselIndicators" class="carousel slide px-3" data-ride="carousel">
-      <div class="carousel-inner" style="height: 22rem;">
+      <div class="carousel-inner">
         {% for tup, asset in assets.items %}
         <div {% if forloop.first %}class="carousel-item active"{% else %}class="carousel-item"{% endif %}>
-          <div class="card box-shadow text-center m-auto" style="max-width: 17rem;">
+          <div class="card box-shadow text-center m-auto" style="max-width: 20rem;">
             {% if asset.asset_type == 'native' %}
             <div class="card-header d-flex justify-content-between align-items-center">
               <span class="text-success" data-feather="check-circle"></span>
@@ -349,16 +360,6 @@
 
 
 {% if object.id == request.user.id and num_addresses > 0 %}
-<div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
-  {% if num_addresses == 1 %}
-  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="Two accounts are needed to issue tokens">
-    <button type="button" class="btn btn-lg btn-primary" disabled>Issue New Token</button>
-  </span>
-  {% else %}
-  <button type="button" class="btn btn-lg btn-primary" data-toggle="modal" data-target="#issueStellarToken">Issue New Token</button>
-  {% endif %}
-</div>
-
 <!-- Issue Stellar Token Modal -->
 <div class="modal fade" id="issueStellarToken" tabindex="-1" role="dialog" aria-labelledby="issueStellarModalTitle" aria-hidden="true">
   <form method="POST" id="issueStellarModalForm" class="form-issue-token">
@@ -366,7 +367,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="issueStellarModalTitle">Issue New Token</h5>
+          <h5 class="modal-title" id="issueStellarModalTitle">Issue Token</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -504,11 +505,33 @@
 </form>
 {% endif %}
 
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 my-3 border-bottom">
+  <h1 id="activity" class="h2">Activity</h1>
+</div>
+
+<div class="py-1 mb-3">
+  <div class="card card-feed">
+    <div class="card-header border-0"></div>
+    <div class="card-body p-0">
+      <ul id="activityList" class="list-group">
+      </ul>
+    </div>
+    <div class="card-footer border-0 d-flex justify-content-start align-items-center">
+      <button id="moreButton" type="button" class="btn btn-sm btn-link more-feed p-0" data-parent="#activityList" data-has_more="true" data-id_lt="">More</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
   <h1 id="accounts" class="h2">Accounts</h1>
+  {% if object.id == request.user.id %}
+  <div>
+    <button type="button" class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#addStellarModal">Add</button>
+    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#createStellarModal">Create</button>
+  </div>
+  {% endif %}
 </div>
-
 
 <div id="accordion" class="py-1">
   {% for account in object.accounts.all %}
@@ -631,17 +654,6 @@
 </div>
 
 {% if object.id == request.user.id %}
-<div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center py-0 mb-3">
-  <button type="button" class="btn btn-lg btn-secondary m-2" data-toggle="modal" data-target="#addStellarModal">Add Existing Stellar Account</button>
-  {% if object.profile and object.profile.pic %}
-  <button type="button" class="btn btn-lg btn-primary m-2" data-toggle="modal" data-target="#createStellarModal">Create New Stellar Account</button>
-  {% else %}
-  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="To preserve our social network, please upload a profile picture before creating a new Stellar account">
-    <button type="button" class="btn btn-lg btn-primary m-2" disabled>Create New Stellar Account</button>
-  </span>
-  {% endif %}
-</div>
-
 <!-- Add Stellar Account Modal -->
 <div class="modal fade" id="addStellarModal" tabindex="-1" role="dialog" aria-labelledby="addStellarModalTitle" aria-hidden="true">
   <form method="POST" id="addStellarModalForm">
@@ -757,24 +769,6 @@
   {{ account_fund_request_form }}
 </form>
 {% endif %}
-
-
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
-  <h1 id="activity" class="h2">Activity</h1>
-</div>
-
-<div class="py-1">
-  <div class="card card-feed">
-    <div class="card-header border-0"></div>
-    <div class="card-body p-0">
-      <ul id="activityList" class="list-group">
-      </ul>
-    </div>
-    <div class="card-footer border-0 d-flex justify-content-start align-items-center">
-      <button id="moreButton" type="button" class="btn btn-sm btn-link more-feed p-0" data-parent="#activityList" data-has_more="true" data-id_lt="">More</button>
-    </div>
-  </div>
-</div>
 
 
 {% else %}

@@ -11,7 +11,7 @@
 {% block title %}{{ object.get_full_name }} (@{{ object.username }}): {% if in_followers_user_follows %}Followed By{% elif in_followers %}Followers{% else %}Following{% endif %} | Nucleo{% endblock %}
 
 {% block main %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-0 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-0 mb-3 border-bottom">
   <h1 class="h2">{% if in_followers_user_follows %}Followed By{% elif in_followers %}Followers{% else %}Following{% endif %}</h1>
 </div>
 
