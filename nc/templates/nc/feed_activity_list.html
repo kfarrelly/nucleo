@@ -15,7 +15,7 @@
 {% block main %}
 <div class="list-group mb-3">
   <div class="list-group-item flex-column align-items-start">
-    <div class="d-flex w-100 justify-content-between">
+    <a href="{% url 'nc:user-redirect' %}" class="list-group-item list-group-item-action d-flex w-100 justify-content-between p-0 border-0">
       <div class="d-flex flex-row align-items-center my-2">
         <div class="mr-2">
           <img class="img-object-fit-cover img-thumbnail flex-auto" style="height: 70px; width: 70px;"{% if profile and profile.pic %} src="{{ profile.pic.url }}"{% else %} src="{% static 'nc/images/profile.png' %}"{% endif %} alt="">
@@ -30,7 +30,7 @@
           </small>
         </div>
       </div>
-    </div>
+    </a>
     <div class="d-flex flex-wrap w-100 justify-content-between align-items-end">
       <div class="d-flex flex-column">
         <div class="btn-group pr-2 my-1">
